@@ -4,6 +4,7 @@ import { Wifi, WifiOff, Settings, Trash2, Zap, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SignalButton } from '@/components/SignalButton';
 import { MessageList } from '@/components/MessageList';
+import { ChatRoom } from '@/components/ChatRoom';
 import { useSignals } from '@/hooks/useSignals';
 import { toast } from 'sonner';
 
@@ -170,6 +171,9 @@ const SignalApp = () => {
           </p>
         </div>
 
+        {/* Chat Room */}
+        <ChatRoom />
+
         {/* Message List */}
         <MessageList messages={messages} />
 
@@ -182,7 +186,7 @@ const SignalApp = () => {
             實際 iOS 版本將使用 MultipeerConnectivity 進行真正的離線通訊
           </p>
           <p className="text-xs text-blue-600 mt-1">
-            位置資訊模擬 GPS 精度，實際版本支援位置模糊化選項
+            位置資訊使用台北市中心模擬位置，實際版本支援位置模糊化選項
           </p>
         </div>
       </div>

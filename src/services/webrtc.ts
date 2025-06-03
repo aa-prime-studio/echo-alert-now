@@ -1,4 +1,3 @@
-
 export interface SignalMessage {
   id: string;
   type: 'safe' | 'supplies' | 'medical' | 'danger';
@@ -21,35 +20,12 @@ export class WebRTCService {
   }
 
   private async initializeLocation() {
-    try {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            this.currentLocation = {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude
-            };
-            console.log('Location obtained:', this.currentLocation);
-          },
-          (error) => {
-            console.warn('Location access denied, using fallback');
-            // 模擬台北市中心位置
-            this.currentLocation = {
-              lat: 25.0330 + (Math.random() - 0.5) * 0.01,
-              lng: 121.5654 + (Math.random() - 0.5) * 0.01
-            };
-          }
-        );
-      } else {
-        // 瀏覽器不支援地理位置，使用模擬位置
-        this.currentLocation = {
-          lat: 25.0330 + (Math.random() - 0.5) * 0.01,
-          lng: 121.5654 + (Math.random() - 0.5) * 0.01
-        };
-      }
-    } catch (error) {
-      console.error('Failed to get location:', error);
-    }
+    // 直接使用台北市中心的模擬位置，不請求地理位置權限
+    this.currentLocation = {
+      lat: 25.0330 + (Math.random() - 0.5) * 0.01,
+      lng: 121.5654 + (Math.random() - 0.5) * 0.01
+    };
+    console.log('Using simulated location:', this.currentLocation);
   }
 
   private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
