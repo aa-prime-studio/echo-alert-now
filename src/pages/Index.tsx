@@ -85,8 +85,8 @@ const Index = () => {
             與附近的人保持緊急聯繫。四種簡單訊號，關鍵時刻的生命線。
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-blue-600 hover:bg-blue-700">
-              了解更多
+            <Button size="lg" className="bg-blue-600 hover:bg-blue-700" asChild>
+              <a href="/app">體驗 Web 版概念驗證</a>
             </Button>
             <Button size="lg" variant="outline">
               查看技術架構
