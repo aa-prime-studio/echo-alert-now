@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertTriangle, Heart, Package, Shield, Clock } from 'lucide-react';
+import { AlertTriangle, Heart, Package, Shield, Clock, MapPin, Navigation } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
 
 interface MessageListProps {
@@ -30,6 +30,22 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     }
   };
 
+  const formatDistance = (distance?: number) => {
+    if (!distance) return '位置未知';
+    
+    if (distance < 1000) {
+      return `${Math.round(distance)}m`;
+    } else {
+      return `${(distance / 1000).toFixed(1)}km`;
+    }
+  };
+
+  const formatLocation = (lat?: number, lng?: number, accuracy?: number) => {
+    if (!lat || !lng) return null;
+    
+    return `${lat.toFixed(4)}, ${lng.toFixed(4)}${accuracy ? ` (±${Math.round(accuracy)}m)` : ''}`;
+  };
+
   if (messages.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
@@ -40,28 +56,56 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     );
   }
 
+  // 按距離排序（近的優先）
+  const sortedMessages = [...messages].sort((a, b) => {
+    if (!a.distance && !b.distance) return b.timestamp - a.timestamp;
+    if (!a.distance) return 1;
+    if (!b.distance) return -1;
+    return a.distance - b.distance;
+  });
+
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b">
         <h3 className="font-semibold text-gray-900">接收到的訊號 ({messages.length})</h3>
+        <p className="text-sm text-gray-500 mt-1">依距離排序，近的優先</p>
       </div>
       <div className="max-h-96 overflow-y-auto">
-        {messages.map((message) => {
+        {sortedMessages.map((message) => {
           const config = signalConfig[message.type];
           const Icon = config.icon;
           
           return (
             <div key={message.id} className="p-4 border-b last:border-b-0 hover:bg-gray-50">
-              <div className="flex items-center space-x-3">
+              <div className="flex items-start space-x-3">
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color}`}>
                   <Icon className="w-5 h-5" />
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center justify-between">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-gray-900">{config.label}</span>
                     <span className="text-sm text-gray-500">{formatTime(message.timestamp)}</span>
                   </div>
-                  <div className="text-sm text-gray-600">來自: {message.deviceName}</div>
+                  
+                  <div className="text-sm text-gray-600 mb-2">來自: {message.deviceName}</div>
+                  
+                  <div className="flex items-center space-x-4 text-sm">
+                    {message.distance !== undefined && (
+                      <div className="flex items-center space-x-1 text-blue-600">
+                        <Navigation className="w-4 h-4" />
+                        <span className="font-medium">{formatDistance(message.distance)}</span>
+                      </div>
+                    )}
+                    
+                    {message.location && (
+                      <div className="flex items-center space-x-1 text-gray-500">
+                        <MapPin className="w-4 h-4" />
+                        <span className="font-mono text-xs">
+                          {formatLocation(message.location.lat, message.location.lng, message.location.accuracy)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

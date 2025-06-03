@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Wifi, WifiOff, Settings, Trash2, Zap } from 'lucide-react';
+import { Wifi, WifiOff, Settings, Trash2, Zap, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SignalButton } from '@/components/SignalButton';
 import { MessageList } from '@/components/MessageList';
@@ -11,6 +11,7 @@ const SignalApp = () => {
   const { messages, connectionState, deviceName, setDeviceName, sendSignal, clearMessages } = useSignals();
   const [isConnected, setIsConnected] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  const [shareLocation, setShareLocation] = useState(true);
 
   const handleSendSignal = async (type: 'safe' | 'supplies' | 'medical' | 'danger') => {
     await sendSignal(type);
@@ -23,7 +24,7 @@ const SignalApp = () => {
     };
     
     toast.success(`${signalNames[type]}已發送`, {
-      description: '訊號已廣播至附近裝置'
+      description: shareLocation ? '訊號已廣播至附近裝置（含位置）' : '訊號已廣播至附近裝置（不含位置）'
     });
   };
 
@@ -81,6 +82,7 @@ const SignalApp = () => {
         {showSettings && (
           <div className="bg-white rounded-lg shadow p-4 space-y-4">
             <h3 className="font-semibold text-gray-900">設定</h3>
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 裝置名稱
@@ -91,9 +93,34 @@ const SignalApp = () => {
                 onChange={(e) => setDeviceName(e.target.value)}
                 className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 maxLength={16}
+                placeholder="輸入裝置名稱..."
               />
             </div>
-            <div className="flex items-center justify-between pt-2">
+
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center space-x-2">
+                <MapPin className="w-4 h-4 text-gray-600" />
+                <span className="text-sm text-gray-700">分享位置資訊</span>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={shareLocation}
+                  onChange={(e) => setShareLocation(e.target.checked)}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+              </label>
+            </div>
+            
+            <div className="text-xs text-gray-500">
+              {shareLocation 
+                ? '其他人可以看到你的大概位置（±20公尺）' 
+                : '訊號將不包含位置資訊，其他人無法知道你的位置'
+              }
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t">
               <span className="text-sm text-gray-600">清除所有訊息</span>
               <Button
                 variant="outline"
@@ -139,6 +166,7 @@ const SignalApp = () => {
           </div>
           <p className="text-xs text-gray-500 text-center mt-4">
             訊號會廣播至 50-100 公尺範圍內的裝置
+            {shareLocation && <span className="block">包含你的位置資訊（可在設定中關閉）</span>}
           </p>
         </div>
 
@@ -152,6 +180,9 @@ const SignalApp = () => {
           </p>
           <p className="text-xs text-blue-600 mt-1">
             實際 iOS 版本將使用 MultipeerConnectivity 進行真正的離線通訊
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            位置資訊模擬 GPS 精度，實際版本支援位置模糊化選項
           </p>
         </div>
       </div>
