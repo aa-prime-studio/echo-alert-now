@@ -172,9 +172,9 @@ const SignalApp = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col max-w-md mx-auto">
+    <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-100">
       {/* Header */}
-      <header className={`${headerConfig.bg} text-black px-4 py-6`}>
+      <header className={`${headerConfig.bg} text-black px-4 py-6 flex-shrink-0`}>
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-5xl font-bold">{headerConfig.title}</h1>
           <Button
@@ -193,12 +193,12 @@ const SignalApp = () => {
       </header>
 
       {/* Content */}
-      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-24 relative z-10">
+      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-20 relative z-10 overflow-auto">
         {renderTabContent()}
       </main>
 
       {/* Bottom Navigation - Fixed at bottom */}
-      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 shadow-lg px-4 py-2">
+      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 shadow-lg px-4 py-2 z-50">
         <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
@@ -208,7 +208,7 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center space-y-1 py-2"
+                className="flex flex-col items-center space-y-1 py-2 min-w-0 flex-1"
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
