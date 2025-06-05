@@ -46,6 +46,16 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   return (
     <div>
+      {/* Arc decoration above nearby signals */}
+      <div className="relative mb-4">
+        <div className="absolute left-0 top-0 w-6 h-6">
+          <div className="w-6 h-6 border-2 border-gray-300 border-b-0 border-r-0 rounded-tl-full"></div>
+        </div>
+        <div className="absolute right-0 top-0 w-6 h-6">
+          <div className="w-6 h-6 border-2 border-gray-300 border-b-0 border-l-0 rounded-tr-full"></div>
+        </div>
+      </div>
+      
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-2">
           <Users className="w-5 h-5 text-blue-500" />
