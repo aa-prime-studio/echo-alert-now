@@ -42,15 +42,15 @@ const SignalApp = () => {
   const getHeaderConfig = () => {
     switch (activeTab) {
       case 'signals':
-        return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
+        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
       case 'chat':
-        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '請支援櫃檯' };
+        return { bg: '#ab93e5', title: 'Live Support Chatroom', subtitle: null };
       case 'games':
-        return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '遊戲房間' };
+        return { bg: '#283ee5', title: 'Bingo Game Room', subtitle: null };
       case 'settings':
-        return { bg: 'bg-green-400', title: 'Settings', subtitle: '應用程式設定' };
+        return { bg: '#00d76a', title: 'Settings', subtitle: null };
       default:
-        return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
+        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
     }
   };
 
@@ -174,7 +174,7 @@ const SignalApp = () => {
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-100">
       {/* Header */}
-      <header className={`${headerConfig.bg} text-black px-4 py-6 flex-shrink-0`}>
+      <header className="text-black px-4 py-6 flex-shrink-0" style={{ backgroundColor: headerConfig.bg }}>
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-5xl font-bold">{headerConfig.title}</h1>
           <Button
@@ -186,10 +186,10 @@ const SignalApp = () => {
             {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
           </Button>
         </div>
-        {headerConfig.subtitle && (
+        {activeTab === 'signals' && (
           <div className="flex items-center">
             <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-            <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
+            <p className="text-sm opacity-80">已連線 - 可發送和接收訊號</p>
           </div>
         )}
       </header>
@@ -214,10 +214,10 @@ const SignalApp = () => {
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-600 text-white' 
+                    ? 'text-white' 
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
-                }`}>
-                  <Icon className="w-5 h-5" />
+                }`} style={{ backgroundColor: isActive ? '#283ee5' : undefined }}>
+                  <Icon className="w-5 h-5" style={{ color: isActive ? '#02d35c' : undefined }} />
                 </div>
                 <span className={`text-xs font-medium ${
                   isActive ? 'text-blue-600' : 'text-gray-400'
