@@ -42,15 +42,15 @@ const SignalApp = () => {
   const getHeaderConfig = () => {
     switch (activeTab) {
       case 'signals':
-        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
+        return { bg: '#e5d804', title: 'Broadcast\nSignal', subtitle: null };
       case 'chat':
-        return { bg: '#ab93e5', title: 'Live Support Chatroom', subtitle: null };
+        return { bg: '#ab93e5', title: 'Live Support\nChatroom', subtitle: null };
       case 'games':
-        return { bg: '#283ee5', title: 'Bingo Game Room', subtitle: null };
+        return { bg: '#283ee5', title: 'Bingo Game\nRoom', subtitle: null };
       case 'settings':
         return { bg: '#00d76a', title: 'Settings', subtitle: null };
       default:
-        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
+        return { bg: '#e5d804', title: 'Broadcast\nSignal', subtitle: null };
     }
   };
 
@@ -62,7 +62,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊息</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -121,7 +121,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊息</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -176,7 +176,15 @@ const SignalApp = () => {
       {/* Header */}
       <header className="text-black px-4 py-6 flex-shrink-0" style={{ backgroundColor: headerConfig.bg }}>
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-5xl font-bold">{headerConfig.title}</h1>
+          <div className="flex-1">
+            {activeTab === 'signals' && (
+              <div className="flex items-center mb-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                <p className="text-sm opacity-80">已連線 - 可發送和接收訊號</p>
+              </div>
+            )}
+            <h1 className="text-5xl font-bold whitespace-pre-line">{headerConfig.title}</h1>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -186,12 +194,6 @@ const SignalApp = () => {
             {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
           </Button>
         </div>
-        {activeTab === 'signals' && (
-          <div className="flex items-center">
-            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-            <p className="text-sm opacity-80">已連線 - 可發送和接收訊號</p>
-          </div>
-        )}
       </header>
 
       {/* Content */}

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { BingoRoom } from '@/types/game';
@@ -11,7 +10,7 @@ interface RoomSelectorProps {
 export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom }) => {
   return (
     <div>
-      <h4 className="text-lg font-semibold text-gray-900 mb-3">選擇房間</h4>
+      <h4 className="text-lg font-semibold text-gray-900 mb-3 text-left">選擇房間</h4>
       <div className="grid grid-cols-1 gap-3">
         {rooms.map((room) => (
           <Button
