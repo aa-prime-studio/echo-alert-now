@@ -37,7 +37,7 @@ export const translations = {
     'terms_service': '使用條款',
     'about': '關於',
     'language': '語言',
-    'chinese': '中文',
+    'chinese': '繁體中文',
     'english': 'English',
     
     // 通用
@@ -50,7 +50,7 @@ export const translations = {
     // 英文翻譯會在你提供翻譯後填入
     'settings': 'Settings',
     'language': 'Language',
-    'chinese': '中文',
+    'chinese': '繁體中文',
     'english': 'English',
     // 其他英文翻譯待補充...
   }
