@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
+import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SignalButton } from '@/components/SignalButton';
 import { MessageList } from '@/components/MessageList';
@@ -60,11 +61,9 @@ const SignalApp = () => {
       case 'signals':
         return (
           <div className="space-y-6">
-            {/* Signal Buttons */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
               <div className="flex gap-3 mb-4">
-                {/* Safe button takes half width */}
                 <div className="w-1/2">
                   <SignalButton
                     type="safe"
@@ -73,8 +72,6 @@ const SignalApp = () => {
                     size="large"
                   />
                 </div>
-                
-                {/* Other three buttons in vertical stack on the right */}
                 <div className="w-1/2 flex flex-col gap-3">
                   <SignalButton
                     type="supplies"
@@ -100,8 +97,6 @@ const SignalApp = () => {
                 訊號會廣播至 50-500 公尺範圍內的裝置
               </p>
             </div>
-
-            {/* Nearby Messages */}
             <div className="flex-1">
               <MessageList messages={messages} />
             </div>
@@ -125,11 +120,9 @@ const SignalApp = () => {
       default:
         return (
           <div className="space-y-6">
-            {/* Signal Buttons */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
               <div className="flex gap-3 mb-4">
-                {/* Safe button takes half width */}
                 <div className="w-1/2">
                   <SignalButton
                     type="safe"
@@ -138,8 +131,6 @@ const SignalApp = () => {
                     size="large"
                   />
                 </div>
-                
-                {/* Other three buttons in vertical stack on the right */}
                 <div className="w-1/2 flex flex-col gap-3">
                   <SignalButton
                     type="supplies"
@@ -165,8 +156,6 @@ const SignalApp = () => {
                 訊號會廣播至 50-500 公尺範圍內的裝置
               </p>
             </div>
-
-            {/* Nearby Messages */}
             <div className="flex-1">
               <MessageList messages={messages} />
             </div>
@@ -184,7 +173,7 @@ const SignalApp = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col max-w-md mx-auto">
-      {/* Colored Header */}
+      {/* Header */}
       <header className={`${headerConfig.bg} text-black px-4 py-6`}>
         <div className="flex items-center justify-between mb-2">
           <h1 className="text-5xl font-bold">{headerConfig.title}</h1>
@@ -203,13 +192,13 @@ const SignalApp = () => {
         </div>
       </header>
 
-      {/* White Content Card */}
-      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-32 relative z-10">
+      {/* Content */}
+      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-24 relative z-10">
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t-2 border-gray-200 shadow-lg px-4 py-4">
+      {/* Bottom Navigation - Fixed at bottom */}
+      <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 shadow-lg px-4 py-2">
         <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
@@ -219,14 +208,14 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center space-y-2"
+                className="flex flex-col items-center space-y-1 py-2"
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-500 text-white shadow-blue-200' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:shadow-gray-200'
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}>
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-5 h-5" />
                 </div>
                 <span className={`text-xs font-medium ${
                   isActive ? 'text-blue-500' : 'text-gray-400'
@@ -237,8 +226,7 @@ const SignalApp = () => {
             );
           })}
         </div>
-        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-t-full"></div>
-      </div>
+      </nav>
     </div>
   );
 };
