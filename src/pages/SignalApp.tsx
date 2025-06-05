@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -93,7 +94,7 @@ const SignalApp = () => {
       case 'chat':
         return <ChatRoom />;
       case 'games':
-        return <GameRoom />;
+        return <GameRoom deviceName={deviceName} />;
       case 'settings':
         return (
           <SettingsPanel 

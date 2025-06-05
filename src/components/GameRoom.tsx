@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3, Send, Target, Hash, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -38,10 +37,13 @@ interface RoomChatMessage {
   isOwn?: boolean;
 }
 
-export const GameRoom: React.FC = () => {
+interface GameRoomProps {
+  deviceName: string;
+}
+
+export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   const [currentRoom, setCurrentRoom] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
-  const [deviceName] = useState(`Player-${Math.random().toString(36).substr(2, 4)}`);
   const [bingoCard, setBingoCard] = useState<BingoCard | null>(null);
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
   const [completedLines, setCompletedLines] = useState(0);
@@ -98,7 +100,7 @@ export const GameRoom: React.FC = () => {
       hasWon: false
     }));
     
-    // 加入自己
+    // 加入自己 - 使用傳入的 deviceName
     players.push({
       name: deviceName,
       completedLines: 0,
@@ -188,7 +190,7 @@ export const GameRoom: React.FC = () => {
     const lines = checkCompletedLines(newMarked);
     setCompletedLines(lines);
     
-    // 更新自己在房間玩家列表中的進度
+    // 更新自己在房間玩家列表中的進度 - 使用 deviceName
     setRoomPlayers(prev => 
       prev.map(player => 
         player.name === deviceName 
@@ -237,7 +239,7 @@ export const GameRoom: React.FC = () => {
   const updateLeaderboard = (score: number) => {
     const today = new Date().toISOString().split('T')[0];
     const newScore: BingoScore = {
-      deviceName,
+      deviceName, // 使用傳入的 deviceName
       score,
       timestamp: Date.now(),
       date: today
@@ -257,7 +259,7 @@ export const GameRoom: React.FC = () => {
     const message: RoomChatMessage = {
       id: crypto.randomUUID(),
       message: newChatMessage.trim(),
-      playerName: deviceName,
+      playerName: deviceName, // 使用傳入的 deviceName
       timestamp: Date.now(),
       isOwn: true
     };
