@@ -52,9 +52,9 @@ export const DirectionCompass: React.FC<DirectionCompassProps> = ({
         <div className="text-lg font-semibold text-gray-900">{formatDistance(distance)}</div>
         <div className="text-sm text-gray-500">{label}</div>
       </div>
-      <div className="relative w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+      <div className="relative w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
         <Navigation 
-          className="w-3 h-3 text-blue-600" 
+          className="w-3 h-3 text-black" 
           style={{ transform: `rotate(${angle}deg)` }}
         />
       </div>
