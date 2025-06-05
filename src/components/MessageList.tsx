@@ -3,6 +3,7 @@ import React from 'react';
 import { AlertTriangle, Heart, Package, Shield, Clock } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
 import { DirectionCompass } from '@/components/DirectionCompass';
+import { Separator } from '@/components/ui/separator';
 
 interface MessageListProps {
   messages: SignalMessage[];
@@ -50,35 +51,41 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
         <span className="text-sm text-gray-500">({messages.length})</span>
       </div>
       
-      <div className="space-y-4">
-        {sortedMessages.map((message) => {
+      <div className="space-y-0">
+        {sortedMessages.map((message, index) => {
           const config = signalConfig[message.type];
           const Icon = config.icon;
+          const isLastMessage = index === sortedMessages.length - 1;
           
           return (
-            <div key={message.id} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-black">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} flex-shrink-0 border border-black`}>
-                <Icon className="w-5 h-5" />
-              </div>
-              <div className="flex-1 min-w-0 relative">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <span className="font-medium text-gray-900">{config.label}</span>
-                    <div className="text-sm text-gray-600 mb-1 mt-1">來自: {message.deviceName}</div>
-                    <div className="text-sm text-gray-500">{formatTime(message.timestamp)}</div>
-                  </div>
-                  
-                  {message.distance && message.direction && (
-                    <div className="ml-4">
-                      <DirectionCompass 
-                        distance={message.distance} 
-                        direction={message.direction}
-                      />
+            <React.Fragment key={message.id}>
+              <div className="flex items-start space-x-3 p-4 bg-white">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} flex-shrink-0 border border-black`}>
+                  <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0 relative">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <span className="font-medium text-gray-900">{config.label}</span>
+                      <div className="text-sm text-gray-600 mb-1 mt-1">來自: {message.deviceName}</div>
+                      <div className="text-sm text-gray-500">{formatTime(message.timestamp)}</div>
                     </div>
-                  )}
+                    
+                    {message.distance && message.direction && (
+                      <div className="ml-4">
+                        <DirectionCompass 
+                          distance={message.distance} 
+                          direction={message.direction}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+              {!isLastMessage && (
+                <Separator className="bg-black" />
+              )}
+            </React.Fragment>
           );
         })}
       </div>
