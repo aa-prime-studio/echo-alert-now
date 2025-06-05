@@ -13,13 +13,14 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
     <div>
       <h4 className="font-semibold text-gray-900 mb-3">選擇房間</h4>
       <div className="relative h-56 flex items-center justify-center">
-        {/* Room B - Right (垂直翻轉，底部對齊C) */}
+        {/* Room B - Right (垂直翻轉，底部對齊C，靠近3) */}
         <div 
-          className="absolute bottom-0 right-1/2 transform translate-x-1/2 w-40 h-40 flex items-end justify-end cursor-pointer"
+          className="absolute bottom-0 w-40 h-40 flex items-end justify-end cursor-pointer"
           style={{
             backgroundColor: '#ff5663',
             clipPath: 'polygon(0% 0%, 100% 0%, 0% 100%)',
-            transform: 'translateX(50%) scaleY(-1)'
+            transform: 'scaleY(-1)',
+            right: 'calc(50% - 82px)' // 靠近三角形3，只留一條縫隙
           }}
           onClick={() => onJoinRoom(2)}
         >
