@@ -55,7 +55,8 @@ export const RoomChat: React.FC<RoomChatProps> = ({
             <p className="text-xs mt-1">開始聊天為遊戲加油吧！</p>
           </div>
         ) : (
-          messages.map((msg) => (
+          // 反轉陣列順序，讓最新訊息顯示在底部
+          [...messages].reverse().map((msg) => (
             <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-xs px-3 py-2 rounded-lg ${
                 msg.isOwn 
