@@ -1,9 +1,11 @@
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText, Languages } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +29,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   setDeviceName,
   onClearMessages
 }) => {
+  const { language, setLanguage, t } = useLanguage();
   const [notifications, setNotifications] = React.useState(true);
   const [autoConnect, setAutoConnect] = React.useState(true);
   const [shareLocation, setShareLocation] = React.useState(false);
@@ -78,16 +81,33 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       <div className="p-4 border-b">
         <div className="flex items-center space-x-2">
           <Settings className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">設定</h3>
+          <h3 className="font-semibold text-gray-900">{t('settings')}</h3>
         </div>
       </div>
       
       <div className="p-4 space-y-6">
+        {/* 語言設定 */}
+        <div>
+          <div className="flex items-center space-x-2 mb-3">
+            <Languages className="w-4 h-4 text-gray-600" />
+            <h4 className="text-sm font-medium text-gray-900">{t('language')}</h4>
+          </div>
+          <Select value={language} onValueChange={(value) => setLanguage(value as 'zh' | 'en')}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="zh">{t('chinese')}</SelectItem>
+              <SelectItem value="en">{t('english')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* 訂購狀態 */}
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Crown className="w-4 h-4 text-yellow-600" />
-            <h4 className="text-sm font-medium text-gray-900">訂購狀態</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('subscription_status')}</h4>
           </div>
           <div className="space-y-3">
             <div className={`p-3 rounded-lg border-2 ${
@@ -101,19 +121,19 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     <User className="w-5 h-5 text-gray-500" />
                   )}
                   <span className="font-medium">
-                    {isPremium ? '付費版用戶' : '免費版用戶'}
+                    {isPremium ? t('premium_user') : t('free_user')}
                   </span>
                 </div>
                 {isPremium && (
                   <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full">
-                    已解鎖
+                    {t('unlocked')}
                   </span>
                 )}
               </div>
               <p className="text-sm text-gray-600">
                 {isPremium 
-                  ? '您已解鎖所有遊戲功能，感謝您的支持！' 
-                  : '升級解鎖遊戲功能，享受完整體驗'
+                  ? t('premium_message')
+                  : t('upgrade_message')
                 }
               </p>
             </div>
@@ -124,7 +144,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
               >
                 <Crown className="w-4 h-4 mr-2" />
-                升級解鎖遊戲功能
+                {t('upgrade_unlock_games')}
               </Button>
             )}
 
@@ -136,7 +156,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   className="text-sm"
                 >
                   <CreditCard className="w-4 h-4 mr-1" />
-                  管理訂購
+                  {t('manage_subscription')}
                 </Button>
                 <Button
                   variant="outline"
@@ -154,13 +174,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <User className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">裝置設定</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('device_settings')}</h4>
           </div>
           
           <div className="space-y-3">
             <div>
               <Label htmlFor="device-name" className="text-sm text-gray-700">
-                裝置名稱
+                {t('device_name')}
               </Label>
               <div className="mt-1 flex space-x-2">
                 {isEditing ? (
@@ -179,14 +199,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       disabled={!tempDeviceName.trim()}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      保存
+                      {t('save')}
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={handleNameCancel}
                     >
-                      取消
+                      {t('cancel')}
                     </Button>
                   </>
                 ) : (
@@ -210,9 +230,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <div className="mt-2 text-xs text-gray-500">
                 {canChangeName ? (
-                  <span>可修改 1 次</span>
+                  <span>{t('can_change_once')}</span>
                 ) : (
-                  <span className="text-red-500">名稱已確定，無法再修改</span>
+                  <span className="text-red-500">{t('name_fixed')}</span>
                 )}
               </div>
             </div>
@@ -223,12 +243,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Bell className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">通知設定</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('notification_settings')}</h4>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label htmlFor="notifications" className="text-sm text-gray-700">
-                推播通知
+                {t('push_notifications')}
               </Label>
               <Switch
                 id="notifications"
@@ -243,16 +263,16 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Shield className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">隱私與連線</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('privacy_connection')}</h4>
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="auto-connect" className="text-sm text-gray-700">
-                  自動連線
+                  {t('auto_connect')}
                 </Label>
                 <p className="text-xs text-gray-500 mt-1">
-                  開啟時會自動搜尋並連接附近的裝置
+                  {t('auto_connect_desc')}
                 </p>
               </div>
               <Switch
@@ -264,10 +284,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="share-location" className="text-sm text-gray-700">
-                  分享位置方向
+                  {t('share_location')}
                 </Label>
                 <p className="text-xs text-gray-500 mt-1">
-                  允許他人看到你的模糊距離和方向
+                  {t('share_location_desc')}
                 </p>
               </div>
               <Switch
@@ -283,7 +303,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Trash2 className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">資料管理</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('data_management')}</h4>
           </div>
           <div className="space-y-3">
             <Button
@@ -292,7 +312,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
             >
               <Trash2 className="w-4 h-4 mr-2" />
-              清除所有訊息
+              {t('clear_all_messages')}
             </Button>
             
             <AlertDialog>
@@ -302,23 +322,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                 >
                   <UserX className="w-4 h-4 mr-2" />
-                  刪除帳號
+                  {t('delete_account')}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>確定要刪除帳號嗎？</AlertDialogTitle>
+                  <AlertDialogTitle>{t('confirm_delete_title')}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    此操作無法復原。這將永久刪除您的帳號和所有相關資料。
+                    {t('confirm_delete_desc')}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={handleDeleteAccount}
                     className="bg-red-600 hover:bg-red-700"
                   >
-                    確定刪除
+                    {t('confirm_delete')}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -330,7 +350,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Info className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">法律與幫助</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('legal_help')}</h4>
           </div>
           <div className="space-y-2">
             <Button
@@ -339,7 +359,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onClick={() => window.open('/help', '_blank')}
             >
               <HelpCircle className="w-4 h-4 mr-2" />
-              幫助與說明
+              {t('help_guide')}
             </Button>
             <Button
               variant="ghost" 
@@ -347,7 +367,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onClick={() => window.open('/privacy', '_blank')}
             >
               <Shield className="w-4 h-4 mr-2" />
-              隱私政策
+              {t('privacy_policy')}
             </Button>
             <Button
               variant="ghost"
@@ -355,7 +375,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               onClick={() => window.open('/terms', '_blank')}
             >
               <FileText className="w-4 h-4 mr-2" />
-              使用條款
+              {t('terms_service')}
             </Button>
           </div>
         </div>
@@ -364,7 +384,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <Info className="w-4 h-4 text-gray-600" />
-            <h4 className="text-sm font-medium text-gray-900">關於</h4>
+            <h4 className="text-sm font-medium text-gray-900">{t('about')}</h4>
           </div>
           <div className="text-xs text-gray-500 space-y-1">
             <p>Signal-Lite v1.0.0</p>
