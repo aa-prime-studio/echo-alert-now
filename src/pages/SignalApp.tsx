@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -158,7 +159,7 @@ const SignalApp = () => {
         {renderTabContent()}
       </main>
 
-      {/* Enhanced Bottom Navigation - More visible design with shadows and borders */}
+      {/* Bottom Navigation */}
       <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t-2 border-gray-200 shadow-lg px-4 py-4">
         <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
@@ -187,7 +188,6 @@ const SignalApp = () => {
             );
           })}
         </div>
-        {/* Design indicator - subtle bottom accent */}
         <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-t-full"></div>
       </div>
     </div>

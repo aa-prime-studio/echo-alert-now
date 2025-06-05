@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { AlertTriangle, Heart, Package, Shield, Clock, Users } from 'lucide-react';
+import { AlertTriangle, Heart, Package, Shield, Clock } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
 import { DirectionCompass } from '@/components/DirectionCompass';
 
@@ -34,7 +34,6 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   if (messages.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center p-8 text-center text-gray-500">
-        <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p className="text-gray-600 mb-2">目前沒有訊息</p>
         <p className="text-sm text-gray-400">當附近有人發送訊號時，會顯示在這裡</p>
       </div>
@@ -47,12 +46,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center space-x-2">
-          <Users className="w-5 h-5 text-blue-500" />
-          <h3 className="font-semibold text-gray-900">附近訊號</h3>
-          <span className="text-sm text-gray-500">({messages.length})</span>
-        </div>
-        <span className="text-xs text-gray-400">依時間排序</span>
+        <h3 className="text-lg font-semibold text-gray-900">附近訊號</h3>
+        <span className="text-sm text-gray-500">({messages.length})</span>
       </div>
       
       <div className="space-y-4">
