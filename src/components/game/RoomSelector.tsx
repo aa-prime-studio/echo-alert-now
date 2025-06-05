@@ -12,72 +12,22 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
   return (
     <div>
       <h4 className="font-semibold text-gray-900 mb-3">選擇房間</h4>
-      <div className="relative h-56 flex items-center justify-center">
-        {/* Room B - Right (垂直翻轉，底部對齊C，靠近3) */}
-        <div 
-          className="absolute bottom-0 w-40 h-40 flex items-end justify-end cursor-pointer"
-          style={{
-            backgroundColor: '#ff5663',
-            clipPath: 'polygon(0% 0%, 100% 0%, 0% 100%)',
-            transform: 'scaleY(-1)',
-            right: 'calc(50% - 82px)' // 靠近三角形3，只留一條縫隙
-          }}
-          onClick={() => onJoinRoom(2)}
-        >
-          <span 
-            className="font-bold text-lg absolute"
-            style={{ 
-              color: '#00d76a',
-              bottom: '8px',
-              left: '8px',
-              transform: 'scaleY(-1)'
-            }}
+      <div className="grid grid-cols-1 gap-3">
+        {rooms.map((room) => (
+          <Button
+            key={room.id}
+            variant="outline"
+            className="w-full text-left justify-start"
+            onClick={() => onJoinRoom(room.id)}
           >
-            2
-          </span>
-        </div>
-        
-        {/* Room A - Bottom Left */}
-        <div 
-          className="absolute bottom-0 left-8 w-40 h-40 flex items-end justify-start cursor-pointer"
-          style={{
-            backgroundColor: '#ff5663',
-            clipPath: 'polygon(0% 0%, 100% 0%, 0% 100%)'
-          }}
-          onClick={() => onJoinRoom(1)}
-        >
-          <span 
-            className="font-bold text-lg absolute"
-            style={{ 
-              color: '#00d76a',
-              bottom: '8px',
-              left: '8px'
-            }}
-          >
-            1
-          </span>
-        </div>
-        
-        {/* Room C - Bottom Right */}
-        <div 
-          className="absolute bottom-0 right-8 w-40 h-40 flex items-end justify-end cursor-pointer"
-          style={{
-            backgroundColor: '#ff5663',
-            clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%)'
-          }}
-          onClick={() => onJoinRoom(3)}
-        >
-          <span 
-            className="font-bold text-lg absolute"
-            style={{ 
-              color: '#00d76a',
-              bottom: '8px',
-              right: '8px'
-            }}
-          >
-            3
-          </span>
-        </div>
+            <div className="flex items-center justify-between w-full">
+              <span>{room.name}</span>
+              <span className="text-sm text-gray-500">
+                {room.players.length} 玩家
+              </span>
+            </div>
+          </Button>
+        ))}
       </div>
     </div>
   );
