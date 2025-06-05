@@ -1,273 +1,293 @@
 
 import React, { useState, useEffect } from 'react';
-import { Gamepad2, Trophy, Users, Star, RotateCcw } from 'lucide-react';
+import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-interface GameScore {
+interface BingoScore {
   deviceName: string;
   score: number;
   timestamp: number;
+  date: string;
+}
+
+interface BingoRoom {
+  id: number;
+  name: string;
+  players: string[];
+  currentNumbers: number[];
+  isActive: boolean;
+}
+
+interface BingoCard {
+  numbers: number[];
+  marked: boolean[];
 }
 
 export const GameRoom: React.FC = () => {
-  const [currentGame, setCurrentGame] = useState<'memory' | 'reaction' | null>(null);
-  const [gameScore, setGameScore] = useState(0);
-  const [leaderboard, setLeaderboard] = useState<GameScore[]>([]);
+  const [currentRoom, setCurrentRoom] = useState<number | null>(null);
+  const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
   const [deviceName] = useState(`Player-${Math.random().toString(36).substr(2, 4)}`);
+  const [bingoCard, setBingoCard] = useState<BingoCard | null>(null);
+  const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
+  const [completedLines, setCompletedLines] = useState(0);
+  const [gameWon, setGameWon] = useState(false);
 
-  // 記憶遊戲狀態
-  const [memorySequence, setMemorySequence] = useState<number[]>([]);
-  const [playerSequence, setPlayerSequence] = useState<number[]>([]);
-  const [showingSequence, setShowingSequence] = useState(false);
-  const [gameLevel, setGameLevel] = useState(1);
-
-  // 反應遊戲狀態
-  const [reactionStart, setReactionStart] = useState<number>(0);
-  const [reactionWaiting, setReactionWaiting] = useState(false);
-  const [reactionResults, setReactionResults] = useState<number[]>([]);
+  // 3個賓果房間
+  const [rooms] = useState<BingoRoom[]>([
+    { id: 1, name: '新手房', players: [], currentNumbers: [], isActive: false },
+    { id: 2, name: '進階房', players: [], currentNumbers: [], isActive: false },
+    { id: 3, name: '高手房', players: [], currentNumbers: [], isActive: false }
+  ]);
 
   useEffect(() => {
-    // 模擬其他玩家分數
-    const simulatedScores: GameScore[] = [
-      { deviceName: 'SpeedRunner', score: 1250, timestamp: Date.now() - 300000 },
-      { deviceName: 'MemoryMaster', score: 980, timestamp: Date.now() - 600000 },
-      { deviceName: 'QuickFinger', score: 760, timestamp: Date.now() - 900000 },
+    // 模擬每日排行榜
+    const today = new Date().toISOString().split('T')[0];
+    const simulatedScores: BingoScore[] = [
+      { deviceName: 'BingoMaster', score: 6, timestamp: Date.now() - 300000, date: today },
+      { deviceName: 'LineHunter', score: 5, timestamp: Date.now() - 600000, date: today },
+      { deviceName: 'NumberWiz', score: 4, timestamp: Date.now() - 900000, date: today },
+      { deviceName: 'LuckyPlayer', score: 3, timestamp: Date.now() - 1200000, date: today },
     ];
     setLeaderboard(simulatedScores);
   }, []);
 
-  const startMemoryGame = () => {
-    setCurrentGame('memory');
-    setGameScore(0);
-    setGameLevel(1);
-    setMemorySequence([]);
-    setPlayerSequence([]);
-    generateNewSequence();
+  const generateBingoCard = (): BingoCard => {
+    const numbers: number[] = [];
+    const used = new Set<number>();
+    
+    // 生成25個不重複的1-60號碼
+    while (numbers.length < 25) {
+      const num = Math.floor(Math.random() * 60) + 1;
+      if (!used.has(num)) {
+        used.add(num);
+        numbers.push(num);
+      }
+    }
+    
+    return {
+      numbers,
+      marked: new Array(25).fill(false)
+    };
   };
 
-  const generateNewSequence = () => {
-    const newNumber = Math.floor(Math.random() * 4) + 1;
-    const newSequence = [...memorySequence, newNumber];
-    setMemorySequence(newSequence);
-    setPlayerSequence([]);
-    setShowingSequence(true);
+  const joinRoom = (roomId: number) => {
+    setCurrentRoom(roomId);
+    setBingoCard(generateBingoCard());
+    setDrawnNumbers([]);
+    setCompletedLines(0);
+    setGameWon(false);
     
-    // 顯示序列
+    // 模擬號碼抽取
     setTimeout(() => {
-      setShowingSequence(false);
-    }, newSequence.length * 600 + 500);
+      startDrawingNumbers();
+    }, 2000);
   };
 
-  const handleMemoryClick = (number: number) => {
-    if (showingSequence) return;
-    
-    const newPlayerSequence = [...playerSequence, number];
-    setPlayerSequence(newPlayerSequence);
-    
-    // 檢查是否正確
-    if (newPlayerSequence[newPlayerSequence.length - 1] !== memorySequence[newPlayerSequence.length - 1]) {
-      // 遊戲結束
-      endMemoryGame();
-    } else if (newPlayerSequence.length === memorySequence.length) {
-      // 這關過了
-      setGameScore(prev => prev + gameLevel * 10);
-      setGameLevel(prev => prev + 1);
-      setTimeout(() => {
-        generateNewSequence();
-      }, 1000);
-    }
-  };
+  const startDrawingNumbers = () => {
+    const drawInterval = setInterval(() => {
+      const availableNumbers = Array.from({length: 60}, (_, i) => i + 1)
+        .filter(num => !drawnNumbers.includes(num));
+      
+      if (availableNumbers.length === 0) {
+        clearInterval(drawInterval);
+        return;
+      }
+      
+      const newNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
+      setDrawnNumbers(prev => [...prev, newNumber]);
+    }, 3000); // 每3秒抽一個號碼
 
-  const endMemoryGame = () => {
-    updateLeaderboard(gameScore);
-    setCurrentGame(null);
-  };
-
-  const startReactionGame = () => {
-    setCurrentGame('reaction');
-    setReactionResults([]);
-    startReactionRound();
-  };
-
-  const startReactionRound = () => {
-    setReactionWaiting(true);
-    const delay = Math.random() * 3000 + 1000; // 1-4秒隨機延遲
-    
+    // 模擬遊戲結束
     setTimeout(() => {
-      setReactionStart(Date.now());
-      setReactionWaiting(false);
-    }, delay);
+      clearInterval(drawInterval);
+    }, 60000); // 1分鐘後結束
   };
 
-  const handleReactionClick = () => {
-    if (reactionWaiting) {
-      // 太早按了
-      setReactionResults([]);
-      setCurrentGame(null);
-      return;
+  const markNumber = (index: number) => {
+    if (!bingoCard || gameWon) return;
+    
+    const number = bingoCard.numbers[index];
+    if (!drawnNumbers.includes(number) || bingoCard.marked[index]) return;
+    
+    const newMarked = [...bingoCard.marked];
+    newMarked[index] = true;
+    setBingoCard({ ...bingoCard, marked: newMarked });
+    
+    // 檢查完成的線
+    const lines = checkCompletedLines(newMarked);
+    setCompletedLines(lines);
+    
+    if (lines >= 6) {
+      setGameWon(true);
+      updateLeaderboard(lines);
+    }
+  };
+
+  const checkCompletedLines = (marked: boolean[]): number => {
+    let lines = 0;
+    
+    // 檢查橫線
+    for (let row = 0; row < 5; row++) {
+      if (marked.slice(row * 5, (row + 1) * 5).every(m => m)) {
+        lines++;
+      }
     }
     
-    if (reactionStart === 0) return;
-    
-    const reactionTime = Date.now() - reactionStart;
-    const newResults = [...reactionResults, reactionTime];
-    setReactionResults(newResults);
-    
-    if (newResults.length >= 5) {
-      // 遊戲結束，計算平均反應時間
-      const avgTime = newResults.reduce((a, b) => a + b, 0) / newResults.length;
-      const score = Math.max(0, 1000 - Math.floor(avgTime));
-      updateLeaderboard(score);
-      setCurrentGame(null);
-    } else {
-      setReactionStart(0);
-      setTimeout(() => {
-        startReactionRound();
-      }, 1000);
+    // 檢查直線
+    for (let col = 0; col < 5; col++) {
+      if ([0, 1, 2, 3, 4].every(row => marked[row * 5 + col])) {
+        lines++;
+      }
     }
+    
+    // 檢查對角線
+    if ([0, 6, 12, 18, 24].every(i => marked[i])) {
+      lines++;
+    }
+    if ([4, 8, 12, 16, 20].every(i => marked[i])) {
+      lines++;
+    }
+    
+    return lines;
   };
 
   const updateLeaderboard = (score: number) => {
-    const newScore: GameScore = {
+    const today = new Date().toISOString().split('T')[0];
+    const newScore: BingoScore = {
       deviceName,
       score,
-      timestamp: Date.now()
+      timestamp: Date.now(),
+      date: today
     };
     
     const updatedLeaderboard = [...leaderboard, newScore]
+      .filter(s => s.date === today) // 只保留今天的記錄
       .sort((a, b) => b.score - a.score)
-      .slice(0, 10); // 只保留前10名
+      .slice(0, 10);
       
     setLeaderboard(updatedLeaderboard);
   };
 
-  if (currentGame === 'memory') {
-    return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">記憶遊戲</h3>
-          <div className="text-sm text-gray-600">
-            關卡: {gameLevel} | 分數: {gameScore}
-          </div>
-        </div>
-        
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {[1, 2, 3, 4].map((num) => (
-            <Button
-              key={num}
-              onClick={() => handleMemoryClick(num)}
-              disabled={showingSequence}
-              className={`h-16 text-lg font-bold ${
-                showingSequence && memorySequence.includes(num) 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-              }`}
-            >
-              {num}
-            </Button>
-          ))}
-        </div>
-        
-        <div className="text-center">
-          <p className="text-sm text-gray-600 mb-2">
-            {showingSequence ? '記住順序...' : '重複剛才的順序'}
-          </p>
-          <Button variant="outline" onClick={() => setCurrentGame(null)}>
-            結束遊戲
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const leaveRoom = () => {
+    setCurrentRoom(null);
+    setBingoCard(null);
+    setDrawnNumbers([]);
+    setCompletedLines(0);
+    setGameWon(false);
+  };
 
-  if (currentGame === 'reaction') {
+  if (currentRoom) {
+    const room = rooms.find(r => r.id === currentRoom);
     return (
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white rounded-lg shadow p-6 h-full flex flex-col">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-gray-900">反應力測試</h3>
+          <h3 className="font-semibold text-gray-900">{room?.name} - 賓果遊戲</h3>
           <div className="text-sm text-gray-600">
-            第 {reactionResults.length + 1}/5 次
+            完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
           </div>
         </div>
         
-        <div className="text-center mb-6">
-          <Button
-            onClick={handleReactionClick}
-            disabled={reactionStart === 0 && !reactionWaiting}
-            className={`w-full h-32 text-xl font-bold ${
-              reactionWaiting 
-                ? 'bg-red-500 hover:bg-red-600 text-white' 
-                : reactionStart > 0 
-                  ? 'bg-green-500 hover:bg-green-600 text-white'
-                  : 'bg-gray-300 text-gray-600'
-            }`}
-          >
-            {reactionWaiting 
-              ? '等待...' 
-              : reactionStart > 0 
-                ? '現在按！' 
-                : '準備開始'
-            }
-          </Button>
+        {/* 抽取號碼顯示 */}
+        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+          <div className="text-sm text-blue-800 mb-2">已抽取號碼:</div>
+          <div className="flex flex-wrap gap-1">
+            {drawnNumbers.slice(-10).map((num, index) => (
+              <span key={index} className={`px-2 py-1 rounded text-xs font-bold ${
+                index === drawnNumbers.slice(-10).length - 1 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-blue-200 text-blue-800'
+              }`}>
+                {num}
+              </span>
+            ))}
+          </div>
+          {drawnNumbers.length > 0 && (
+            <div className="text-xs text-blue-600 mt-1">
+              最新號碼: {drawnNumbers[drawnNumbers.length - 1]}
+            </div>
+          )}
         </div>
         
-        {reactionResults.length > 0 && (
-          <div className="mb-4">
-            <h4 className="text-sm font-medium mb-2">反應時間:</h4>
-            <div className="flex flex-wrap gap-1">
-              {reactionResults.map((time, index) => (
-                <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                  {time}ms
-                </span>
+        {/* 賓果卡片 */}
+        {bingoCard && (
+          <div className="flex-1 flex flex-col items-center">
+            <div className="grid grid-cols-5 gap-1 mb-4 max-w-xs">
+              {bingoCard.numbers.map((number, index) => (
+                <button
+                  key={index}
+                  onClick={() => markNumber(index)}
+                  disabled={!drawnNumbers.includes(number) || bingoCard.marked[index]}
+                  className={`w-12 h-12 text-sm font-bold rounded border-2 ${
+                    bingoCard.marked[index]
+                      ? 'bg-green-500 text-white border-green-600'
+                      : drawnNumbers.includes(number)
+                        ? 'bg-yellow-200 text-yellow-800 border-yellow-400 hover:bg-yellow-300'
+                        : 'bg-gray-100 text-gray-600 border-gray-300'
+                  }`}
+                >
+                  {number}
+                </button>
               ))}
+            </div>
+            
+            <div className="text-center space-y-2">
+              <p className="text-sm text-gray-600">
+                點擊已抽取的號碼來標記
+              </p>
+              <Button variant="outline" onClick={leaveRoom}>
+                離開房間
+              </Button>
             </div>
           </div>
         )}
-        
-        <div className="text-center">
-          <Button variant="outline" onClick={() => setCurrentGame(null)}>
-            結束遊戲
-          </Button>
-        </div>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b">
+    <div className="bg-white rounded-lg shadow h-full flex flex-col">
+      <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <Gamepad2 className="w-5 h-5 text-purple-600" />
-          <h3 className="font-semibold text-gray-900">遊戲室</h3>
+          <Grid3X3 className="w-5 h-5 text-purple-600" />
+          <h3 className="font-semibold text-gray-900">賓果遊戲室</h3>
         </div>
       </div>
       
-      <div className="p-4 space-y-4">
-        <div className="grid grid-cols-2 gap-3">
-          <Button
-            onClick={startMemoryGame}
-            className="h-20 bg-blue-500 hover:bg-blue-600 text-white flex flex-col items-center justify-center"
-          >
-            <Star className="w-6 h-6 mb-1" />
-            <span className="text-sm">記憶遊戲</span>
-          </Button>
-          
-          <Button
-            onClick={startReactionGame}
-            className="h-20 bg-green-500 hover:bg-green-600 text-white flex flex-col items-center justify-center"
-          >
-            <RotateCcw className="w-6 h-6 mb-1" />
-            <span className="text-sm">反應力測試</span>
-          </Button>
+      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+        {/* 房間選擇 */}
+        <div>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">選擇房間 (每房間6位玩家)</h4>
+          <div className="grid grid-cols-1 gap-3">
+            {rooms.map((room) => (
+              <Button
+                key={room.id}
+                onClick={() => joinRoom(room.id)}
+                className="h-16 bg-purple-500 hover:bg-purple-600 text-white flex flex-col items-center justify-center"
+              >
+                <span className="text-lg font-bold">{room.name}</span>
+                <span className="text-sm opacity-90">
+                  {Math.floor(Math.random() * 6) + 1}/6 玩家
+                </span>
+              </Button>
+            ))}
+          </div>
         </div>
         
+        <div className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
+          <p className="font-medium">遊戲規則:</p>
+          <p>• 號碼範圍: 1-60</p>
+          <p>• 目標: 先完成6條線獲勝</p>
+          <p>• 每日排行榜更新</p>
+        </div>
+        
+        {/* 今日排行榜 */}
         {leaderboard.length > 0 && (
           <div>
             <div className="flex items-center space-x-2 mb-3">
               <Trophy className="w-4 h-4 text-yellow-600" />
-              <h4 className="text-sm font-medium text-gray-900">排行榜</h4>
+              <h4 className="text-sm font-medium text-gray-900">今日排行榜</h4>
             </div>
-            <div className="space-y-2 max-h-32 overflow-y-auto">
+            <div className="space-y-2">
               {leaderboard.slice(0, 5).map((score, index) => (
                 <div key={`${score.deviceName}-${score.timestamp}`} className="flex items-center justify-between text-sm">
                   <div className="flex items-center space-x-2">
@@ -281,7 +301,7 @@ export const GameRoom: React.FC = () => {
                     </span>
                     <span className="text-gray-900">{score.deviceName}</span>
                   </div>
-                  <span className="font-medium text-gray-700">{score.score}</span>
+                  <span className="font-medium text-gray-700">{score.score}線</span>
                 </div>
               ))}
             </div>
