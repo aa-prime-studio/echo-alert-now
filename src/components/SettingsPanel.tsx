@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info, UserX } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,25 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [notifications, setNotifications] = React.useState(true);
   const [autoConnect, setAutoConnect] = React.useState(true);
   const [shareLocation, setShareLocation] = React.useState(false);
+  const [nameChangeCount, setNameChangeCount] = React.useState(0);
+  const [tempDeviceName, setTempDeviceName] = React.useState(deviceName);
+  const [isEditing, setIsEditing] = React.useState(false);
+
+  const maxNameChanges = 3;
+  const canChangeName = nameChangeCount < maxNameChanges;
+
+  const handleNameSave = () => {
+    if (!canChangeName) return;
+    
+    setDeviceName(tempDeviceName);
+    setNameChangeCount(prev => prev + 1);
+    setIsEditing(false);
+  };
+
+  const handleNameCancel = () => {
+    setTempDeviceName(deviceName);
+    setIsEditing(false);
+  };
 
   const handleDeleteAccount = () => {
     // 這裡可以添加刪除帳號的邏輯
@@ -58,14 +77,59 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Label htmlFor="device-name" className="text-sm text-gray-700">
                 裝置名稱
               </Label>
-              <Input
-                id="device-name"
-                value={deviceName}
-                onChange={(e) => setDeviceName(e.target.value)}
-                className="mt-1"
-                maxLength={16}
-                placeholder="輸入裝置名稱..."
-              />
+              <div className="mt-1 flex space-x-2">
+                {isEditing ? (
+                  <>
+                    <Input
+                      id="device-name"
+                      value={tempDeviceName}
+                      onChange={(e) => setTempDeviceName(e.target.value)}
+                      className="flex-1"
+                      maxLength={16}
+                      placeholder="輸入裝置名稱..."
+                    />
+                    <Button
+                      size="sm"
+                      onClick={handleNameSave}
+                      disabled={!tempDeviceName.trim()}
+                      className="bg-green-600 hover:bg-green-700"
+                    >
+                      保存
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleNameCancel}
+                    >
+                      取消
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      value={deviceName}
+                      readOnly
+                      className="flex-1 bg-gray-50"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setIsEditing(true)}
+                      disabled={!canChangeName}
+                      className={!canChangeName ? 'opacity-50 cursor-not-allowed' : ''}
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </Button>
+                  </>
+                )}
+              </div>
+              <div className="mt-2 text-xs text-gray-500">
+                {canChangeName ? (
+                  <span>還可修改 {maxNameChanges - nameChangeCount} 次</span>
+                ) : (
+                  <span className="text-red-500">已達修改次數上限</span>
+                )}
+              </div>
             </div>
           </div>
         </div>
