@@ -7,6 +7,7 @@ interface SignalButtonProps {
   type: 'safe' | 'supplies' | 'medical' | 'danger';
   onSend: (type: 'safe' | 'supplies' | 'medical' | 'danger') => void;
   disabled?: boolean;
+  size?: 'large' | 'small';
 }
 
 const signalConfig = {
@@ -40,20 +41,30 @@ const signalConfig = {
   }
 };
 
-export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabled }) => {
+export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabled, size = 'large' }) => {
   const config = signalConfig[type];
   const Icon = config.icon;
+
+  const sizeClasses = size === 'large' 
+    ? 'h-16 text-base space-y-2' 
+    : 'h-12 text-sm space-y-1';
+    
+  const iconSize = size === 'large' ? 'w-7 h-7' : 'w-5 h-5';
+  const textSize = size === 'large' ? 'text-sm' : 'text-xs';
+  const descSize = size === 'large' ? 'text-xs' : 'text-[10px]';
 
   return (
     <Button
       onClick={() => onSend(type)}
       disabled={disabled}
-      className={`h-24 w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center space-y-1 text-base font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+      className={`${sizeClasses} w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
     >
-      <Icon className="w-6 h-6" />
-      <div className="text-center">
-        <div className="text-sm leading-tight">{config.label}</div>
-        <div className="text-xs opacity-80 leading-tight">{config.description}</div>
+      <Icon className={iconSize} />
+      <div className="text-center leading-tight">
+        <div className={`${textSize} leading-tight`}>{config.label}</div>
+        {size === 'large' && (
+          <div className={`${descSize} opacity-80 leading-tight`}>{config.description}</div>
+        )}
       </div>
     </Button>
   );

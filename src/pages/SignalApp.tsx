@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -64,30 +65,41 @@ const SignalApp = () => {
               <span>{isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}</span>
             </div>
 
-            {/* Signal Buttons - Updated layout */}
+            {/* Signal Buttons - New asymmetric layout */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-3">發送訊號</h2>
-              <div className="grid grid-cols-2 gap-3 mb-3">
-                <SignalButton
-                  type="safe"
-                  onSend={handleSendSignal}
-                  disabled={!isConnected}
-                />
-                <SignalButton
-                  type="supplies"
-                  onSend={handleSendSignal}
-                  disabled={!isConnected}
-                />
-                <SignalButton
-                  type="medical"
-                  onSend={handleSendSignal}
-                  disabled={!isConnected}
-                />
-                <SignalButton
-                  type="danger"
-                  onSend={handleSendSignal}
-                  disabled={!isConnected}
-                />
+              <div className="space-y-3 mb-3">
+                {/* Large Safe Button */}
+                <div className="w-full">
+                  <SignalButton
+                    type="safe"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="large"
+                  />
+                </div>
+                
+                {/* Three smaller buttons in a row */}
+                <div className="grid grid-cols-3 gap-2">
+                  <SignalButton
+                    type="supplies"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                  <SignalButton
+                    type="medical"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                  <SignalButton
+                    type="danger"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
                 訊號會廣播至 50-500 公尺範圍內的裝置
@@ -150,8 +162,8 @@ const SignalApp = () => {
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
+      {/* Bottom Navigation - Updated with circular design */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-4">
         <div className="flex justify-between items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
@@ -161,17 +173,17 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center space-y-1"
+                className="flex flex-col items-center space-y-2"
               >
-                <div className={`p-3 rounded-full ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-500 text-white' 
-                    : 'text-gray-400'
+                    ? 'bg-blue-500 text-white shadow-lg' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}>
                   <Icon className="w-6 h-6" />
                 </div>
-                <span className={`text-xs ${
-                  isActive ? 'text-blue-500 font-medium' : 'text-gray-400'
+                <span className={`text-xs font-medium ${
+                  isActive ? 'text-blue-500' : 'text-gray-400'
                 }`}>
                   {tab.label}
                 </span>
