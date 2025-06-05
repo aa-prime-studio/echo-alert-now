@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -288,18 +287,20 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   if (currentRoom) {
     const room = rooms.find(r => r.id === currentRoom);
     return (
-      <div className="bg-white rounded-lg shadow p-6 h-full flex flex-col">
-        <div className="flex items-center justify-between mb-4">
+      <div className="space-y-6">
+        {/* Game Header */}
+        <div className="flex items-center justify-between">
           <h3 className="font-semibold text-gray-900">{room?.name} - 賓果遊戲</h3>
           <div className="text-sm text-gray-600">
             完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
           </div>
         </div>
         
-        <PlayerList players={roomPlayers} deviceName={deviceName} />
-        <DrawnNumbers drawnNumbers={drawnNumbers} />
-        
-        <div className="flex-1 flex flex-col min-h-0">
+        {/* Game Content */}
+        <div className="space-y-4">
+          <PlayerList players={roomPlayers} deviceName={deviceName} />
+          <DrawnNumbers drawnNumbers={drawnNumbers} />
+          
           {bingoCard && (
             <BingoCard
               bingoCard={bingoCard}
@@ -309,7 +310,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
             />
           )}
 
-          <div className="text-center mb-4">
+          <div className="text-center">
             <Button variant="outline" onClick={leaveRoom}>
               離開房間
             </Button>
@@ -328,15 +329,15 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow h-full flex flex-col">
-      <div className="p-4 border-b flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <Grid3X3 className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-gray-900">賓果遊戲室</h3>
-        </div>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center space-x-2">
+        <Grid3X3 className="w-5 h-5 text-gray-600" />
+        <h3 className="font-semibold text-gray-900">賓果遊戲室</h3>
       </div>
       
-      <div className="flex-1 p-4 space-y-4 overflow-y-auto">
+      {/* Game Selection Content */}
+      <div className="space-y-4">
         <RoomSelector rooms={rooms} onJoinRoom={joinRoom} />
         <GameRules />
         <Leaderboard leaderboard={leaderboard} />

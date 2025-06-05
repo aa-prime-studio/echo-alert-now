@@ -46,12 +46,12 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
   const Icon = config.icon;
 
   if (size === 'large') {
-    // Large button for "我安全" - adjusted height to align with small buttons
+    // Large button for "我安全" - adjusted height to align bottom edge with small buttons (3 * 36px + 2 * 12px gap = 132px)
     return (
       <Button
         onClick={() => onSend(type)}
         disabled={disabled}
-        className={`h-[114px] w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+        className={`h-[132px] w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
       >
         <Icon className="w-8 h-8 mb-2" />
         <div className="text-center">
