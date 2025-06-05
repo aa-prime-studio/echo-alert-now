@@ -56,7 +56,7 @@ const SignalApp = () => {
             {/* Signal Buttons */}
             <div className="bg-white rounded-lg shadow p-6 flex-shrink-0">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-                發送應急訊號
+                發送訊號
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <SignalButton
