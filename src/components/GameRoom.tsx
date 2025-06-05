@@ -255,7 +255,7 @@ export const GameRoom: React.FC = () => {
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
         {/* 房間選擇 */}
         <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">選擇房間 (每房間6位玩家)</h4>
+          <h4 className="text-sm font-medium text-gray-900 mb-3">選擇房間</h4>
           <div className="grid grid-cols-1 gap-3">
             {rooms.map((room) => (
               <Button
@@ -264,9 +264,6 @@ export const GameRoom: React.FC = () => {
                 className="h-16 bg-purple-500 hover:bg-purple-600 text-white flex flex-col items-center justify-center"
               >
                 <span className="text-lg font-bold">{room.name}</span>
-                <span className="text-sm opacity-90">
-                  {Math.floor(Math.random() * 6) + 1}/6 玩家
-                </span>
               </Button>
             ))}
           </div>
