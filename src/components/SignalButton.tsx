@@ -46,7 +46,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
   const Icon = config.icon;
 
   if (size === 'large') {
-    // Large button for "我安全"
+    // Large button for "我安全" - same text size as small buttons
     return (
       <Button
         onClick={() => onSend(type)}
@@ -55,21 +55,21 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
       >
         <Icon className="w-8 h-8 mb-2" />
         <div className="text-center">
-          <div className="text-lg font-bold leading-tight">{config.label}</div>
-          <div className="text-sm opacity-90 leading-tight">{config.description}</div>
+          <div className="text-xs font-medium leading-tight">{config.label}</div>
+          <div className="text-[10px] opacity-90 leading-tight">{config.description}</div>
         </div>
       </Button>
     );
   } else {
-    // Small buttons - horizontal layout with icon on left, text on right
+    // Small buttons - horizontal layout with icon on left, text centered
     return (
       <Button
         onClick={() => onSend(type)}
         disabled={disabled}
-        className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-start px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+        className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-center px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
       >
         <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
-        <div className="text-xs font-medium truncate">{config.label}</div>
+        <div className="text-xs font-medium">{config.label}</div>
       </Button>
     );
   }
