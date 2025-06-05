@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText, Languages } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText, Languages, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   // 模擬付費狀態（實際應從全域狀態或 API 獲取）
   const [isPremium, setIsPremium] = React.useState(false);
   const [subscriptionStatus, setSubscriptionStatus] = React.useState<'free' | 'premium' | 'expired'>('free');
+  const [subscriptionEndDate, setSubscriptionEndDate] = React.useState<string>('2024-07-15');
 
   const maxNameChanges = 1;
   const canChangeName = nameChangeCount < maxNameChanges;
@@ -71,9 +73,21 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     // 開啟訂購管理頁面
   };
 
+  const handleCancelSubscription = () => {
+    console.log('取消訂閱');
+    // 實際應該呼叫取消訂閱的 API
+    setIsPremium(false);
+    setSubscriptionStatus('expired');
+  };
+
   const handleRestorePurchases = () => {
     console.log('恢復購買');
     // iOS 內購恢復功能
+  };
+
+  const handleViewSubscriptionDetails = () => {
+    console.log('查看訂閱詳情');
+    // 顯示詳細的訂閱資訊
   };
 
   return (
@@ -136,6 +150,12 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   : t('upgrade_message')
                 }
               </p>
+              {isPremium && (
+                <div className="mt-2 flex items-center text-xs text-gray-500">
+                  <Calendar className="w-3 h-3 mr-1" />
+                  <span>到期日期: {subscriptionEndDate}</span>
+                </div>
+              )}
             </div>
 
             {!isPremium && (
@@ -149,22 +169,62 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             )}
 
             {isPremium && (
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleManageSubscription}
-                  className="text-sm"
-                >
-                  <CreditCard className="w-4 h-4 mr-1" />
-                  {t('manage_subscription')}
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleRestorePurchases}
-                  className="text-sm"
-                >
-                  恢復購買
-                </Button>
+              <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleViewSubscriptionDetails}
+                    className="text-sm"
+                  >
+                    <Info className="w-4 h-4 mr-1" />
+                    查看詳情
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleManageSubscription}
+                    className="text-sm"
+                  >
+                    <CreditCard className="w-4 h-4 mr-1" />
+                    {t('manage_subscription')}
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={handleRestorePurchases}
+                    className="text-sm"
+                  >
+                    恢復購買
+                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <X className="w-4 h-4 mr-1" />
+                        取消訂閱
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>確定要取消訂閱嗎？</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          取消後您將失去所有付費功能的存取權限。您可以繼續使用到訂閱期結束 ({subscriptionEndDate})。
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>保留訂閱</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={handleCancelSubscription}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          確定取消
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
               </div>
             )}
           </div>
