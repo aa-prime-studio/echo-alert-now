@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Users, Zap } from 'lucide-react';
+import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SignalButton } from '@/components/SignalButton';
 import { MessageList } from '@/components/MessageList';
@@ -10,7 +10,7 @@ import { SettingsPanel } from '@/components/SettingsPanel';
 import { useSignals } from '@/hooks/useSignals';
 import { toast } from 'sonner';
 
-type TabType = 'signals' | 'messages' | 'chat' | 'games' | 'settings';
+type TabType = 'signals' | 'chat' | 'games' | 'settings';
 
 const SignalApp = () => {
   const { messages, connectionState, deviceName, setDeviceName, sendSignal, clearMessages } = useSignals();
@@ -84,10 +84,11 @@ const SignalApp = () => {
                 訊號會廣播至 50-500 公尺範圍內的裝置
               </p>
             </div>
+
+            {/* Nearby Messages */}
+            <MessageList messages={messages} />
           </div>
         );
-      case 'messages':
-        return <MessageList messages={messages} />;
       case 'chat':
         return <ChatRoom />;
       case 'games':
@@ -110,7 +111,6 @@ const SignalApp = () => {
 
   const tabConfig = [
     { id: 'signals' as TabType, label: '訊號', icon: Radio },
-    { id: 'messages' as TabType, label: '附近', icon: Users },
     { id: 'chat' as TabType, label: '聊天', icon: MessageCircle },
     { id: 'games' as TabType, label: '遊戲', icon: Gamepad2 },
     { id: 'settings' as TabType, label: '設定', icon: Settings },
