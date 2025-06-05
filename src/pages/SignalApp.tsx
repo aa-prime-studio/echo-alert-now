@@ -158,8 +158,8 @@ const SignalApp = () => {
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation - Circular design like in the image */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-4 py-4">
+      {/* Enhanced Bottom Navigation - More visible design with shadows and borders */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t-2 border-gray-200 shadow-lg px-4 py-4">
         <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
@@ -171,10 +171,10 @@ const SignalApp = () => {
                 onClick={() => setActiveTab(tab.id)}
                 className="flex flex-col items-center space-y-2"
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
                   isActive 
-                    ? 'bg-blue-500 text-white' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    ? 'bg-blue-500 text-white shadow-blue-200' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200 hover:shadow-gray-200'
                 }`}>
                   <Icon className="w-6 h-6" />
                 </div>
@@ -187,6 +187,8 @@ const SignalApp = () => {
             );
           })}
         </div>
+        {/* Design indicator - subtle bottom accent */}
+        <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-16 h-1 bg-gray-300 rounded-t-full"></div>
       </div>
     </div>
   );
