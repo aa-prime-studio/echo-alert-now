@@ -35,7 +35,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [tempDeviceName, setTempDeviceName] = React.useState(deviceName);
   const [isEditing, setIsEditing] = React.useState(false);
 
-  const maxNameChanges = 3;
+  const maxNameChanges = 1;
   const canChangeName = nameChangeCount < maxNameChanges;
 
   const handleNameSave = () => {
@@ -125,9 +125,9 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               </div>
               <div className="mt-2 text-xs text-gray-500">
                 {canChangeName ? (
-                  <span>還可修改 {maxNameChanges - nameChangeCount} 次</span>
+                  <span>可修改 1 次</span>
                 ) : (
-                  <span className="text-red-500">已達修改次數上限</span>
+                  <span className="text-red-500">名稱已確定，無法再修改</span>
                 )}
               </div>
             </div>
