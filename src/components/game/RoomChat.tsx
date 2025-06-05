@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RoomChatMessage } from '@/types/game';
@@ -19,6 +19,16 @@ export const RoomChat: React.FC<RoomChatProps> = ({
   setNewMessage,
   onSendMessage
 }) => {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const formatChatTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -69,6 +79,7 @@ export const RoomChat: React.FC<RoomChatProps> = ({
             </div>
           ))
         )}
+        <div ref={messagesEndRef} />
       </div>
       
       {/* 發送訊息 */}
