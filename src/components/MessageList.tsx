@@ -65,21 +65,23 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
               <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} flex-shrink-0`}>
                 <Icon className="w-5 h-5" />
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-medium text-gray-900">{config.label}</span>
+              <div className="flex-1 min-w-0 relative">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <span className="font-medium text-gray-900">{config.label}</span>
+                    <div className="text-sm text-gray-600 mb-1 mt-1">來自: {message.deviceName}</div>
+                    <div className="text-sm text-gray-500">{formatTime(message.timestamp)}</div>
+                  </div>
+                  
+                  {message.distance && message.direction && (
+                    <div className="ml-4">
+                      <DirectionCompass 
+                        distance={message.distance} 
+                        direction={message.direction}
+                      />
+                    </div>
+                  )}
                 </div>
-                
-                <div className="text-sm text-gray-600 mb-1">來自: {message.deviceName}</div>
-                <div className="text-sm text-gray-500 mb-2">{formatTime(message.timestamp)}</div>
-                
-                {message.distance && message.direction && (
-                  <DirectionCompass 
-                    distance={message.distance} 
-                    direction={message.direction}
-                    className="mt-2"
-                  />
-                )}
               </div>
             </div>
           );
