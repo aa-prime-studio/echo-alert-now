@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,6 +48,8 @@ const SignalApp = () => {
         return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '線上遊戲房間' };
       case 'settings':
         return { bg: 'bg-green-400', title: 'Settings', subtitle: '應用程式設定' };
+      default:
+        return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
     }
   };
 
@@ -122,7 +123,55 @@ const SignalApp = () => {
           />
         );
       default:
-        return null;
+        return (
+          <div className="space-y-6">
+            {/* Signal Buttons */}
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
+              <div className="flex gap-3 mb-4">
+                {/* Safe button takes half width */}
+                <div className="w-1/2">
+                  <SignalButton
+                    type="safe"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="large"
+                  />
+                </div>
+                
+                {/* Other three buttons in vertical stack on the right */}
+                <div className="w-1/2 flex flex-col gap-3">
+                  <SignalButton
+                    type="supplies"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                  <SignalButton
+                    type="medical"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                  <SignalButton
+                    type="danger"
+                    onSend={handleSendSignal}
+                    disabled={!isConnected}
+                    size="small"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-gray-500 text-center">
+                訊號會廣播至 50-500 公尺範圍內的裝置
+              </p>
+            </div>
+
+            {/* Nearby Messages */}
+            <div className="flex-1">
+              <MessageList messages={messages} />
+            </div>
+          </div>
+        );
     }
   };
 
