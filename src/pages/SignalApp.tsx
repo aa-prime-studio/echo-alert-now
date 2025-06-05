@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -58,11 +57,11 @@ const SignalApp = () => {
     switch (activeTab) {
       case 'signals':
         return (
-          <div className="space-y-4">
-            {/* Signal Buttons - Half screen layout */}
+          <div className="space-y-6">
+            {/* Signal Buttons */}
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-3">發送訊號</h2>
-              <div className="flex gap-3 mb-3">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
+              <div className="flex gap-3 mb-4">
                 {/* Safe button takes half width */}
                 <div className="w-1/2">
                   <SignalButton
@@ -74,7 +73,7 @@ const SignalApp = () => {
                 </div>
                 
                 {/* Other three buttons in vertical stack on the right */}
-                <div className="w-1/2 flex flex-col gap-2">
+                <div className="w-1/2 flex flex-col gap-3">
                   <SignalButton
                     type="supplies"
                     onSend={handleSendSignal}
@@ -138,7 +137,7 @@ const SignalApp = () => {
       {/* Colored Header */}
       <header className={`${headerConfig.bg} text-black px-4 py-6`}>
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-4xl font-bold">{headerConfig.title}</h1>
+          <h1 className="text-5xl font-bold">{headerConfig.title}</h1>
           <Button
             variant="ghost"
             size="sm"
@@ -155,12 +154,12 @@ const SignalApp = () => {
       </header>
 
       {/* White Content Card */}
-      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-24 relative z-10">
+      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-32 relative z-10">
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation - Updated design */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-4 py-2">
+      {/* Bottom Navigation - Circular design like in the image */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-4 py-4">
         <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
@@ -170,16 +169,16 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center space-y-1 py-1"
+                className="flex flex-col items-center space-y-2"
               >
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
                     ? 'bg-blue-500 text-white' 
-                    : 'text-gray-400 hover:text-gray-600'
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}>
-                  <Icon className="w-5 h-5" />
+                  <Icon className="w-6 h-6" />
                 </div>
-                <span className={`text-[10px] font-medium ${
+                <span className={`text-xs font-medium ${
                   isActive ? 'text-blue-500' : 'text-gray-400'
                 }`}>
                   {tab.label}
