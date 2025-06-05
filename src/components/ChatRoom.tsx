@@ -99,7 +99,7 @@ export const ChatRoom: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={clearMessages}
-            className="text-red-600 hover:text-red-700 border border-black"
+            className="text-red-600 hover:text-red-700"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -118,7 +118,7 @@ export const ChatRoom: React.FC = () => {
           <div className="space-y-3 p-4 border border-black rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg border border-black ${
+                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
                   msg.isOwn 
                     ? 'bg-blue-600 text-white' 
                     : 'bg-white text-gray-900'
