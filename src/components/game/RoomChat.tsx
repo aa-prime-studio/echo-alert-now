@@ -42,8 +42,8 @@ export const RoomChat: React.FC<RoomChatProps> = ({
   };
 
   return (
-    <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0">
-      <div className="p-3 border-b border-gray-200">
+    <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0 border border-black">
+      <div className="p-3 border-b border-black">
         <h4 className="text-sm font-medium text-gray-900">房間聊天</h4>
       </div>
       
@@ -58,10 +58,10 @@ export const RoomChat: React.FC<RoomChatProps> = ({
           // 反轉陣列順序，讓最新訊息顯示在底部
           [...messages].reverse().map((msg) => (
             <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-xs px-3 py-2 rounded-lg ${
+              <div className={`max-w-xs px-3 py-2 rounded-lg border border-black ${
                 msg.isOwn 
                   ? 'bg-blue-500 text-white' 
-                  : 'bg-white text-gray-900 border'
+                  : 'bg-white text-gray-900'
               }`}>
                 <div className="flex items-center space-x-2 mb-1">
                   <span className={`font-medium text-xs ${
@@ -84,7 +84,7 @@ export const RoomChat: React.FC<RoomChatProps> = ({
       </div>
       
       {/* 發送訊息 */}
-      <div className="p-3 border-t border-gray-200">
+      <div className="p-3 border-t border-black">
         <div className="flex space-x-2">
           <input
             type="text"
@@ -92,14 +92,14 @@ export const RoomChat: React.FC<RoomChatProps> = ({
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && onSendMessage()}
             placeholder="輸入訊息..."
-            className="flex-1 p-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 p-2 text-sm border border-black rounded-md focus:ring-blue-500 focus:border-blue-500"
             maxLength={100}
           />
           <Button
             onClick={onSendMessage}
             disabled={!newMessage.trim()}
             size="sm"
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 border border-black"
           >
             <Send className="w-4 h-4" />
           </Button>

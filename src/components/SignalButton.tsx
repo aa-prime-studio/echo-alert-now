@@ -51,7 +51,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
       <Button
         onClick={() => onSend(type)}
         disabled={disabled}
-        className={`h-[132px] w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+        className={`h-[132px] w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border border-black`}
       >
         <Icon className="w-8 h-8 mb-2" />
         <div className="text-center">
@@ -66,7 +66,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
       <Button
         onClick={() => onSend(type)}
         disabled={disabled}
-        className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-center px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+        className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-center px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border border-black`}
       >
         <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
         <div className="text-xs font-medium">{config.label}</div>

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Send, Trash2, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -86,7 +87,7 @@ export const ChatRoom: React.FC = () => {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <h3 className="font-semibold text-gray-900">支援聊天室</h3>
+          <h3 className="text-lg font-semibold text-gray-900 text-left">支援聊天室</h3>
           <span className="text-sm text-gray-500">({messages.length})</span>
         </div>
         <div className="flex items-center space-x-2">
@@ -98,7 +99,7 @@ export const ChatRoom: React.FC = () => {
             variant="ghost"
             size="sm"
             onClick={clearMessages}
-            className="text-red-600 hover:text-red-700"
+            className="text-red-600 hover:text-red-700 border border-black"
           >
             <Trash2 className="w-4 h-4" />
           </Button>
@@ -108,19 +109,19 @@ export const ChatRoom: React.FC = () => {
       {/* Messages List */}
       <div className="flex-1">
         {messages.length === 0 ? (
-          <div className="text-center text-gray-500 py-12">
+          <div className="text-center text-gray-500 py-12 border border-black rounded-lg bg-gray-50">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p className="text-gray-600 mb-2">目前沒有訊息</p>
             <p className="text-sm text-gray-400">發送第一條訊息開始對話</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-3 p-4 border border-black rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
             {messages.map((msg) => (
               <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg border border-black ${
                   msg.isOwn 
                     ? 'bg-blue-600 text-white' 
-                    : 'bg-gray-200 text-gray-900'
+                    : 'bg-white text-gray-900'
                 }`}>
                   <div className="flex items-center space-x-2 mb-1">
                     <span className={`font-medium text-sm ${
@@ -151,13 +152,13 @@ export const ChatRoom: React.FC = () => {
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
             placeholder="輸入訊息..."
-            className="flex-1 p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+            className="flex-1 p-2 border border-black rounded-md focus:ring-blue-500 focus:border-blue-500"
             maxLength={200}
           />
           <Button
             onClick={sendMessage}
             disabled={!newMessage.trim()}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-blue-600 hover:bg-blue-700 border border-black"
           >
             <Send className="w-4 h-4" />
           </Button>

@@ -33,7 +33,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col justify-center items-center p-8 text-center text-gray-500">
+      <div className="flex flex-col justify-center items-center p-8 text-center text-gray-500 border border-black rounded-lg bg-gray-50">
         <p className="text-gray-600 mb-2">目前沒有訊息</p>
         <p className="text-sm text-gray-400">當附近有人發送訊號時，會顯示在這裡</p>
       </div>
@@ -56,8 +56,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           const Icon = config.icon;
           
           return (
-            <div key={message.id} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg">
-              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} flex-shrink-0`}>
+            <div key={message.id} className="flex items-start space-x-3 p-4 bg-gray-50 rounded-lg border border-black">
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color} flex-shrink-0 border border-black`}>
                 <Icon className="w-5 h-5" />
               </div>
               <div className="flex-1 min-w-0 relative">
