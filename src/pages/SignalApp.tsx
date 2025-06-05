@@ -47,8 +47,8 @@ const SignalApp = () => {
             {/* Connection Status */}
             <div className={`p-3 rounded-lg text-center text-sm ${
               isConnected 
-                ? 'bg-white text-green-800' 
-                : 'bg-white text-red-800'
+                ? 'bg-white text-gray-500' 
+                : 'bg-white text-gray-500'
             }`}>
               {isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}
             </div>
