@@ -73,20 +73,20 @@ const Index = () => {
         {/* Hero Section */}
         <div className="text-center mb-16">
           <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200 mb-6">
-            {t.index.badge}
+            {t('badge')}
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            {t.index.title}
+            {t('title')}
           </h1>
           <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-            {t.index.subtitle}
+            {t('subtitle')}
           </p>
           <Button 
             onClick={handleStartApp}
             size="lg"
             className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8 py-3 text-lg"
           >
-            {t.index.cta}
+            {t('cta')}
           </Button>
         </div>
 
@@ -130,8 +130,8 @@ const Index = () => {
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
                 <Smartphone className="w-6 h-6 text-yellow-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{t.index.features.crossPlatform}</h3>
-              <p className="text-gray-600 text-sm">{t.index.features.crossPlatformDesc}</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('cross_platform')}</h3>
+              <p className="text-gray-600 text-sm">{t('cross_platform_desc')}</p>
             </CardContent>
           </Card>
 
@@ -140,8 +140,8 @@ const Index = () => {
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
                 <Users className="w-6 h-6 text-yellow-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{t.index.features.groupComm}</h3>
-              <p className="text-gray-600 text-sm">{t.index.features.groupCommDesc}</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('group_comm')}</h3>
+              <p className="text-gray-600 text-sm">{t('group_comm_desc')}</p>
             </CardContent>
           </Card>
 
@@ -150,8 +150,8 @@ const Index = () => {
               <div className="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mb-4">
                 <Zap className="w-6 h-6 text-yellow-600" />
               </div>
-              <h3 className="font-semibold text-gray-900 mb-2">{t.index.features.realTime}</h3>
-              <p className="text-gray-600 text-sm">{t.index.features.realTimeDesc}</p>
+              <h3 className="font-semibold text-gray-900 mb-2">{t('real_time')}</h3>
+              <p className="text-gray-600 text-sm">{t('real_time_desc')}</p>
             </CardContent>
           </Card>
         </div>
@@ -168,9 +168,9 @@ const Index = () => {
               </span>
             </div>
             <div className="flex space-x-6">
-              <a href="/privacy" className="hover:text-gray-700">{t.index.privacy}</a>
-              <a href="/terms" className="hover:text-gray-700">{t.index.terms}</a>
-              <a href="/help" className="hover:text-gray-700">{t.index.help}</a>
+              <a href="/privacy" className="hover:text-gray-700">{t('privacy')}</a>
+              <a href="/terms" className="hover:text-gray-700">{t('terms')}</a>
+              <a href="/help" className="hover:text-gray-700">{t('help')}</a>
             </div>
           </div>
         </footer>
