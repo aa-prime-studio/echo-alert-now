@@ -41,13 +41,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     );
   }
 
-  // 按距離排序（近的優先）
-  const sortedMessages = [...messages].sort((a, b) => {
-    if (!a.distance && !b.distance) return b.timestamp - a.timestamp;
-    if (!a.distance) return 1;
-    if (!b.distance) return -1;
-    return a.distance - b.distance;
-  });
+  // 按時間排序（最新的在上方）
+  const sortedMessages = [...messages].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
     <div className="bg-white rounded-lg shadow h-full flex flex-col">
@@ -58,7 +53,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
             <h3 className="font-semibold text-gray-900">附近訊號</h3>
             <span className="text-sm text-gray-500">({messages.length})</span>
           </div>
-          <span className="text-xs text-gray-500">依距離排序</span>
+          <span className="text-xs text-gray-500">依時間排序</span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
