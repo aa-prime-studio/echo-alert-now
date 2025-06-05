@@ -44,9 +44,9 @@ const SignalApp = () => {
       case 'signals':
         return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
       case 'chat':
-        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '即時聊天室' };
+        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '' };
       case 'games':
-        return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '線上遊戲房間' };
+        return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '遊戲房間' };
       case 'settings':
         return { bg: 'bg-green-400', title: 'Settings', subtitle: '應用程式設定' };
       default:
@@ -186,10 +186,12 @@ const SignalApp = () => {
             {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
           </Button>
         </div>
-        <div className="flex items-center">
-          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-          <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
-        </div>
+        {headerConfig.subtitle && (
+          <div className="flex items-center">
+            <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+            <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
+          </div>
+        )}
       </header>
 
       {/* Content */}
@@ -212,13 +214,13 @@ const SignalApp = () => {
               >
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-500 text-white' 
+                    ? 'bg-blue-600 text-white' 
                     : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
                 }`}>
                   <Icon className="w-5 h-5" />
                 </div>
                 <span className={`text-xs font-medium ${
-                  isActive ? 'text-blue-500' : 'text-gray-400'
+                  isActive ? 'text-blue-600' : 'text-gray-400'
                 }`}>
                   {tab.label}
                 </span>

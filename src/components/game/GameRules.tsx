@@ -1,12 +1,10 @@
-
 import React from 'react';
-import { Gamepad2, Hash, Target, Calendar } from 'lucide-react';
+import { Hash, Target, Calendar } from 'lucide-react';
 
 export const GameRules: React.FC = () => {
   return (
     <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
       <div className="flex items-center space-x-2 mb-4">
-        <Gamepad2 className="w-5 h-5 text-blue-600" />
         <h4 className="text-base font-semibold text-gray-900">遊戲規則</h4>
       </div>
       <div className="grid grid-cols-3 gap-3">

@@ -332,7 +332,6 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-2">
-        <Grid3X3 className="w-5 h-5 text-gray-600" />
         <h3 className="font-semibold text-gray-900">賓果遊戲室</h3>
       </div>
       
