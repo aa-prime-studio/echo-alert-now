@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -323,6 +323,40 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
+          </div>
+        </div>
+
+        {/* 法律文件連結 */}
+        <div>
+          <div className="flex items-center space-x-2 mb-3">
+            <Info className="w-4 h-4 text-gray-600" />
+            <h4 className="text-sm font-medium text-gray-900">法律與幫助</h4>
+          </div>
+          <div className="space-y-2">
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-left text-gray-600 hover:text-gray-900"
+              onClick={() => window.open('/help', '_blank')}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              幫助與說明
+            </Button>
+            <Button
+              variant="ghost" 
+              className="w-full justify-start text-left text-gray-600 hover:text-gray-900"
+              onClick={() => window.open('/privacy', '_blank')}
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              隱私政策
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full justify-start text-left text-gray-600 hover:text-gray-900" 
+              onClick={() => window.open('/terms', '_blank')}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              使用條款
+            </Button>
           </div>
         </div>
 
