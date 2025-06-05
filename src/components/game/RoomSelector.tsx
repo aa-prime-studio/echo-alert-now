@@ -13,13 +13,13 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
     <div>
       <h4 className="font-semibold text-gray-900 mb-3">選擇房間</h4>
       <div className="relative h-56 flex items-center justify-center">
-        {/* Room B - Top (rotated 90 degrees) */}
+        {/* Room B - Top (rotated 180 degrees) */}
         <div 
           className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-40 flex items-start justify-start cursor-pointer"
           style={{
             backgroundColor: '#ff5663',
             clipPath: 'polygon(0% 0%, 100% 0%, 0% 100%)',
-            transform: 'translateX(-50%) rotate(90deg)'
+            transform: 'translateX(-50%) rotate(180deg)'
           }}
           onClick={() => onJoinRoom(2)}
         >
@@ -29,7 +29,7 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
               color: '#00d76a',
               top: '8px',
               left: '8px',
-              transform: 'rotate(-90deg)',
+              transform: 'rotate(-180deg)',
               transformOrigin: 'center'
             }}
           >
