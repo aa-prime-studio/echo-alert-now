@@ -485,7 +485,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
               <Button
                 key={room.id}
                 onClick={() => joinRoom(room.id)}
-                className="h-16 bg-gray-500 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
+                className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center"
               >
                 <span className="text-lg font-bold">{room.name}</span>
               </Button>
@@ -493,41 +493,35 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
           </div>
         </div>
         
-        {/* 改進的遊戲規則 */}
+        {/* 改進的遊戲規則 - 方格顯示 */}
         <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center space-x-2 mb-3">
+          <div className="flex items-center space-x-2 mb-4">
             <Gamepad2 className="w-5 h-5 text-blue-600" />
             <h4 className="text-base font-semibold text-gray-900">遊戲規則</h4>
           </div>
-          <div className="grid grid-cols-1 gap-3">
-            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <Hash className="w-4 h-4 text-blue-600" />
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Hash className="w-5 h-5 text-blue-600" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">號碼範圍</p>
-                <p className="text-xs text-gray-600">1-60 隨機抽取</p>
-              </div>
+              <p className="text-sm font-medium text-gray-900 mb-1">號碼範圍</p>
+              <p className="text-xs text-gray-600">1-60 隨機抽取</p>
             </div>
             
-            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
-              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                <Target className="w-4 h-4 text-green-600" />
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Target className="w-5 h-5 text-green-600" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">獲勝條件</p>
-                <p className="text-xs text-gray-600">完成 6 條線即可獲勝</p>
-              </div>
+              <p className="text-sm font-medium text-gray-900 mb-1">獲勝條件</p>
+              <p className="text-xs text-gray-600">完成 6 條線即可獲勝</p>
             </div>
             
-            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
-              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-yellow-600" />
+            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
+              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                <Calendar className="w-5 h-5 text-yellow-600" />
               </div>
-              <div className="flex-1">
-                <p className="text-sm font-medium text-gray-900">每日排行</p>
-                <p className="text-xs text-gray-600">每天更新排行榜</p>
-              </div>
+              <p className="text-sm font-medium text-gray-900 mb-1">每日排行</p>
+              <p className="text-xs text-gray-600">每天更新排行榜</p>
             </div>
           </div>
         </div>
