@@ -45,10 +45,10 @@ const SignalApp = () => {
         return (
           <div className="flex flex-col h-full space-y-6">
             {/* Connection Status */}
-            <div className={`p-3 rounded-lg text-center text-sm border ${
+            <div className={`p-3 rounded-lg text-center text-sm ${
               isConnected 
-                ? 'bg-white text-green-800 border-green-200' 
-                : 'bg-white text-red-800 border-red-200'
+                ? 'bg-white text-green-800' 
+                : 'bg-white text-red-800'
             }`}>
               {isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}
             </div>
