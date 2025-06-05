@@ -44,7 +44,7 @@ const SignalApp = () => {
       case 'signals':
         return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
       case 'chat':
-        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '' };
+        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '請支援櫃檯' };
       case 'games':
         return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '遊戲房間' };
       case 'settings':
@@ -62,7 +62,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -121,7 +121,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton

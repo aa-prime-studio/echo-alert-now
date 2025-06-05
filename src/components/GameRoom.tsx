@@ -34,9 +34,9 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
 
   // 3個賓果房間
   const [rooms] = useState<BingoRoom[]>([
-    { id: 1, name: '星光大廳', players: [], currentNumbers: [], isActive: false },
-    { id: 2, name: '幸運殿堂', players: [], currentNumbers: [], isActive: false },
-    { id: 3, name: '王者競技場', players: [], currentNumbers: [], isActive: false }
+    { id: 1, name: 'room A', players: [], currentNumbers: [], isActive: false },
+    { id: 2, name: 'room B', players: [], currentNumbers: [], isActive: false },
+    { id: 3, name: 'room C', players: [], currentNumbers: [], isActive: false }
   ]);
 
   useEffect(() => {
