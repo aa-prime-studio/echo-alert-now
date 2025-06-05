@@ -45,28 +45,32 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
   const config = signalConfig[type];
   const Icon = config.icon;
 
-  // Adjusted heights to make safe button align with danger button at bottom
-  const sizeClasses = size === 'large' 
-    ? 'h-[108px] text-base space-y-2' // Height to align with 3 small buttons (36px each + 8px gaps)
-    : 'h-[32px] text-sm space-y-1';   // Small button height
-    
-  const iconSize = size === 'large' ? 'w-6 h-6' : 'w-4 h-4';
-  const textSize = size === 'large' ? 'text-sm font-medium' : 'text-xs';
-  const descSize = size === 'large' ? 'text-xs' : 'text-[10px]';
-
-  return (
-    <Button
-      onClick={() => onSend(type)}
-      disabled={disabled}
-      className={`${sizeClasses} w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
-    >
-      <Icon className={iconSize} />
-      <div className="text-center leading-tight">
-        <div className={`${textSize} leading-tight`}>{config.label}</div>
-        {size === 'large' && (
-          <div className={`${descSize} opacity-80 leading-tight`}>{config.description}</div>
-        )}
-      </div>
-    </Button>
-  );
+  if (size === 'large') {
+    // Large button for "我安全"
+    return (
+      <Button
+        onClick={() => onSend(type)}
+        disabled={disabled}
+        className={`h-[120px] w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+      >
+        <Icon className="w-8 h-8 mb-2" />
+        <div className="text-center">
+          <div className="text-lg font-bold leading-tight">{config.label}</div>
+          <div className="text-sm opacity-90 leading-tight">{config.description}</div>
+        </div>
+      </Button>
+    );
+  } else {
+    // Small buttons - horizontal layout with icon on left, text on right
+    return (
+      <Button
+        onClick={() => onSend(type)}
+        disabled={disabled}
+        className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-start px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
+      >
+        <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
+        <div className="text-xs font-medium truncate">{config.label}</div>
+      </Button>
+    );
+  }
 };

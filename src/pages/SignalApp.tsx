@@ -137,7 +137,7 @@ const SignalApp = () => {
       {/* Colored Header */}
       <header className={`${headerConfig.bg} text-black px-4 py-6`}>
         <div className="flex items-center justify-between mb-2">
-          <h1 className="text-2xl font-bold">{headerConfig.title}</h1>
+          <h1 className="text-3xl font-bold">{headerConfig.title}</h1>
           <Button
             variant="ghost"
             size="sm"
