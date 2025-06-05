@@ -13,13 +13,13 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
     <div>
       <h4 className="font-semibold text-gray-900 mb-3">選擇房間</h4>
       <div className="relative h-56 flex items-center justify-center">
-        {/* Room B - Top (rotated 180 degrees) */}
+        {/* Room B - Right (垂直翻轉，底部對齊C) */}
         <div 
-          className="absolute top-0 left-1/2 transform -translate-x-1/2 w-40 h-40 flex items-start justify-start cursor-pointer"
+          className="absolute bottom-0 right-1/2 transform translate-x-1/2 w-40 h-40 flex items-end justify-end cursor-pointer"
           style={{
             backgroundColor: '#ff5663',
             clipPath: 'polygon(0% 0%, 100% 0%, 0% 100%)',
-            transform: 'translateX(-50%) rotate(180deg)'
+            transform: 'translateX(50%) scaleY(-1)'
           }}
           onClick={() => onJoinRoom(2)}
         >
@@ -27,13 +27,12 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
             className="font-bold text-lg absolute"
             style={{ 
               color: '#00d76a',
-              top: '8px',
+              bottom: '8px',
               left: '8px',
-              transform: 'rotate(-180deg)',
-              transformOrigin: 'center'
+              transform: 'scaleY(-1)'
             }}
           >
-            room B
+            2
           </span>
         </div>
         
@@ -54,11 +53,11 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
               left: '8px'
             }}
           >
-            room A
+            1
           </span>
         </div>
         
-        {/* Room C - Bottom Right (flipped horizontally) */}
+        {/* Room C - Bottom Right */}
         <div 
           className="absolute bottom-0 right-8 w-40 h-40 flex items-end justify-end cursor-pointer"
           style={{
@@ -75,7 +74,7 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
               right: '8px'
             }}
           >
-            room C
+            3
           </span>
         </div>
       </div>
