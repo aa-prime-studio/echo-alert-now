@@ -39,26 +39,36 @@ const SignalApp = () => {
     });
   };
 
+  const getHeaderConfig = () => {
+    switch (activeTab) {
+      case 'signals':
+        return { bg: 'bg-yellow-400', title: 'Broadcast Signal', subtitle: '已連線 - 可發送和接收訊號' };
+      case 'chat':
+        return { bg: 'bg-purple-400', title: 'Live Support Chatroom', subtitle: '即時聊天室' };
+      case 'games':
+        return { bg: 'bg-blue-500', title: 'Bingo Game Room', subtitle: '線上遊戲房間' };
+      case 'settings':
+        return { bg: 'bg-green-400', title: 'Settings', subtitle: '應用程式設定' };
+    }
+  };
+
+  const headerConfig = getHeaderConfig();
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'signals':
         return (
-          <div className="flex flex-col h-full space-y-6">
+          <div className="space-y-6">
             {/* Connection Status */}
-            <div className={`p-3 rounded-lg text-center text-sm ${
-              isConnected 
-                ? 'bg-white text-gray-500' 
-                : 'bg-white text-gray-500'
-            }`}>
-              {isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
+              <span>{isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}</span>
             </div>
 
             {/* Signal Buttons */}
-            <div className="bg-white rounded-lg shadow p-6 flex-shrink-0">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-                發送訊號
-              </h2>
-              <div className="grid grid-cols-2 gap-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">發送訊號</h2>
+              <div className="grid grid-cols-2 gap-4 mb-4">
                 <SignalButton
                   type="safe"
                   onSend={handleSendSignal}
@@ -80,13 +90,13 @@ const SignalApp = () => {
                   disabled={!isConnected}
                 />
               </div>
-              <p className="text-xs text-gray-500 text-center mt-4">
+              <p className="text-xs text-gray-500 text-center">
                 訊號會廣播至 50-500 公尺範圍內的裝置
               </p>
             </div>
 
-            {/* Nearby Messages - 自適應高度 */}
-            <div className="flex-1 min-h-0">
+            {/* Nearby Messages */}
+            <div className="flex-1">
               <MessageList messages={messages} />
             </div>
           </div>
@@ -113,43 +123,37 @@ const SignalApp = () => {
 
   const tabConfig = [
     { id: 'signals' as TabType, label: '訊號', icon: Radio },
-    { id: 'chat' as TabType, label: '聊天', icon: MessageCircle },
+    { id: 'chat' as TabType, label: '聊天室', icon: MessageCircle },
     { id: 'games' as TabType, label: '遊戲', icon: Gamepad2 },
     { id: 'settings' as TabType, label: '設定', icon: Settings },
   ];
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col max-w-md mx-auto">
-      {/* iOS Style Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="px-4 py-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Zap className="w-5 h-5 text-white" />
-              </div>
-              <h1 className="text-xl font-bold text-gray-900">Signal-Lite</h1>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleConnection}
-              className={isConnected ? 'text-green-600' : 'text-gray-400'}
-            >
-              {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
-            </Button>
-          </div>
+      {/* Colored Header */}
+      <header className={`${headerConfig.bg} text-black px-4 py-6`}>
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-2xl font-bold">{headerConfig.title}</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleConnection}
+            className="text-black hover:bg-black/10"
+          >
+            {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
+          </Button>
         </div>
+        <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
       </header>
 
-      {/* Content Area - 自適應高度 */}
-      <main className="flex-1 p-4 pb-20 min-h-0 overflow-hidden">
+      {/* White Content Card */}
+      <main className="flex-1 bg-white rounded-t-3xl -mt-4 p-6 pb-24 relative z-10">
         {renderTabContent()}
       </main>
 
-      {/* iOS Style Tab Bar */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
-        <div className="flex">
+      {/* Bottom Navigation */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-3">
+        <div className="flex justify-between items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -158,14 +162,18 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-2 px-1 text-center ${
-                  isActive 
-                    ? 'text-blue-600' 
-                    : 'text-gray-400'
-                }`}
+                className="flex flex-col items-center space-y-1"
               >
-                <Icon className={`w-6 h-6 mx-auto mb-1 ${isActive ? 'text-blue-600' : 'text-gray-400'}`} />
-                <span className={`text-xs font-medium ${isActive ? 'text-blue-600' : 'text-gray-400'}`}>
+                <div className={`p-3 rounded-full ${
+                  isActive 
+                    ? 'bg-blue-500 text-white' 
+                    : 'text-gray-400'
+                }`}>
+                  <Icon className="w-6 h-6" />
+                </div>
+                <span className={`text-xs ${
+                  isActive ? 'text-blue-500 font-medium' : 'text-gray-400'
+                }`}>
                   {tab.label}
                 </span>
               </button>
@@ -173,18 +181,6 @@ const SignalApp = () => {
           })}
         </div>
       </div>
-
-      {/* Info Footer (只在訊號頁面顯示) */}
-      {activeTab === 'signals' && (
-        <div className="bg-blue-50 p-4 text-center space-y-1">
-          <p className="text-sm text-blue-800 font-medium">
-            WebRTC 概念驗證
-          </p>
-          <p className="text-xs text-blue-600">
-            實際 iOS 版本將使用 MultipeerConnectivity 進行真正的離線通訊
-          </p>
-        </div>
-      )}
     </div>
   );
 };
