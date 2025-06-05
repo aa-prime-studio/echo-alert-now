@@ -1,10 +1,11 @@
+
 export interface SignalMessage {
   id: string;
   type: 'safe' | 'supplies' | 'medical' | 'danger';
   timestamp: number;
   deviceName: string;
-  location?: { lat: number; lng: number; accuracy?: number };
   distance?: number;
+  direction?: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
 }
 
 export class WebRTCService {
@@ -12,35 +13,19 @@ export class WebRTCService {
   private dataChannel: RTCDataChannel | null = null;
   private onMessageCallback: ((message: SignalMessage) => void) | null = null;
   private onConnectionStateChange: ((state: string) => void) | null = null;
-  private currentLocation: { lat: number; lng: number } | null = null;
 
   constructor() {
     this.initializePeerConnection();
-    this.initializeLocation();
   }
 
-  private async initializeLocation() {
-    // 直接使用台北市中心的模擬位置，不請求地理位置權限
-    this.currentLocation = {
-      lat: 25.0330 + (Math.random() - 0.5) * 0.01,
-      lng: 121.5654 + (Math.random() - 0.5) * 0.01
-    };
-    console.log('Using simulated location:', this.currentLocation);
+  private generateRandomDistance(): number {
+    // 模糊化距離：10-500 公尺
+    return Math.floor(Math.random() * 490) + 10;
   }
 
-  private calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371e3; // 地球半徑（公尺）
-    const φ1 = lat1 * Math.PI/180;
-    const φ2 = lat2 * Math.PI/180;
-    const Δφ = (lat2-lat1) * Math.PI/180;
-    const Δλ = (lng2-lng1) * Math.PI/180;
-
-    const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-              Math.cos(φ1) * Math.cos(φ2) *
-              Math.sin(Δλ/2) * Math.sin(Δλ/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    return R * c; // 距離（公尺）
+  private generateRandomDirection(): 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW' {
+    const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'] as const;
+    return directions[Math.floor(Math.random() * directions.length)];
   }
 
   private initializePeerConnection() {
@@ -64,17 +49,6 @@ export class WebRTCService {
       channel.onmessage = (event) => {
         try {
           const message: SignalMessage = JSON.parse(event.data);
-          
-          // 計算距離
-          if (message.location && this.currentLocation) {
-            message.distance = this.calculateDistance(
-              this.currentLocation.lat,
-              this.currentLocation.lng,
-              message.location.lat,
-              message.location.lng
-            );
-          }
-          
           this.onMessageCallback?.(message);
         } catch (error) {
           console.error('Failed to parse message:', error);
@@ -99,20 +73,15 @@ export class WebRTCService {
     this.onConnectionStateChange = callback;
   }
 
-  async sendSignal(type: SignalMessage['type'], deviceName: string, includeLocation: boolean = true) {
-    const location = includeLocation && this.currentLocation ? {
-      lat: this.currentLocation.lat,
-      lng: this.currentLocation.lng,
-      accuracy: 10 + Math.random() * 20 // 模擬 GPS 精度
-    } : undefined;
-
+  async sendSignal(type: SignalMessage['type'], deviceName: string) {
     if (this.dataChannel && this.dataChannel.readyState === 'open') {
       const message: SignalMessage = {
         id: crypto.randomUUID(),
         type,
         timestamp: Date.now(),
         deviceName,
-        location
+        distance: this.generateRandomDistance(),
+        direction: this.generateRandomDirection()
       };
 
       this.dataChannel.send(JSON.stringify(message));
@@ -120,10 +89,12 @@ export class WebRTCService {
     } else {
       // 模擬附近裝置的訊號
       const simulatedNearbyDevices = [
-        { name: '救援隊-Alpha', lat: 25.0335, lng: 121.5660 },
-        { name: '醫療站-02', lat: 25.0325, lng: 121.5650 },
-        { name: '避難所-中山', lat: 25.0340, lng: 121.5665 },
-        { name: 'Device-A1B2C3', lat: 25.0320, lng: 121.5645 }
+        '救援隊-Alpha',
+        '醫療站-02', 
+        '避難所-中山',
+        'Device-A1B2C3',
+        'Emergency-X7Y9',
+        'Rescue-Team-B'
       ];
 
       const randomDevice = simulatedNearbyDevices[Math.floor(Math.random() * simulatedNearbyDevices.length)];
@@ -133,22 +104,9 @@ export class WebRTCService {
         type,
         timestamp: Date.now(),
         deviceName,
-        location: includeLocation ? {
-          lat: randomDevice.lat + (Math.random() - 0.5) * 0.002,
-          lng: randomDevice.lng + (Math.random() - 0.5) * 0.002,
-          accuracy: 10 + Math.random() * 20
-        } : undefined
+        distance: this.generateRandomDistance(),
+        direction: this.generateRandomDirection()
       };
-
-      // 計算距離
-      if (message.location && this.currentLocation) {
-        message.distance = this.calculateDistance(
-          this.currentLocation.lat,
-          this.currentLocation.lng,
-          message.location.lat,
-          message.location.lng
-        );
-      }
       
       // 模擬網路延遲
       setTimeout(() => {
@@ -174,7 +132,7 @@ export class WebRTCService {
 
       simulatedSignals.forEach((signal, index) => {
         setTimeout(() => {
-          this.sendSignal(signal.type, signal.device, true);
+          this.sendSignal(signal.type, signal.device);
         }, (index + 1) * 2000);
       });
     }, 3000);

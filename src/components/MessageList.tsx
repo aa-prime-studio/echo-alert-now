@@ -1,7 +1,8 @@
 
 import React from 'react';
-import { AlertTriangle, Heart, Package, Shield, Clock, MapPin, Navigation } from 'lucide-react';
+import { AlertTriangle, Heart, Package, Shield, Clock, Users } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
+import { DirectionCompass } from '@/components/DirectionCompass';
 
 interface MessageListProps {
   messages: SignalMessage[];
@@ -30,22 +31,6 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     }
   };
 
-  const formatDistance = (distance?: number) => {
-    if (!distance) return '位置未知';
-    
-    if (distance < 1000) {
-      return `${Math.round(distance)}m`;
-    } else {
-      return `${(distance / 1000).toFixed(1)}km`;
-    }
-  };
-
-  const formatLocation = (lat?: number, lng?: number, accuracy?: number) => {
-    if (!lat || !lng) return null;
-    
-    return `${lat.toFixed(4)}, ${lng.toFixed(4)}${accuracy ? ` (±${Math.round(accuracy)}m)` : ''}`;
-  };
-
   if (messages.length === 0) {
     return (
       <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
@@ -67,10 +52,16 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div className="bg-white rounded-lg shadow">
       <div className="p-4 border-b">
-        <h3 className="font-semibold text-gray-900">接收到的訊號 ({messages.length})</h3>
-        <p className="text-sm text-gray-500 mt-1">依距離排序，近的優先</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Users className="w-5 h-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">附近訊號</h3>
+            <span className="text-sm text-gray-500">({messages.length})</span>
+          </div>
+          <span className="text-xs text-gray-500">依距離排序</span>
+        </div>
       </div>
-      <div className="max-h-96 overflow-y-auto">
+      <div className="max-h-80 overflow-y-auto">
         {sortedMessages.map((message) => {
           const config = signalConfig[message.type];
           const Icon = config.icon;
@@ -89,23 +80,13 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                   
                   <div className="text-sm text-gray-600 mb-2">來自: {message.deviceName}</div>
                   
-                  <div className="flex items-center space-x-4 text-sm">
-                    {message.distance !== undefined && (
-                      <div className="flex items-center space-x-1 text-blue-600">
-                        <Navigation className="w-4 h-4" />
-                        <span className="font-medium">{formatDistance(message.distance)}</span>
-                      </div>
-                    )}
-                    
-                    {message.location && (
-                      <div className="flex items-center space-x-1 text-gray-500">
-                        <MapPin className="w-4 h-4" />
-                        <span className="font-mono text-xs">
-                          {formatLocation(message.location.lat, message.location.lng, message.location.accuracy)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+                  {message.distance && message.direction && (
+                    <DirectionCompass 
+                      distance={message.distance} 
+                      direction={message.direction}
+                      className="mt-2"
+                    />
+                  )}
                 </div>
               </div>
             </div>

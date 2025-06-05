@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { WebRTCService, SignalMessage } from '@/services/webrtc';
 
@@ -7,7 +6,6 @@ export const useSignals = () => {
   const [messages, setMessages] = useState<SignalMessage[]>([]);
   const [connectionState, setConnectionState] = useState<string>('new');
   const [deviceName, setDeviceName] = useState(`Device-${Math.random().toString(36).substr(2, 6)}`);
-  const [shareLocation, setShareLocation] = useState(true);
 
   useEffect(() => {
     webrtcService.onMessage((message) => {
@@ -43,12 +41,12 @@ export const useSignals = () => {
 
   const sendSignal = useCallback(async (type: SignalMessage['type']) => {
     try {
-      const message = await webrtcService.sendSignal(type, deviceName, shareLocation);
+      const message = await webrtcService.sendSignal(type, deviceName);
       console.log('Signal sent:', message);
     } catch (error) {
       console.error('Failed to send signal:', error);
     }
-  }, [webrtcService, deviceName, shareLocation]);
+  }, [webrtcService, deviceName]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -59,8 +57,6 @@ export const useSignals = () => {
     connectionState,
     deviceName,
     setDeviceName,
-    shareLocation,
-    setShareLocation,
     sendSignal,
     clearMessages
   };
