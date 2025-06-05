@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -34,9 +33,9 @@ export const GameRoom: React.FC = () => {
 
   // 3個賓果房間
   const [rooms] = useState<BingoRoom[]>([
-    { id: 1, name: '新手房', players: [], currentNumbers: [], isActive: false },
-    { id: 2, name: '進階房', players: [], currentNumbers: [], isActive: false },
-    { id: 3, name: '高手房', players: [], currentNumbers: [], isActive: false }
+    { id: 1, name: '星光大廳', players: [], currentNumbers: [], isActive: false },
+    { id: 2, name: '幸運殿堂', players: [], currentNumbers: [], isActive: false },
+    { id: 3, name: '王者競技場', players: [], currentNumbers: [], isActive: false }
   ]);
 
   useEffect(() => {
