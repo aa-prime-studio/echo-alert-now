@@ -468,7 +468,7 @@ export const GameRoom: React.FC = () => {
     <div className="bg-white rounded-lg shadow h-full flex flex-col">
       <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <Grid3X3 className="w-5 h-5 text-purple-600" />
+          <Grid3X3 className="w-5 h-5 text-gray-600" />
           <h3 className="font-semibold text-gray-900">賓果遊戲室</h3>
         </div>
       </div>
@@ -482,7 +482,7 @@ export const GameRoom: React.FC = () => {
               <Button
                 key={room.id}
                 onClick={() => joinRoom(room.id)}
-                className="h-16 bg-purple-500 hover:bg-purple-600 text-white flex flex-col items-center justify-center"
+                className="h-16 bg-gray-500 hover:bg-gray-600 text-white flex flex-col items-center justify-center"
               >
                 <span className="text-lg font-bold">{room.name}</span>
               </Button>
