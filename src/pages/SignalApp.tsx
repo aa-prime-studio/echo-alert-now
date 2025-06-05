@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -147,7 +148,10 @@ const SignalApp = () => {
             {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
           </Button>
         </div>
-        <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
+        <div className="flex items-center">
+          <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+          <p className="text-sm opacity-80">{headerConfig.subtitle}</p>
+        </div>
       </header>
 
       {/* White Content Card */}
@@ -155,9 +159,9 @@ const SignalApp = () => {
         {renderTabContent()}
       </main>
 
-      {/* Bottom Navigation - Updated with circular design */}
-      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-6 py-4">
-        <div className="flex justify-between items-center">
+      {/* Bottom Navigation - Updated design */}
+      <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200 px-4 py-2">
+        <div className="flex justify-around items-center">
           {tabConfig.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -166,16 +170,16 @@ const SignalApp = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className="flex flex-col items-center space-y-2"
+                className="flex flex-col items-center space-y-1 py-1"
               >
-                <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 ${
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 ${
                   isActive 
-                    ? 'bg-blue-500 text-white shadow-lg' 
-                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+                    ? 'bg-blue-500 text-white' 
+                    : 'text-gray-400 hover:text-gray-600'
                 }`}>
-                  <Icon className="w-6 h-6" />
+                  <Icon className="w-5 h-5" />
                 </div>
-                <span className={`text-xs font-medium ${
+                <span className={`text-[10px] font-medium ${
                   isActive ? 'text-blue-500' : 'text-gray-400'
                 }`}>
                   {tab.label}
