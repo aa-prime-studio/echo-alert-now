@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3, Send } from 'lucide-react';
+import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3, Send, Target, Hash, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -490,11 +491,43 @@ export const GameRoom: React.FC = () => {
           </div>
         </div>
         
-        <div className="text-center text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-          <p className="font-medium">遊戲規則:</p>
-          <p>• 號碼範圍: 1-60</p>
-          <p>• 目標: 先完成6條線獲勝</p>
-          <p>• 每日排行榜更新</p>
+        {/* 改進的遊戲規則 */}
+        <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
+          <div className="flex items-center space-x-2 mb-3">
+            <Gamepad2 className="w-5 h-5 text-blue-600" />
+            <h4 className="text-base font-semibold text-gray-900">遊戲規則</h4>
+          </div>
+          <div className="grid grid-cols-1 gap-3">
+            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <Hash className="w-4 h-4 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">號碼範圍</p>
+                <p className="text-xs text-gray-600">1-60 隨機抽取</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Target className="w-4 h-4 text-green-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">獲勝條件</p>
+                <p className="text-xs text-gray-600">完成 6 條線即可獲勝</p>
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-3 p-3 bg-white rounded-lg shadow-sm">
+              <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                <Calendar className="w-4 h-4 text-yellow-600" />
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-gray-900">每日排行</p>
+                <p className="text-xs text-gray-600">每天更新排行榜</p>
+              </div>
+            </div>
+          </div>
         </div>
         
         {/* 今日排行榜 */}

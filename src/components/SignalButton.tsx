@@ -13,25 +13,29 @@ const signalConfig = {
   safe: {
     label: '我安全',
     description: 'I\'m Safe',
-    color: 'bg-green-500 hover:bg-green-600 text-white',
+    color: 'text-white',
+    bgColor: 'bg-[#263eea] hover:bg-[#1d32d4]',
     icon: Shield
   },
   supplies: {
     label: '需要物資',
     description: 'Need Supplies',
-    color: 'bg-yellow-500 hover:bg-yellow-600 text-white',
+    color: 'text-white',
+    bgColor: 'bg-[#b199ea] hover:bg-[#a085e6]',
     icon: Package
   },
   medical: {
     label: '需要醫療',
     description: 'Need Medical',
-    color: 'bg-red-500 hover:bg-red-600 text-white',
+    color: 'text-white',
+    bgColor: 'bg-[#ff5662] hover:bg-[#ff4553]',
     icon: Heart
   },
   danger: {
     label: '危險警告',
     description: 'Danger Warning',
-    color: 'bg-gray-900 hover:bg-gray-800 text-white',
+    color: 'text-black',
+    bgColor: 'bg-[#fec91b] hover:bg-[#fdc107]',
     icon: AlertTriangle
   }
 };
@@ -44,7 +48,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
     <Button
       onClick={() => onSend(type)}
       disabled={disabled}
-      className={`h-32 w-full ${config.color} flex flex-col items-center justify-center space-y-2 text-lg font-semibold transition-all duration-200 transform active:scale-95`}
+      className={`h-32 w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center space-y-2 text-lg font-semibold transition-all duration-200 transform active:scale-95`}
     >
       <Icon className="w-8 h-8" />
       <div className="text-center">
