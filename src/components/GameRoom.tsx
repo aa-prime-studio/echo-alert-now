@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
 
 interface BingoScore {
   deviceName: string;
@@ -22,6 +23,12 @@ interface BingoCard {
   marked: boolean[];
 }
 
+interface RoomPlayer {
+  name: string;
+  completedLines: number;
+  hasWon: boolean;
+}
+
 export const GameRoom: React.FC = () => {
   const [currentRoom, setCurrentRoom] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
@@ -30,6 +37,7 @@ export const GameRoom: React.FC = () => {
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
   const [completedLines, setCompletedLines] = useState(0);
   const [gameWon, setGameWon] = useState(false);
+  const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
 
   // 3個賓果房間
   const [rooms] = useState<BingoRoom[]>([
@@ -69,12 +77,33 @@ export const GameRoom: React.FC = () => {
     };
   };
 
+  const generateRoomPlayers = () => {
+    const playerNames = [
+      'BingoKing', 'LuckyStrike', 'NumberHunter', 'LineChaser', 'BingoMaster'
+    ];
+    const players = playerNames.slice(0, Math.floor(Math.random() * 4) + 2).map(name => ({
+      name,
+      completedLines: 0,
+      hasWon: false
+    }));
+    
+    // 加入自己
+    players.push({
+      name: deviceName,
+      completedLines: 0,
+      hasWon: false
+    });
+    
+    return players;
+  };
+
   const joinRoom = (roomId: number) => {
     setCurrentRoom(roomId);
     setBingoCard(generateBingoCard());
     setDrawnNumbers([]);
     setCompletedLines(0);
     setGameWon(false);
+    setRoomPlayers(generateRoomPlayers());
     
     // 模擬號碼抽取
     setTimeout(() => {
@@ -94,12 +123,42 @@ export const GameRoom: React.FC = () => {
       
       const newNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
       setDrawnNumbers(prev => [...prev, newNumber]);
-    }, 3000); // 每3秒抽一個號碼
+      
+      // 模擬其他玩家的進度
+      simulateOtherPlayersProgress();
+    }, 15000); // 改為15秒抽一個號碼
 
     // 模擬遊戲結束
     setTimeout(() => {
       clearInterval(drawInterval);
-    }, 60000); // 1分鐘後結束
+    }, 180000); // 3分鐘後結束
+  };
+
+  const simulateOtherPlayersProgress = () => {
+    setRoomPlayers(prev => 
+      prev.map(player => {
+        if (player.name === deviceName || player.hasWon) return player;
+        
+        // 隨機機會增加線數
+        if (Math.random() < 0.3) {
+          const newLines = player.completedLines + 1;
+          const hasWon = newLines >= 6;
+          
+          if (newLines > player.completedLines) {
+            toast.info(`${player.name} 完成了 ${newLines} 條線！`, {
+              description: hasWon ? '🎉 獲勝了！' : '繼續加油！'
+            });
+          }
+          
+          return {
+            ...player,
+            completedLines: newLines,
+            hasWon
+          };
+        }
+        return player;
+      })
+    );
   };
 
   const markNumber = (index: number) => {
@@ -116,9 +175,21 @@ export const GameRoom: React.FC = () => {
     const lines = checkCompletedLines(newMarked);
     setCompletedLines(lines);
     
-    if (lines >= 6) {
+    // 更新自己在房間玩家列表中的進度
+    setRoomPlayers(prev => 
+      prev.map(player => 
+        player.name === deviceName 
+          ? { ...player, completedLines: lines, hasWon: lines >= 6 }
+          : player
+      )
+    );
+    
+    if (lines >= 6 && !gameWon) {
       setGameWon(true);
       updateLeaderboard(lines);
+      toast.success('🎉 恭喜獲勝！', {
+        description: `完成了 ${lines} 條線！`
+      });
     }
   };
 
@@ -173,6 +244,7 @@ export const GameRoom: React.FC = () => {
     setDrawnNumbers([]);
     setCompletedLines(0);
     setGameWon(false);
+    setRoomPlayers([]);
   };
 
   if (currentRoom) {
@@ -183,6 +255,23 @@ export const GameRoom: React.FC = () => {
           <h3 className="font-semibold text-gray-900">{room?.name} - 賓果遊戲</h3>
           <div className="text-sm text-gray-600">
             完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
+          </div>
+        </div>
+        
+        {/* 房間玩家狀態 */}
+        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
+          <div className="text-sm text-gray-800 mb-2">房間玩家:</div>
+          <div className="grid grid-cols-2 gap-2">
+            {roomPlayers.map((player, index) => (
+              <div key={index} className={`text-xs p-2 rounded ${
+                player.name === deviceName ? 'bg-blue-100 text-blue-800' :
+                player.hasWon ? 'bg-green-100 text-green-800' :
+                'bg-white text-gray-700'
+              }`}>
+                <div className="font-medium">{player.name}</div>
+                <div>{player.completedLines} 條線 {player.hasWon && '👑'}</div>
+              </div>
+            ))}
           </div>
         </div>
         
