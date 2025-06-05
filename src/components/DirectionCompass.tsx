@@ -48,17 +48,15 @@ export const DirectionCompass: React.FC<DirectionCompassProps> = ({
 
   return (
     <div className={`flex items-center justify-between ${className}`}>
-      <div className="flex items-center space-x-2">
-        <div className="relative w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
-          <Navigation 
-            className="w-3 h-3 text-blue-600" 
-            style={{ transform: `rotate(${angle}deg)` }}
-          />
-        </div>
-      </div>
-      <div className="text-right">
+      <div className="flex-1">
         <div className="text-lg font-semibold text-gray-900">{formatDistance(distance)}</div>
         <div className="text-sm text-gray-500">{label}</div>
+      </div>
+      <div className="relative w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center ml-3">
+        <Navigation 
+          className="w-3 h-3 text-blue-600" 
+          style={{ transform: `rotate(${angle}deg)` }}
+        />
       </div>
     </div>
   );
