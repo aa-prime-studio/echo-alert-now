@@ -48,12 +48,12 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
     <Button
       onClick={() => onSend(type)}
       disabled={disabled}
-      className={`h-32 w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center space-y-2 text-lg font-semibold transition-all duration-200 transform active:scale-95`}
+      className={`h-24 w-full ${config.bgColor} ${config.color} flex flex-col items-center justify-center space-y-1 text-base font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border-0`}
     >
-      <Icon className="w-8 h-8" />
+      <Icon className="w-6 h-6" />
       <div className="text-center">
-        <div>{config.label}</div>
-        <div className="text-sm opacity-90">{config.description}</div>
+        <div className="text-sm leading-tight">{config.label}</div>
+        <div className="text-xs opacity-80 leading-tight">{config.description}</div>
       </div>
     </Button>
   );
