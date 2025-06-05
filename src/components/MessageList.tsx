@@ -33,7 +33,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   if (messages.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center text-gray-500">
+      <div className="bg-white rounded-lg shadow h-full flex flex-col justify-center items-center p-6 text-center text-gray-500">
         <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
         <p>目前沒有收到任何訊號</p>
         <p className="text-sm mt-2">當附近有人發送訊號時，會顯示在這裡</p>
@@ -50,8 +50,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   });
 
   return (
-    <div className="bg-white rounded-lg shadow">
-      <div className="p-4 border-b">
+    <div className="bg-white rounded-lg shadow h-full flex flex-col">
+      <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Users className="w-5 h-5 text-blue-600" />
@@ -61,7 +61,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           <span className="text-xs text-gray-500">依距離排序</span>
         </div>
       </div>
-      <div className="max-h-80 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto">
         {sortedMessages.map((message) => {
           const config = signalConfig[message.type];
           const Icon = config.icon;

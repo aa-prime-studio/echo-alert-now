@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +42,7 @@ const SignalApp = () => {
     switch (activeTab) {
       case 'signals':
         return (
-          <div className="space-y-6">
+          <div className="flex flex-col h-full space-y-6">
             {/* Connection Status */}
             <div className={`p-3 rounded-lg text-center text-sm ${
               isConnected 
@@ -54,7 +53,7 @@ const SignalApp = () => {
             </div>
 
             {/* Signal Buttons */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white rounded-lg shadow p-6 flex-shrink-0">
               <h2 className="text-lg font-semibold text-gray-900 mb-4 text-center">
                 發送應急訊號
               </h2>
@@ -85,8 +84,10 @@ const SignalApp = () => {
               </p>
             </div>
 
-            {/* Nearby Messages */}
-            <MessageList messages={messages} />
+            {/* Nearby Messages - 自適應高度 */}
+            <div className="flex-1 min-h-0">
+              <MessageList messages={messages} />
+            </div>
           </div>
         );
       case 'chat':
@@ -140,8 +141,8 @@ const SignalApp = () => {
         </div>
       </header>
 
-      {/* Content Area */}
-      <main className="flex-1 p-4 pb-20">
+      {/* Content Area - 自適應高度 */}
+      <main className="flex-1 p-4 pb-20 min-h-0 overflow-hidden">
         {renderTabContent()}
       </main>
 
