@@ -1,21 +1,6 @@
 
 export const translations = {
   zh: {
-    // 首頁
-    'badge': '緊急通訊系統',
-    'title': '快速可靠的緊急通訊',
-    'subtitle': '在沒有網路的情況下與附近的人保持聯繫，專為緊急情況設計的點對點通訊系統',
-    'cta': '開始使用',
-    'cross_platform': '跨平台支援',
-    'cross_platform_desc': '支援各種設備和作業系統',
-    'group_comm': '群組通訊',
-    'group_comm_desc': '建立群組進行多人通訊',
-    'real_time': '即時通訊',
-    'real_time_desc': '快速可靠的即時訊息傳送',
-    'privacy': '隱私政策',
-    'terms': '使用條款',
-    'help': '幫助',
-
     // 設定頁面
     'settings': '設定',
     'subscription_status': '訂購狀態',
@@ -58,64 +43,15 @@ export const translations = {
     // 通用
     'back': '返回',
     'close': '關閉',
+    
+    // 其他待翻譯的key會在這裡添加...
   },
   en: {
-    // Index page
-    'badge': 'Emergency Communication System',
-    'title': 'Fast and Reliable Emergency Communication',
-    'subtitle': 'Stay connected with nearby people without internet, a peer-to-peer communication system designed for emergency situations',
-    'cta': 'Get Started',
-    'cross_platform': 'Cross-Platform Support',
-    'cross_platform_desc': 'Works on various devices and operating systems',
-    'group_comm': 'Group Communication',
-    'group_comm_desc': 'Create groups for multi-person communication',
-    'real_time': 'Real-time Communication',
-    'real_time_desc': 'Fast and reliable instant messaging',
-    'privacy': 'Privacy Policy',
-    'terms': 'Terms of Service',
-    'help': 'Help',
-
-    // Settings page
+    // 英文翻譯會在你提供翻譯後填入
     'settings': 'Settings',
-    'subscription_status': 'Subscription Status',
-    'free_user': 'Free User',
-    'premium_user': 'Premium User',
-    'unlocked': 'Unlocked',
-    'upgrade_message': 'Upgrade to unlock game features and enjoy the full experience',
-    'premium_message': 'You have unlocked all game features, thank you for your support!',
-    'upgrade_unlock_games': 'Upgrade to Unlock Game Features',
-    'manage_subscription': 'Manage Subscription',
-    'restore_purchases': 'Restore Purchases',
-    'device_settings': 'Device Settings',
-    'device_name': 'Device Name',
-    'save': 'Save',
-    'cancel': 'Cancel',
-    'can_change_once': 'Can be changed once',
-    'name_fixed': 'Name is fixed and cannot be changed again',
-    'notification_settings': 'Notification Settings',
-    'push_notifications': 'Push Notifications',
-    'privacy_connection': 'Privacy & Connection',
-    'auto_connect': 'Auto Connect',
-    'auto_connect_desc': 'Automatically search and connect to nearby devices when enabled',
-    'share_location': 'Share Location Direction',
-    'share_location_desc': 'Allow others to see your approximate distance and direction',
-    'data_management': 'Data Management',
-    'clear_all_messages': 'Clear All Messages',
-    'delete_account': 'Delete Account',
-    'confirm_delete_title': 'Are you sure you want to delete your account?',
-    'confirm_delete_desc': 'This action cannot be undone. This will permanently delete your account and all related data.',
-    'confirm_delete': 'Confirm Delete',
-    'legal_help': 'Legal & Help',
-    'help_guide': 'Help & Guide',
-    'privacy_policy': 'Privacy Policy',
-    'terms_service': 'Terms of Service',
-    'about': 'About',
     'language': 'Language',
     'chinese': '繁體中文',
     'english': 'English',
-    
-    // Common
-    'back': 'Back',
-    'close': 'Close',
+    // 其他英文翻譯待補充...
   }
 };

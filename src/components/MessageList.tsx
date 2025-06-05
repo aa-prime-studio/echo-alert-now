@@ -33,32 +33,27 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
 
   if (messages.length === 0) {
     return (
-      <div className="bg-white rounded-2xl border-2 border-gray-300 h-full flex flex-col justify-center items-center p-8 text-center text-gray-500">
-        <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center mb-4 border-2 border-gray-200">
-          <Clock className="w-8 h-8 text-gray-400" />
-        </div>
-        <p className="font-bold text-black mb-2">目前沒有收到任何訊號</p>
-        <p className="text-sm text-gray-600">當附近有人發送訊號時，會顯示在這裡</p>
+      <div className="bg-white rounded-lg shadow h-full flex flex-col justify-center items-center p-6 text-center text-gray-500">
+        <Clock className="w-12 h-12 mx-auto mb-4 opacity-50" />
+        <p>目前沒有收到任何訊號</p>
+        <p className="text-sm mt-2">當附近有人發送訊號時，會顯示在這裡</p>
       </div>
     );
   }
 
+  // 按時間排序（最新的在上方）
   const sortedMessages = [...messages].sort((a, b) => b.timestamp - a.timestamp);
 
   return (
-    <div className="bg-white rounded-2xl border-2 border-gray-300 h-full flex flex-col">
-      <div className="p-6 border-b-2 border-gray-200 flex-shrink-0">
+    <div className="bg-white rounded-lg shadow h-full flex flex-col">
+      <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-yellow-400 rounded-xl flex items-center justify-center border-2 border-black">
-              <Users className="w-5 h-5 text-black" />
-            </div>
-            <h3 className="font-bold text-black text-lg">附近訊號</h3>
-            <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm font-bold border border-gray-300">
-              {messages.length}
-            </span>
+          <div className="flex items-center space-x-2">
+            <Users className="w-5 h-5 text-blue-600" />
+            <h3 className="font-semibold text-gray-900">附近訊號</h3>
+            <span className="text-sm text-gray-500">({messages.length})</span>
           </div>
-          <span className="text-xs text-gray-500 font-medium">依時間排序</span>
+          <span className="text-xs text-gray-500">依時間排序</span>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto">
@@ -67,24 +62,24 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           const Icon = config.icon;
           
           return (
-            <div key={message.id} className="p-6 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors">
-              <div className="flex items-start space-x-4">
-                <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 border-black ${config.color}`}>
-                  <Icon className="w-6 h-6" />
+            <div key={message.id} className="p-4 border-b last:border-b-0 hover:bg-gray-50">
+              <div className="flex items-start space-x-3">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${config.color}`}>
+                  <Icon className="w-5 h-5" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-black">{config.label}</span>
-                    <span className="text-sm text-gray-500 font-medium">{formatTime(message.timestamp)}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="font-medium text-gray-900">{config.label}</span>
+                    <span className="text-sm text-gray-500">{formatTime(message.timestamp)}</span>
                   </div>
                   
-                  <div className="text-sm text-gray-600 mb-3 font-medium">來自: {message.deviceName}</div>
+                  <div className="text-sm text-gray-600 mb-2">來自: {message.deviceName}</div>
                   
                   {message.distance && message.direction && (
                     <DirectionCompass 
                       distance={message.distance} 
                       direction={message.direction}
-                      className="mt-3"
+                      className="mt-2"
                     />
                   )}
                 </div>
