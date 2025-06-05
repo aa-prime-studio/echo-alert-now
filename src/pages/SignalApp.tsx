@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -65,12 +64,12 @@ const SignalApp = () => {
               <span>{isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}</span>
             </div>
 
-            {/* Signal Buttons - New asymmetric layout */}
+            {/* Signal Buttons - Half screen layout */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-3">發送訊號</h2>
-              <div className="space-y-3 mb-3">
-                {/* Large Safe Button */}
-                <div className="w-full">
+              <div className="flex gap-3 mb-3">
+                {/* Safe button takes half width */}
+                <div className="w-1/2">
                   <SignalButton
                     type="safe"
                     onSend={handleSendSignal}
@@ -79,8 +78,8 @@ const SignalApp = () => {
                   />
                 </div>
                 
-                {/* Three smaller buttons in a row */}
-                <div className="grid grid-cols-3 gap-2">
+                {/* Other three buttons in vertical stack on the right */}
+                <div className="w-1/2 flex flex-col gap-2">
                   <SignalButton
                     type="supplies"
                     onSend={handleSendSignal}

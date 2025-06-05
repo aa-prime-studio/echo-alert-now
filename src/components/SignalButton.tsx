@@ -45,13 +45,14 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
   const config = signalConfig[type];
   const Icon = config.icon;
 
+  // Adjusted heights for the new layout
   const sizeClasses = size === 'large' 
-    ? 'h-16 text-base space-y-2' 
-    : 'h-12 text-sm space-y-1';
+    ? 'h-32 text-base space-y-2' // Taller for the main safe button
+    : 'h-10 text-sm space-y-1';  // Shorter for the side buttons
     
-  const iconSize = size === 'large' ? 'w-7 h-7' : 'w-5 h-5';
-  const textSize = size === 'large' ? 'text-sm' : 'text-xs';
-  const descSize = size === 'large' ? 'text-xs' : 'text-[10px]';
+  const iconSize = size === 'large' ? 'w-8 h-8' : 'w-4 h-4';
+  const textSize = size === 'large' ? 'text-base' : 'text-xs';
+  const descSize = size === 'large' ? 'text-sm' : 'text-[10px]';
 
   return (
     <Button
