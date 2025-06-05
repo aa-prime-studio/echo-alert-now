@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3 } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
@@ -35,6 +34,10 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   const [tempDeviceName, setTempDeviceName] = React.useState(deviceName);
   const [isEditing, setIsEditing] = React.useState(false);
 
+  // 模擬付費狀態（實際應從全域狀態或 API 獲取）
+  const [isPremium, setIsPremium] = React.useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = React.useState<'free' | 'premium' | 'expired'>('free');
+
   const maxNameChanges = 1;
   const canChangeName = nameChangeCount < maxNameChanges;
 
@@ -52,8 +55,22 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   };
 
   const handleDeleteAccount = () => {
-    // 這裡可以添加刪除帳號的邏輯
     console.log('刪除帳號');
+  };
+
+  const handleUpgrade = () => {
+    console.log('升級到付費版');
+    // 這裡會觸發內購或付費流程
+  };
+
+  const handleManageSubscription = () => {
+    console.log('管理訂購');
+    // 開啟訂購管理頁面
+  };
+
+  const handleRestorePurchases = () => {
+    console.log('恢復購買');
+    // iOS 內購恢復功能
   };
 
   return (
@@ -66,12 +83,80 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
       </div>
       
       <div className="p-4 space-y-6">
+        {/* 訂購狀態 */}
+        <div>
+          <div className="flex items-center space-x-2 mb-3">
+            <Crown className="w-4 h-4 text-yellow-600" />
+            <h4 className="text-sm font-medium text-gray-900">訂購狀態</h4>
+          </div>
+          <div className="space-y-3">
+            <div className={`p-3 rounded-lg border-2 ${
+              isPremium ? 'border-yellow-300 bg-yellow-50' : 'border-gray-200 bg-gray-50'
+            }`}>
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center space-x-2">
+                  {isPremium ? (
+                    <Star className="w-5 h-5 text-yellow-500" />
+                  ) : (
+                    <User className="w-5 h-5 text-gray-500" />
+                  )}
+                  <span className="font-medium">
+                    {isPremium ? '付費版用戶' : '免費版用戶'}
+                  </span>
+                </div>
+                {isPremium && (
+                  <span className="text-xs bg-yellow-200 text-yellow-800 px-2 py-1 rounded-full">
+                    已解鎖
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-gray-600">
+                {isPremium 
+                  ? '您已解鎖所有遊戲功能，感謝您的支持！' 
+                  : '升級解鎖遊戲功能，享受完整體驗'
+                }
+              </p>
+            </div>
+
+            {!isPremium && (
+              <Button
+                onClick={handleUpgrade}
+                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white"
+              >
+                <Crown className="w-4 h-4 mr-2" />
+                升級解鎖遊戲功能
+              </Button>
+            )}
+
+            {isPremium && (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleManageSubscription}
+                  className="text-sm"
+                >
+                  <CreditCard className="w-4 h-4 mr-1" />
+                  管理訂購
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRestorePurchases}
+                  className="text-sm"
+                >
+                  恢復購買
+                </Button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* 裝置設定 */}
         <div>
           <div className="flex items-center space-x-2 mb-3">
             <User className="w-4 h-4 text-gray-600" />
             <h4 className="text-sm font-medium text-gray-900">裝置設定</h4>
           </div>
+          
           <div className="space-y-3">
             <div>
               <Label htmlFor="device-name" className="text-sm text-gray-700">
