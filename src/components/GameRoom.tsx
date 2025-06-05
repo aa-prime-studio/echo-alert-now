@@ -1,41 +1,22 @@
+
 import React, { useState, useEffect } from 'react';
-import { Gamepad2, Trophy, Users, Star, RotateCcw, Grid3X3, Send, Target, Hash, Calendar } from 'lucide-react';
+import { Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-
-interface BingoScore {
-  deviceName: string;
-  score: number;
-  timestamp: number;
-  date: string;
-}
-
-interface BingoRoom {
-  id: number;
-  name: string;
-  players: string[];
-  currentNumbers: number[];
-  isActive: boolean;
-}
-
-interface BingoCard {
-  numbers: number[];
-  marked: boolean[];
-}
-
-interface RoomPlayer {
-  name: string;
-  completedLines: number;
-  hasWon: boolean;
-}
-
-interface RoomChatMessage {
-  id: string;
-  message: string;
-  playerName: string;
-  timestamp: number;
-  isOwn?: boolean;
-}
+import { BingoCard } from '@/components/game/BingoCard';
+import { RoomChat } from '@/components/game/RoomChat';
+import { PlayerList } from '@/components/game/PlayerList';
+import { RoomSelector } from '@/components/game/RoomSelector';
+import { GameRules } from '@/components/game/GameRules';
+import { Leaderboard } from '@/components/game/Leaderboard';
+import { DrawnNumbers } from '@/components/game/DrawnNumbers';
+import { 
+  BingoScore, 
+  BingoRoom, 
+  BingoCard as BingoCardType, 
+  RoomPlayer, 
+  RoomChatMessage 
+} from '@/types/game';
 
 interface GameRoomProps {
   deviceName: string;
@@ -44,7 +25,7 @@ interface GameRoomProps {
 export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   const [currentRoom, setCurrentRoom] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
-  const [bingoCard, setBingoCard] = useState<BingoCard | null>(null);
+  const [bingoCard, setBingoCard] = useState<BingoCardType | null>(null);
   const [drawnNumbers, setDrawnNumbers] = useState<number[]>([]);
   const [completedLines, setCompletedLines] = useState(0);
   const [gameWon, setGameWon] = useState(false);
@@ -71,7 +52,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     setLeaderboard(simulatedScores);
   }, []);
 
-  const generateBingoCard = (): BingoCard => {
+  const generateBingoCard = (): BingoCardType => {
     const numbers: number[] = [];
     const used = new Set<number>();
     
@@ -117,7 +98,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     setCompletedLines(0);
     setGameWon(false);
     setRoomPlayers(generateRoomPlayers());
-    setRoomChatMessages([]); // 清空聊天記錄
+    setRoomChatMessages([]);
     setNewChatMessage('');
     
     // 模擬號碼抽取
@@ -141,12 +122,12 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       
       // 模擬其他玩家的進度
       simulateOtherPlayersProgress();
-    }, 15000); // 改為15秒抽一個號碼
+    }, 15000);
 
     // 模擬遊戲結束
     setTimeout(() => {
       clearInterval(drawInterval);
-    }, 180000); // 3分鐘後結束
+    }, 180000);
   };
 
   const simulateOtherPlayersProgress = () => {
@@ -190,7 +171,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     const lines = checkCompletedLines(newMarked);
     setCompletedLines(lines);
     
-    // 更新自己在房間玩家列表中的進度 - 使用 deviceName
+    // 更新自己在房間玩家列表中的進度
     setRoomPlayers(prev => 
       prev.map(player => 
         player.name === deviceName 
@@ -239,14 +220,14 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   const updateLeaderboard = (score: number) => {
     const today = new Date().toISOString().split('T')[0];
     const newScore: BingoScore = {
-      deviceName, // 使用傳入的 deviceName
+      deviceName,
       score,
       timestamp: Date.now(),
       date: today
     };
     
     const updatedLeaderboard = [...leaderboard, newScore]
-      .filter(s => s.date === today) // 只保留今天的記錄
+      .filter(s => s.date === today)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10);
       
@@ -259,12 +240,12 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     const message: RoomChatMessage = {
       id: crypto.randomUUID(),
       message: newChatMessage.trim(),
-      playerName: deviceName, // 使用傳入的 deviceName
+      playerName: deviceName,
       timestamp: Date.now(),
       isOwn: true
     };
 
-    setRoomChatMessages(prev => [message, ...prev].slice(0, 30)); // 最多保留30條訊息
+    setRoomChatMessages(prev => [message, ...prev].slice(0, 30));
     setNewChatMessage('');
 
     // 模擬其他玩家的聊天回應
@@ -293,18 +274,6 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     }, 1000 + Math.random() * 2000);
   };
 
-  const formatChatTime = (timestamp: number) => {
-    const now = Date.now();
-    const diff = now - timestamp;
-    const minutes = Math.floor(diff / (1000 * 60));
-    
-    if (minutes > 0) {
-      return `${minutes}分鐘前`;
-    } else {
-      return '剛剛';
-    }
-  };
-
   const leaveRoom = () => {
     setCurrentRoom(null);
     setBingoCard(null);
@@ -312,7 +281,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     setCompletedLines(0);
     setGameWon(false);
     setRoomPlayers([]);
-    setRoomChatMessages([]); // 清空聊天記錄
+    setRoomChatMessages([]);
     setNewChatMessage('');
   };
 
@@ -327,141 +296,32 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
           </div>
         </div>
         
-        {/* 房間玩家狀態 */}
-        <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-          <div className="text-sm text-gray-800 mb-2">房間玩家:</div>
-          <div className="grid grid-cols-2 gap-2">
-            {roomPlayers.map((player, index) => (
-              <div key={index} className={`text-xs p-2 rounded ${
-                player.name === deviceName ? 'bg-blue-100 text-blue-800' :
-                player.hasWon ? 'bg-green-100 text-green-800' :
-                'bg-white text-gray-700'
-              }`}>
-                <div className="font-medium">{player.name}</div>
-                <div>{player.completedLines} 條線 {player.hasWon && '👑'}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* 抽取號碼顯示 */}
-        <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-          <div className="text-sm text-blue-800 mb-2">已抽取號碼:</div>
-          <div className="flex flex-wrap gap-1">
-            {drawnNumbers.slice(-10).map((num, index) => (
-              <span key={index} className={`px-2 py-1 rounded text-xs font-bold ${
-                index === drawnNumbers.slice(-10).length - 1 
-                  ? 'bg-red-500 text-white' 
-                  : 'bg-blue-200 text-blue-800'
-              }`}>
-                {num}
-              </span>
-            ))}
-          </div>
-          {drawnNumbers.length > 0 && (
-            <div className="text-xs text-blue-600 mt-1">
-              最新號碼: {drawnNumbers[drawnNumbers.length - 1]}
-            </div>
-          )}
-        </div>
+        <PlayerList players={roomPlayers} deviceName={deviceName} />
+        <DrawnNumbers drawnNumbers={drawnNumbers} />
         
         <div className="flex-1 flex flex-col min-h-0">
-          {/* 賓果卡片 */}
           {bingoCard && (
-            <div className="flex-shrink-0 flex flex-col items-center mb-4">
-              <div className="grid grid-cols-5 gap-1 mb-4 max-w-xs">
-                {bingoCard.numbers.map((number, index) => (
-                  <button
-                    key={index}
-                    onClick={() => markNumber(index)}
-                    disabled={!drawnNumbers.includes(number) || bingoCard.marked[index]}
-                    className={`w-12 h-12 text-sm font-bold rounded border-2 ${
-                      bingoCard.marked[index]
-                        ? 'bg-green-500 text-white border-green-600'
-                        : drawnNumbers.includes(number)
-                          ? 'bg-yellow-200 text-yellow-800 border-yellow-400 hover:bg-yellow-300'
-                          : 'bg-gray-100 text-gray-600 border-gray-300'
-                    }`}
-                  >
-                    {number}
-                  </button>
-                ))}
-              </div>
-              
-              <div className="text-center">
-                <p className="text-sm text-gray-600 mb-2">
-                  點擊已抽取的號碼來標記
-                </p>
-                <Button variant="outline" onClick={leaveRoom}>
-                  離開房間
-                </Button>
-              </div>
-            </div>
+            <BingoCard
+              bingoCard={bingoCard}
+              drawnNumbers={drawnNumbers}
+              onMarkNumber={markNumber}
+              gameWon={gameWon}
+            />
           )}
 
-          {/* 房間聊天室 */}
-          <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0">
-            <div className="p-3 border-b border-gray-200">
-              <h4 className="text-sm font-medium text-gray-900">房間聊天</h4>
-            </div>
-            
-            {/* 聊天訊息 */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2">
-              {roomChatMessages.length === 0 ? (
-                <div className="text-center text-gray-500 py-4">
-                  <p className="text-sm">歡迎來到 {room?.name}</p>
-                  <p className="text-xs mt-1">開始聊天為遊戲加油吧！</p>
-                </div>
-              ) : (
-                roomChatMessages.map((msg) => (
-                  <div key={msg.id} className={`flex ${msg.isOwn ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs px-3 py-2 rounded-lg ${
-                      msg.isOwn 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-white text-gray-900 border'
-                    }`}>
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className={`font-medium text-xs ${
-                          msg.isOwn ? 'text-blue-100' : 'text-gray-600'
-                        }`}>
-                          {msg.isOwn ? '我' : msg.playerName}
-                        </span>
-                        <span className={`text-xs ${
-                          msg.isOwn ? 'text-blue-200' : 'text-gray-400'
-                        }`}>
-                          {formatChatTime(msg.timestamp)}
-                        </span>
-                      </div>
-                      <p className="text-sm break-words">{msg.message}</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            
-            {/* 發送訊息 */}
-            <div className="p-3 border-t border-gray-200">
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={newChatMessage}
-                  onChange={(e) => setNewChatMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && sendRoomChatMessage()}
-                  placeholder="輸入訊息..."
-                  className="flex-1 p-2 text-sm border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
-                  maxLength={100}
-                />
-                <Button
-                  onClick={sendRoomChatMessage}
-                  disabled={!newChatMessage.trim()}
-                  size="sm"
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Send className="w-4 h-4" />
-                </Button>
-              </div>
-            </div>
+          <div className="text-center mb-4">
+            <Button variant="outline" onClick={leaveRoom}>
+              離開房間
+            </Button>
           </div>
+
+          <RoomChat
+            roomName={room?.name || ''}
+            messages={roomChatMessages}
+            newMessage={newChatMessage}
+            setNewMessage={setNewChatMessage}
+            onSendMessage={sendRoomChatMessage}
+          />
         </div>
       </div>
     );
@@ -477,82 +337,9 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       </div>
       
       <div className="flex-1 p-4 space-y-4 overflow-y-auto">
-        {/* 房間選擇 */}
-        <div>
-          <h4 className="text-sm font-medium text-gray-900 mb-3">選擇房間</h4>
-          <div className="grid grid-cols-1 gap-3">
-            {rooms.map((room) => (
-              <Button
-                key={room.id}
-                onClick={() => joinRoom(room.id)}
-                className="h-16 bg-blue-600 hover:bg-blue-700 text-white flex flex-col items-center justify-center"
-              >
-                <span className="text-lg font-bold">{room.name}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-        
-        {/* 改進的遊戲規則 - 方格顯示 */}
-        <div className="bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200 rounded-xl p-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <Gamepad2 className="w-5 h-5 text-blue-600" />
-            <h4 className="text-base font-semibold text-gray-900">遊戲規則</h4>
-          </div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
-              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Hash className="w-5 h-5 text-blue-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-900 mb-1">號碼範圍</p>
-              <p className="text-xs text-gray-600">1-60 隨機抽取</p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Target className="w-5 h-5 text-green-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-900 mb-1">獲勝條件</p>
-              <p className="text-xs text-gray-600">完成 6 條線即可獲勝</p>
-            </div>
-            
-            <div className="bg-white rounded-lg p-3 text-center shadow-sm">
-              <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <Calendar className="w-5 h-5 text-yellow-600" />
-              </div>
-              <p className="text-sm font-medium text-gray-900 mb-1">每日排行</p>
-              <p className="text-xs text-gray-600">每天更新排行榜</p>
-            </div>
-          </div>
-        </div>
-        
-        {/* 今日排行榜 */}
-        {leaderboard.length > 0 && (
-          <div>
-            <div className="flex items-center space-x-2 mb-3">
-              <Trophy className="w-4 h-4 text-yellow-600" />
-              <h4 className="text-sm font-medium text-gray-900">今日排行榜</h4>
-            </div>
-            <div className="space-y-2">
-              {leaderboard.slice(0, 5).map((score, index) => (
-                <div key={`${score.deviceName}-${score.timestamp}`} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center space-x-2">
-                    <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
-                      index === 0 ? 'bg-yellow-100 text-yellow-800' :
-                      index === 1 ? 'bg-gray-100 text-gray-700' :
-                      index === 2 ? 'bg-orange-100 text-orange-700' :
-                      'bg-blue-50 text-blue-600'
-                    }`}>
-                      {index + 1}
-                    </span>
-                    <span className="text-gray-900">{score.deviceName}</span>
-                  </div>
-                  <span className="font-medium text-gray-700">{score.score}線</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        <RoomSelector rooms={rooms} onJoinRoom={joinRoom} />
+        <GameRules />
+        <Leaderboard leaderboard={leaderboard} />
       </div>
     </div>
   );
