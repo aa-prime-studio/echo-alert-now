@@ -1,10 +1,21 @@
 
 import React from 'react';
-import { Settings, User, Bell, Shield, Trash2, Info } from 'lucide-react';
+import { Settings, User, Bell, Shield, Trash2, Info, UserX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface SettingsPanelProps {
   deviceName: string;
@@ -18,9 +29,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
   onClearMessages
 }) => {
   const [notifications, setNotifications] = React.useState(true);
-  const [soundEnabled, setSoundEnabled] = React.useState(true);
   const [autoConnect, setAutoConnect] = React.useState(true);
   const [shareLocation, setShareLocation] = React.useState(false);
+
+  const handleDeleteAccount = () => {
+    // 這裡可以添加刪除帳號的邏輯
+    console.log('刪除帳號');
+  };
 
   return (
     <div className="bg-white rounded-lg shadow">
@@ -72,16 +87,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                 onCheckedChange={setNotifications}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <Label htmlFor="sound" className="text-sm text-gray-700">
-                聲音提示
-              </Label>
-              <Switch
-                id="sound"
-                checked={soundEnabled}
-                onCheckedChange={setSoundEnabled}
-              />
-            </div>
           </div>
         </div>
 
@@ -93,9 +98,14 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
           </div>
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label htmlFor="auto-connect" className="text-sm text-gray-700">
-                自動連線
-              </Label>
+              <div>
+                <Label htmlFor="auto-connect" className="text-sm text-gray-700">
+                  自動連線
+                </Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  開啟時會自動搜尋並連接附近的裝置
+                </p>
+              </div>
               <Switch
                 id="auto-connect"
                 checked={autoConnect}
@@ -135,6 +145,35 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <Trash2 className="w-4 h-4 mr-2" />
               清除所有訊息
             </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                >
+                  <UserX className="w-4 h-4 mr-2" />
+                  刪除帳號
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>確定要刪除帳號嗎？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    此操作無法復原。這將永久刪除您的帳號和所有相關資料。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDeleteAccount}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    確定刪除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </div>
 
