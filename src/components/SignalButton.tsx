@@ -45,14 +45,14 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
   const config = signalConfig[type];
   const Icon = config.icon;
 
-  // Adjusted heights for the new layout
+  // Adjusted heights to make safe button align with danger button at bottom
   const sizeClasses = size === 'large' 
-    ? 'h-32 text-base space-y-2' // Taller for the main safe button
-    : 'h-10 text-sm space-y-1';  // Shorter for the side buttons
+    ? 'h-[108px] text-base space-y-2' // Height to align with 3 small buttons (36px each + 8px gaps)
+    : 'h-[32px] text-sm space-y-1';   // Small button height
     
-  const iconSize = size === 'large' ? 'w-8 h-8' : 'w-4 h-4';
-  const textSize = size === 'large' ? 'text-base' : 'text-xs';
-  const descSize = size === 'large' ? 'text-sm' : 'text-[10px]';
+  const iconSize = size === 'large' ? 'w-6 h-6' : 'w-4 h-4';
+  const textSize = size === 'large' ? 'text-sm font-medium' : 'text-xs';
+  const descSize = size === 'large' ? 'text-xs' : 'text-[10px]';
 
   return (
     <Button

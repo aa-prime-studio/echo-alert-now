@@ -58,12 +58,6 @@ const SignalApp = () => {
       case 'signals':
         return (
           <div className="space-y-4">
-            {/* Connection Status */}
-            <div className="flex items-center justify-center space-x-2 text-sm text-gray-600">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-              <span>{isConnected ? '🟢 已連線 - 可發送和接收訊號' : '🔴 離線模式 - 僅能發送訊號'}</span>
-            </div>
-
             {/* Signal Buttons - Half screen layout */}
             <div>
               <h2 className="text-lg font-semibold text-gray-900 mb-3">發送訊號</h2>
