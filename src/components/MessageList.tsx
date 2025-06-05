@@ -9,10 +9,10 @@ interface MessageListProps {
 }
 
 const signalConfig = {
-  safe: { icon: Shield, color: 'text-green-600 bg-green-50', label: '我安全' },
-  supplies: { icon: Package, color: 'text-yellow-600 bg-yellow-50', label: '需要物資' },
-  medical: { icon: Heart, color: 'text-red-600 bg-red-50', label: '需要醫療' },
-  danger: { icon: AlertTriangle, color: 'text-gray-900 bg-gray-50', label: '危險警告' }
+  safe: { icon: Shield, color: 'text-white bg-[#263eea]', label: '我安全' },
+  supplies: { icon: Package, color: 'text-white bg-[#b199ea]', label: '需要物資' },
+  medical: { icon: Heart, color: 'text-white bg-[#ff5662]', label: '需要醫療' },
+  danger: { icon: AlertTriangle, color: 'text-black bg-[#fec91b]', label: '危險警告' }
 };
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
