@@ -13,9 +13,12 @@ export const DrawnNumbers: React.FC<DrawnNumbersProps> = ({ drawnNumbers }) => {
         {drawnNumbers.slice(-10).map((num, index) => (
           <span key={index} className={`px-2 py-1 rounded text-xs font-bold ${
             index === drawnNumbers.slice(-10).length - 1 
-              ? 'bg-red-500 text-white' 
-              : 'bg-blue-200 text-blue-800'
-          }`}>
+              ? 'text-white' 
+              : ''
+          }`} style={{
+            backgroundColor: index === drawnNumbers.slice(-10).length - 1 ? '#ff5663' : '#263ee4',
+            color: index === drawnNumbers.slice(-10).length - 1 ? 'white' : '#ffec79'
+          }}>
             {num}
           </span>
         ))}

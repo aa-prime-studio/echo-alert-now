@@ -23,13 +23,20 @@ export const BingoCard: React.FC<BingoCardProps> = ({
             key={index}
             onClick={() => onMarkNumber(index)}
             disabled={!drawnNumbers.includes(number) || bingoCard.marked[index]}
-            className={`w-12 h-12 text-sm font-bold rounded border-2 ${
-              bingoCard.marked[index]
-                ? 'bg-green-500 text-white border-green-600'
+            className="w-12 h-12 text-sm font-bold rounded border-2 text-white"
+            style={{
+              backgroundColor: bingoCard.marked[index] 
+                ? '#ffec79' 
                 : drawnNumbers.includes(number)
-                  ? 'bg-yellow-200 text-yellow-800 border-yellow-400 hover:bg-yellow-300'
-                  : 'bg-gray-100 text-gray-600 border-gray-300'
-            }`}
+                  ? '#263ee4'
+                  : '#263ee4',
+              borderColor: bingoCard.marked[index]
+                ? '#ffec79'
+                : drawnNumbers.includes(number)
+                  ? '#263ee4'
+                  : '#263ee4',
+              opacity: !drawnNumbers.includes(number) ? 0.5 : 1
+            }}
           >
             {number}
           </button>
