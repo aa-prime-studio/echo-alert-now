@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -291,11 +290,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       <div className="space-y-6">
         {/* Game Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold text-gray-900 text-left" style={{ 
-            backgroundColor: currentRoom === 2 ? '#10d76a' : 'transparent',
-            padding: currentRoom === 2 ? '4px 8px' : '0',
-            borderRadius: currentRoom === 2 ? '4px' : '0'
-          }}>
+          <h3 className="text-base font-semibold text-gray-900 text-left">
             {room?.name} - 賓果遊戲
           </h3>
           <div className="text-sm text-gray-600">
