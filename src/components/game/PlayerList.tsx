@@ -29,7 +29,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ players, deviceName }) =
           ))}
         </div>
       </div>
-      <Separator />
+      <Separator className="border-black" />
     </>
   );
 };
