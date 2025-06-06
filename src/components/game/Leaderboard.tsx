@@ -1,6 +1,5 @@
 
 import React from 'react';
-import { Trophy } from 'lucide-react';
 import { BingoScore } from '@/types/game';
 
 interface LeaderboardProps {
@@ -12,10 +11,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ leaderboard }) => {
 
   return (
     <div>
-      <div className="flex items-center space-x-2 mb-3">
-        <Trophy className="w-4 h-4 text-yellow-600" />
-        <h4 className="text-base font-semibold text-gray-900 text-left">今日排行榜</h4>
-      </div>
+      <h4 className="text-base font-semibold text-gray-900 text-left mb-3" style={{ fontSize: '1rem' }}>今日排行榜</h4>
       <div className="space-y-2">
         {leaderboard.slice(0, 5).map((score, index) => (
           <div key={`${score.deviceName}-${score.timestamp}`} className="flex items-center justify-between">

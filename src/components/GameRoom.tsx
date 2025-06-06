@@ -122,7 +122,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       
       // 模擬其他玩家的進度
       simulateOtherPlayersProgress();
-    }, 15000);
+    }, 4000); // 改為4秒間隔
 
     // 模擬遊戲結束
     setTimeout(() => {
