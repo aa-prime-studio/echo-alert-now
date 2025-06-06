@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Send, Trash2, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -87,7 +86,7 @@ export const ChatRoom: React.FC = () => {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <h3 className="text-sm font-semibold text-gray-900 text-left">支援聊天室</h3>
+          <h3 className="text-base font-semibold text-gray-900 text-left">支援聊天室</h3>
           <span className="text-sm text-gray-500">({messages.length})</span>
         </div>
         <div className="flex items-center space-x-2">

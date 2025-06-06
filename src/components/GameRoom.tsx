@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -290,7 +291,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       <div className="space-y-6">
         {/* Game Header */}
         <div className="flex items-center justify-between">
-          <h3 className="text-xl font-semibold text-gray-900 text-left">{room?.name} - 賓果遊戲</h3>
+          <h3 className="text-base font-semibold text-gray-900 text-left">{room?.name} - 賓果遊戲</h3>
           <div className="text-sm text-gray-600">
             完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
           </div>
@@ -332,7 +333,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-2">
-        <h3 className="text-xl font-semibold text-gray-900 text-left">賓果遊戲室</h3>
+        <h3 className="text-base font-semibold text-gray-900 text-left">賓果遊戲室</h3>
       </div>
       
       {/* Game Selection Content */}

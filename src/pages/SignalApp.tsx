@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -62,7 +61,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -121,7 +120,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton

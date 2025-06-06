@@ -47,7 +47,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-sm font-semibold text-gray-900 text-left">附近訊號</h3>
+        <h3 className="text-base font-semibold text-gray-900 text-left">附近訊號</h3>
         <span className="text-sm text-gray-500">({messages.length})</span>
       </div>
       
