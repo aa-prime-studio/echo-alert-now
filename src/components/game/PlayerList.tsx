@@ -17,10 +17,11 @@ export const PlayerList: React.FC<PlayerListProps> = ({ players, deviceName }) =
           {players.map((player, index) => (
             <div key={index} className={`text-xs p-2 rounded ${
               player.name === deviceName ? 'text-white' :
-              player.hasWon ? 'bg-green-100 text-green-800' :
+              player.hasWon ? 'text-white' :
               'bg-white text-gray-700'
             }`} style={{
-              backgroundColor: player.name === deviceName ? '#263ee4' : undefined
+              backgroundColor: player.name === deviceName ? '#263ee4' : 
+                             player.hasWon ? '#ff5663' : undefined
             }}>
               <div className="font-medium">{player.name}</div>
               <div>{player.completedLines} 條線 {player.hasWon && '👑'}</div>
@@ -28,7 +29,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ players, deviceName }) =
           ))}
         </div>
       </div>
-      <Separator className="mb-4" />
+      <Separator />
     </>
   );
 };

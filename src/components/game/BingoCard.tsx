@@ -35,7 +35,7 @@ export const BingoCard: React.FC<BingoCardProps> = ({
                 : drawnNumbers.includes(number)
                   ? '#263ee4'
                   : '#263ee4',
-              color: bingoCard.marked[index] ? '#ab93e5' : 'white',
+              color: bingoCard.marked[index] ? '#ab93e5' : '#ffec79',
               opacity: !drawnNumbers.includes(number) ? 0.5 : 1
             }}
           >
