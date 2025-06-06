@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Hash, Target, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,7 +7,7 @@ export const GameRules: React.FC = () => {
   return (
     <Card className="bg-white border-black shadow-sm">
       <CardContent className="p-6">
-        <h4 className="font-semibold text-gray-900 mb-4 text-left" style={{ fontSize: '17px' }}>遊戲規則</h4>
+        <h4 className="text-sm font-semibold text-gray-900 mb-4 text-left">遊戲規則</h4>
         <div className="grid grid-cols-3 gap-4">
           <div className="text-left">
             <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3 border border-black" style={{ backgroundColor: '#00d76a' }}>
