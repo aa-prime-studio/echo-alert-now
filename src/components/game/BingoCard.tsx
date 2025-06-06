@@ -26,16 +26,16 @@ export const BingoCard: React.FC<BingoCardProps> = ({
             className="w-12 h-12 text-sm font-bold rounded border-2"
             style={{
               backgroundColor: bingoCard.marked[index] 
-                ? '#ffec79' 
+                ? '#10d76a'
                 : drawnNumbers.includes(number)
                   ? '#263ee4'
                   : '#263ee4',
               borderColor: bingoCard.marked[index]
-                ? '#ffec79'
+                ? '#10d76a'
                 : drawnNumbers.includes(number)
                   ? '#263ee4'
                   : '#263ee4',
-              color: bingoCard.marked[index] ? '#ab93e5' : '#ffec79',
+              color: bingoCard.marked[index] ? 'white' : '#ffec79',
               opacity: !drawnNumbers.includes(number) ? 0.5 : 1
             }}
           >

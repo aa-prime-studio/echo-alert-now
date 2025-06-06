@@ -21,7 +21,7 @@ export const PlayerList: React.FC<PlayerListProps> = ({ players, deviceName }) =
               'bg-white text-gray-700'
             }`} style={{
               backgroundColor: player.name === deviceName ? '#263ee4' : 
-                             player.hasWon ? '#ff5663' : undefined
+                             player.hasWon ? '#10d76a' : undefined
             }}>
               <div className="font-medium">{player.name}</div>
               <div>{player.completedLines} 條線 {player.hasWon && '👑'}</div>

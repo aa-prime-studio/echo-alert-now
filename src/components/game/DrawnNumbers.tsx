@@ -16,7 +16,7 @@ export const DrawnNumbers: React.FC<DrawnNumbersProps> = ({ drawnNumbers }) => {
               ? 'text-white' 
               : ''
           }`} style={{
-            backgroundColor: index === drawnNumbers.slice(-10).length - 1 ? '#ff5663' : '#263ee4',
+            backgroundColor: index === drawnNumbers.slice(-10).length - 1 ? '#10d76a' : '#263ee4',
             color: index === drawnNumbers.slice(-10).length - 1 ? 'white' : '#ffec79'
           }}>
             {num}
