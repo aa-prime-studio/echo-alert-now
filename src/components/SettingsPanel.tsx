@@ -68,6 +68,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     // 這裡會觸發內購或付費流程
   };
 
+  const handleRestorePurchases = () => {
+    console.log('恢復購買');
+    // iOS 內購恢復功能
+  };
+
   const handleManageSubscription = () => {
     console.log('管理訂購');
     // 開啟訂購管理頁面
@@ -78,11 +83,6 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
     // 實際應該呼叫取消訂閱的 API
     setIsPremium(false);
     setSubscriptionStatus('expired');
-  };
-
-  const handleRestorePurchases = () => {
-    console.log('恢復購買');
-    // iOS 內購恢復功能
   };
 
   const handleViewSubscriptionDetails = () => {
@@ -159,13 +159,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             </div>
 
             {!isPremium && (
-              <Button
-                onClick={handleUpgrade}
-                className="w-full bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-700"
-              >
-                <Crown className="w-4 h-4 mr-2" />
-                {t('upgrade_unlock_games')}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  onClick={handleUpgrade}
+                  className="w-full text-white"
+                  style={{ backgroundColor: '#aa92e4' }}
+                >
+                  <Crown className="w-4 h-4 mr-2" />
+                  {t('upgrade_unlock_games')}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleRestorePurchases}
+                  className="w-full border-gray-300"
+                >
+                  恢復購買
+                </Button>
+              </div>
             )}
 
             {isPremium && (
@@ -370,7 +380,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <Button
               variant="outline"
               onClick={onClearMessages}
-              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+              className="w-full hover:bg-purple-50"
+              style={{ 
+                color: '#aa92e4',
+                borderColor: '#aa92e4'
+              }}
             >
               <Trash2 className="w-4 h-4 mr-2" />
               {t('clear_all_messages')}
@@ -380,7 +394,11 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
+                  className="w-full hover:bg-purple-50"
+                  style={{ 
+                    color: '#aa92e4',
+                    borderColor: '#aa92e4'
+                  }}
                 >
                   <UserX className="w-4 h-4 mr-2" />
                   {t('delete_account')}
