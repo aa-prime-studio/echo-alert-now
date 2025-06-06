@@ -18,7 +18,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ leaderboard }) => {
       </div>
       <div className="space-y-2">
         {leaderboard.slice(0, 5).map((score, index) => (
-          <div key={`${score.deviceName}-${score.timestamp}`} className="flex items-center justify-between text-sm">
+          <div key={`${score.deviceName}-${score.timestamp}`} className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <span className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold ${
                 index === 0 ? 'bg-yellow-100 text-yellow-800' :
@@ -28,9 +28,9 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ leaderboard }) => {
               }`}>
                 {index + 1}
               </span>
-              <span className="text-gray-900">{score.deviceName}</span>
+              <span className="text-gray-900" style={{ fontSize: '14.5px' }}>{score.deviceName}</span>
             </div>
-            <span className="font-medium text-gray-700">{score.score}線</span>
+            <span className="font-medium text-gray-700" style={{ fontSize: '14.5px' }}>{score.score}線</span>
           </div>
         ))}
       </div>

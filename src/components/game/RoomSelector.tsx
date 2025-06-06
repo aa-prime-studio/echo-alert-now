@@ -20,14 +20,14 @@ export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom })
             className="w-full text-left justify-start border-black hover:text-white"
             style={{ 
               backgroundColor: '#00d76a',
-              color: room.id === 1 ? '#263ee4' : 'white',
+              color: '#263ee4',
               borderColor: 'black'
             }}
             onClick={() => onJoinRoom(room.id)}
           >
             <div className="flex items-center justify-between w-full">
               <span>{room.name}</span>
-              <span className="text-sm opacity-80" style={{ color: room.id === 1 ? '#263ee4' : 'white' }}>
+              <span className="text-sm opacity-80" style={{ color: '#263ee4' }}>
                 {room.players.length} 玩家
               </span>
             </div>

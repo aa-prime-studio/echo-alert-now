@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,7 @@ const SignalApp = () => {
       case 'chat':
         return { bg: '#ab93e5', title: 'Live Support\nChatroom', subtitle: null };
       case 'games':
-        return { bg: '#ffec79', title: 'Bingo Game\nRoom', subtitle: null };
+        return { bg: '#263ee4', title: 'Bingo Game\nRoom', subtitle: null, textColor: '#ffec79' };
       case 'settings':
         return { bg: '#00d76a', title: 'Settings', subtitle: null };
       default:
@@ -173,7 +174,10 @@ const SignalApp = () => {
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-gray-100">
       {/* Header */}
-      <header className="text-black px-4 py-6 flex-shrink-0" style={{ backgroundColor: headerConfig.bg }}>
+      <header className="px-4 py-6 flex-shrink-0" style={{ 
+        backgroundColor: headerConfig.bg,
+        color: headerConfig.textColor || 'black'
+      }}>
         <div className="flex items-center justify-between mb-2">
           <div className="flex-1">
             {activeTab === 'signals' && (
@@ -188,7 +192,8 @@ const SignalApp = () => {
             variant="ghost"
             size="sm"
             onClick={toggleConnection}
-            className="text-black hover:bg-black/10"
+            className="hover:bg-black/10"
+            style={{ color: headerConfig.textColor || 'black' }}
           >
             {isConnected ? <Wifi className="w-5 h-5" /> : <WifiOff className="w-5 h-5" />}
           </Button>
