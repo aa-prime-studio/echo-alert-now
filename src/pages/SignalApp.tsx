@@ -45,7 +45,7 @@ const SignalApp = () => {
       case 'chat':
         return { bg: '#ab93e5', title: 'Live Support\nChatroom', subtitle: null };
       case 'games':
-        return { bg: '#283ee5', title: 'Bingo Game\nRoom', subtitle: null };
+        return { bg: '#ffec79', title: 'Bingo Game\nRoom', subtitle: null };
       case 'settings':
         return { bg: '#00d76a', title: 'Settings', subtitle: null };
       default:
