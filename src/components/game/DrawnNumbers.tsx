@@ -7,8 +7,8 @@ interface DrawnNumbersProps {
 
 export const DrawnNumbers: React.FC<DrawnNumbersProps> = ({ drawnNumbers }) => {
   return (
-    <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-      <div className="text-sm text-blue-800 mb-2">已抽取號碼:</div>
+    <div className="mb-4 p-3 rounded-lg">
+      <div className="text-sm text-gray-800 mb-2">已抽取號碼:</div>
       <div className="flex flex-wrap gap-1">
         {drawnNumbers.slice(-10).map((num, index) => (
           <span key={index} className={`px-2 py-1 rounded text-xs font-bold ${
@@ -24,7 +24,7 @@ export const DrawnNumbers: React.FC<DrawnNumbersProps> = ({ drawnNumbers }) => {
         ))}
       </div>
       {drawnNumbers.length > 0 && (
-        <div className="text-xs text-blue-600 mt-1">
+        <div className="text-xs text-gray-600 mt-1">
           最新號碼: {drawnNumbers[drawnNumbers.length - 1]}
         </div>
       )}
