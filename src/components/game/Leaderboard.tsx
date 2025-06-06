@@ -14,7 +14,7 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({ leaderboard }) => {
     <div>
       <div className="flex items-center space-x-2 mb-3">
         <Trophy className="w-4 h-4 text-yellow-600" />
-        <h4 className="text-lg font-semibold text-gray-900 text-left">今日排行榜</h4>
+        <h4 className="text-sm font-semibold text-gray-900 text-left">今日排行榜</h4>
       </div>
       <div className="space-y-2">
         {leaderboard.slice(0, 5).map((score, index) => (
