@@ -1,4 +1,3 @@
-
 export interface BingoScore {
   deviceName: string;
   score: number;
@@ -12,6 +11,9 @@ export interface BingoRoom {
   players: string[];
   currentNumbers: number[];
   isActive: boolean;
+  maxPlayers: number;
+  isFull: boolean;
+  waitingPlayers: number;
 }
 
 export interface BingoCard {

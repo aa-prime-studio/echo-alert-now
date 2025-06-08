@@ -1,5 +1,5 @@
-
 import React from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BingoCard as BingoCardType } from '@/types/game';
 
 interface BingoCardProps {
@@ -15,6 +15,8 @@ export const BingoCard: React.FC<BingoCardProps> = ({
   onMarkNumber,
   gameWon
 }) => {
+  const { t } = useLanguage();
+  
   return (
     <div className="flex-shrink-0 flex flex-col items-center mb-4">
       <div className="grid grid-cols-5 gap-1 mb-4 max-w-xs">
@@ -46,7 +48,7 @@ export const BingoCard: React.FC<BingoCardProps> = ({
       
       <div className="text-center">
         <p className="text-sm text-gray-600 mb-2">
-          點擊已抽取的號碼來標記
+          {t('click_to_mark')}
         </p>
       </div>
     </div>

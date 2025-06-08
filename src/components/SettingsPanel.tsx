@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText, Languages, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -173,7 +172,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   onClick={handleRestorePurchases}
                   className="w-full border-gray-300"
                 >
-                  恢復購買
+                  {t('restore_purchases')}
                 </Button>
               </div>
             )}
@@ -204,7 +203,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     onClick={handleRestorePurchases}
                     className="text-sm border-gray-300"
                   >
-                    恢復購買
+                    {t('restore_purchases')}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>

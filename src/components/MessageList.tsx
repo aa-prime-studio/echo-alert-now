@@ -1,22 +1,41 @@
-
 import React from 'react';
 import { AlertTriangle, Heart, Package, Shield, Clock } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
 import { DirectionCompass } from '@/components/DirectionCompass';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MessageListProps {
   messages: SignalMessage[];
+  isConnected?: boolean;
 }
 
 const signalConfig = {
-  safe: { icon: Shield, color: 'text-white bg-[#263eea]', label: '我安全' },
-  supplies: { icon: Package, color: 'text-white bg-[#b199ea]', label: '需要物資' },
-  medical: { icon: Heart, color: 'text-white bg-[#ff5662]', label: '需要醫療' },
-  danger: { icon: AlertTriangle, color: 'text-black bg-[#fec91b]', label: '危險警告' }
+  safe: { 
+    icon: Shield, 
+    color: 'text-white bg-[#263eea]', 
+    labelKey: 'safe_signal'
+  },
+  supplies: { 
+    icon: Package, 
+    color: 'text-white bg-[#b199ea]', 
+    labelKey: 'supplies_signal'
+  },
+  medical: { 
+    icon: Heart, 
+    color: 'text-white bg-[#ff5662]', 
+    labelKey: 'medical_signal'
+  },
+  danger: { 
+    icon: AlertTriangle, 
+    color: 'text-black bg-[#fec91b]', 
+    labelKey: 'danger_signal'
+  }
 };
 
-export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+export const MessageList: React.FC<MessageListProps> = ({ messages, isConnected = true }) => {
+  const { t } = useLanguage();
+
   const formatTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -24,19 +43,23 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     
     if (hours > 0) {
-      return `${hours}小時前`;
+      return `${hours} ${t('hours_ago')}`;
     } else if (minutes > 0) {
-      return `${minutes}分鐘前`;
+      return `${minutes} ${t('minutes_ago')}`;
     } else {
-      return '剛剛';
+      return t('just_now');
     }
   };
 
   if (messages.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center p-8 text-center text-gray-500 border border-black rounded-lg bg-gray-50">
-        <p className="text-gray-600 mb-2">目前沒有訊息</p>
-        <p className="text-sm text-gray-400">當附近有人發送訊號時，會顯示在這裡</p>
+        <p className="text-gray-600 mb-2">{t('no_signals')}</p>
+        <p className="text-sm text-gray-400">
+          {isConnected 
+            ? t('signal_will_show')
+            : t('offline_mode')}
+        </p>
       </div>
     );
   };
@@ -47,7 +70,9 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-base font-semibold text-gray-900 text-left">附近訊號</h3>
+        <h3 className="text-base font-semibold text-gray-900 text-left">
+          {t('nearby_signals_title')}
+        </h3>
         <span className="text-sm text-gray-500">({messages.length})</span>
       </div>
       
@@ -66,8 +91,15 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 <div className="flex-1 min-w-0 relative">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900">{config.label}</span>
-                      <div className="text-sm text-gray-600 mb-1 mt-1">來自: {message.deviceName}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-gray-900">{t(config.labelKey)}</span>
+                        {!isConnected && (
+                          <span className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                            {t('disconnected_status')}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 mb-1 mt-1">{t('from')}: {message.deviceName}</div>
                       <div className="text-sm text-gray-500">{formatTime(message.timestamp)}</div>
                     </div>
                     

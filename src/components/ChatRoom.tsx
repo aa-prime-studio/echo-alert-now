@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Send, Trash2, Clock, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface ChatMessage {
   id: string;
@@ -11,6 +12,7 @@ interface ChatMessage {
 }
 
 export const ChatRoom: React.FC = () => {
+  const { t } = useLanguage();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [deviceName] = useState(`Device-${Math.random().toString(36).substr(2, 6)}`);
@@ -86,13 +88,13 @@ export const ChatRoom: React.FC = () => {
       {/* Header Section */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <h3 className="text-base font-semibold text-gray-900 text-left">支援聊天室</h3>
+          <h3 className="text-base font-semibold text-gray-900 text-left">{t('support_chat')}</h3>
           <span className="text-sm text-gray-500">({messages.length})</span>
         </div>
         <div className="flex items-center space-x-2">
           <div className="flex items-center space-x-1 text-xs text-gray-500">
             <Clock className="w-4 h-4" />
-            <span>24小時自動清除</span>
+            <span>{t('auto_clear_24h')}</span>
           </div>
           <Button
             variant="ghost"
@@ -110,8 +112,8 @@ export const ChatRoom: React.FC = () => {
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 py-12 border border-black rounded-lg bg-gray-50">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p className="text-gray-600 mb-2">目前沒有訊息</p>
-            <p className="text-sm text-gray-400">發送第一條訊息開始對話</p>
+            <p className="text-gray-600 mb-2">{t('no_messages')}</p>
+            <p className="text-sm text-gray-400">{t('send_first_message')}</p>
           </div>
         ) : (
           <div className="space-y-3 p-4 border border-black rounded-lg bg-gray-50 max-h-96 overflow-y-auto">
@@ -150,7 +152,7 @@ export const ChatRoom: React.FC = () => {
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-            placeholder="輸入訊息..."
+            placeholder={t('enter_message')}
             className="flex-1 p-2 border border-black rounded-md focus:ring-blue-500 focus:border-blue-500"
             maxLength={200}
           />
@@ -163,7 +165,7 @@ export const ChatRoom: React.FC = () => {
           </Button>
         </div>
         <p className="text-xs text-gray-500">
-          訊息會在24小時後自動刪除 • 最多顯示50條訊息
+          {t('message_auto_delete')}
         </p>
       </div>
     </div>

@@ -1,8 +1,8 @@
-
 import React, { useEffect, useRef } from 'react';
 import { Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { RoomChatMessage } from '@/types/game';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface RoomChatProps {
   roomName: string;
@@ -19,6 +19,7 @@ export const RoomChat: React.FC<RoomChatProps> = ({
   setNewMessage,
   onSendMessage
 }) => {
+  const { t } = useLanguage();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -35,24 +36,24 @@ export const RoomChat: React.FC<RoomChatProps> = ({
     const minutes = Math.floor(diff / (1000 * 60));
     
     if (minutes > 0) {
-      return `${minutes}分鐘前`;
+      return `${minutes} ${t('minutes_ago')}`;
     } else {
-      return '剛剛';
+      return t('just_now');
     }
   };
 
   return (
     <div className="flex-1 bg-gray-50 rounded-lg flex flex-col min-h-0 border border-black">
       <div className="p-3 border-b border-black">
-        <h4 className="text-sm font-medium text-gray-900">房間聊天</h4>
+        <h4 className="text-sm font-medium text-gray-900">{t('room_chat')}</h4>
       </div>
       
       {/* 聊天訊息 */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
         {messages.length === 0 ? (
           <div className="text-center text-gray-500 py-4">
-            <p className="text-sm">歡迎來到 {roomName}</p>
-            <p className="text-xs mt-1">開始聊天為遊戲加油吧！</p>
+            <p className="text-sm">{t('welcome_to')} {roomName}</p>
+            <p className="text-xs mt-1">{t('start_chat')}</p>
           </div>
         ) : (
           // 反轉陣列順序，讓最新訊息顯示在底部
@@ -91,7 +92,7 @@ export const RoomChat: React.FC<RoomChatProps> = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && onSendMessage()}
-            placeholder="輸入訊息..."
+            placeholder={t('enter_message')}
             className="flex-1 p-2 text-sm border border-black rounded-md focus:ring-blue-500 focus:border-blue-500"
             maxLength={100}
           />

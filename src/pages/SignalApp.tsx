@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -8,11 +7,13 @@ import { ChatRoom } from '@/components/ChatRoom';
 import { GameRoom } from '@/components/GameRoom';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { useSignals } from '@/hooks/useSignals';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { toast } from 'sonner';
 
 type TabType = 'signals' | 'chat' | 'games' | 'settings';
 
 const SignalApp = () => {
+  const { t } = useLanguage();
   const { messages, connectionState, deviceName, setDeviceName, sendSignal, clearMessages } = useSignals();
   const [activeTab, setActiveTab] = useState<TabType>('signals');
   const [isConnected, setIsConnected] = useState(true);
@@ -21,36 +22,36 @@ const SignalApp = () => {
     await sendSignal(type);
     
     const signalNames = {
-      safe: '安全訊號',
-      supplies: '物資需求',
-      medical: '醫療需求',
-      danger: '危險警告'
+      safe: t('safe_signal'),
+      supplies: t('supplies_signal'),
+      medical: t('medical_signal'),
+      danger: t('danger_signal')
     };
     
-    toast.success(`${signalNames[type]}已發送`, {
-      description: '訊號已廣播至附近裝置'
+    toast.success(`${signalNames[type]} ${t('signal_sent')}`, {
+      description: t('signal_broadcast')
     });
   };
 
   const toggleConnection = () => {
     setIsConnected(!isConnected);
-    toast.info(isConnected ? '已斷開連線' : '正在連線...', {
-      description: isConnected ? '停止廣播訊號' : '開始搜尋附近裝置'
+    toast.info(isConnected ? t('disconnected') : t('connecting'), {
+      description: isConnected ? t('stop_broadcast') : t('searching_devices')
     });
   };
 
   const getHeaderConfig = () => {
     switch (activeTab) {
       case 'signals':
-        return { bg: '#e5d804', title: 'Broadcast\nSignal', subtitle: null };
+        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
       case 'chat':
-        return { bg: '#ab93e5', title: 'Live Support\nChatroom', subtitle: null };
+        return { bg: '#ab93e5', title: 'Support Chat Room', subtitle: null };
       case 'games':
-        return { bg: '#263ee4', title: 'Bingo Game\nRoom', subtitle: null, textColor: '#ffec79' };
+        return { bg: '#263ee4', title: 'Bingo\nGame Room', subtitle: null, textColor: '#ffec79' };
       case 'settings':
         return { bg: '#00d76a', title: 'Settings', subtitle: null };
       default:
-        return { bg: '#e5d804', title: 'Broadcast\nSignal', subtitle: null };
+        return { bg: '#e5d804', title: 'Broadcast Signal', subtitle: null };
     }
   };
 
@@ -62,7 +63,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">{t('broadcast_signal')}</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -94,11 +95,13 @@ const SignalApp = () => {
                 </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
-                訊號會廣播至 50-500 公尺範圍內的裝置
+                {isConnected 
+                  ? t('connected')
+                  : t('disconnected_status')}
               </p>
             </div>
             <div className="flex-1">
-              <MessageList messages={messages} />
+              <MessageList messages={messages} isConnected={isConnected} />
             </div>
           </div>
         );
@@ -113,7 +116,7 @@ const SignalApp = () => {
             setDeviceName={setDeviceName}
             onClearMessages={() => {
               clearMessages();
-              toast.success('訊息已清除');
+              toast.success(t('clear_all_messages'));
             }}
           />
         );
@@ -121,7 +124,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">{t('broadcast_signal')}</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -153,11 +156,13 @@ const SignalApp = () => {
                 </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
-                訊號會廣播至 50-500 公尺範圍內的裝置
+                {isConnected 
+                  ? t('connected')
+                  : t('disconnected_status')}
               </p>
             </div>
             <div className="flex-1">
-              <MessageList messages={messages} />
+              <MessageList messages={messages} isConnected={isConnected} />
             </div>
           </div>
         );
@@ -165,10 +170,10 @@ const SignalApp = () => {
   };
 
   const tabConfig = [
-    { id: 'signals' as TabType, label: '訊號', icon: Radio },
-    { id: 'chat' as TabType, label: '聊天室', icon: MessageCircle },
-    { id: 'games' as TabType, label: '遊戲', icon: Gamepad2 },
-    { id: 'settings' as TabType, label: '設定', icon: Settings },
+    { id: 'signals' as TabType, label: 'Signal', icon: Radio },
+    { id: 'chat' as TabType, label: 'Chat', icon: MessageCircle },
+    { id: 'games' as TabType, label: 'Game', icon: Gamepad2 },
+    { id: 'settings' as TabType, label: 'Settings', icon: Settings },
   ];
 
   return (
@@ -182,8 +187,17 @@ const SignalApp = () => {
           <div className="flex-1">
             {activeTab === 'signals' && (
               <div className="flex items-center mb-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <p className="text-sm opacity-80">已連線 - 可發送和接收訊號</p>
+                {isConnected ? (
+                  <>
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                    <p className="text-sm opacity-80">{t('connected')}</p>
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2"></div>
+                    <p className="text-sm opacity-80">{t('disconnected_status')}</p>
+                  </>
+                )}
               </div>
             )}
             <h1 className="text-5xl font-bold whitespace-pre-line">{headerConfig.title}</h1>

@@ -16,12 +16,14 @@ import {
   RoomPlayer, 
   RoomChatMessage 
 } from '@/types/game';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface GameRoomProps {
   deviceName: string;
 }
 
 export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
+  const { t } = useLanguage();
   const [currentRoom, setCurrentRoom] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
   const [bingoCard, setBingoCard] = useState<BingoCardType | null>(null);
@@ -31,12 +33,42 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   const [roomPlayers, setRoomPlayers] = useState<RoomPlayer[]>([]);
   const [roomChatMessages, setRoomChatMessages] = useState<RoomChatMessage[]>([]);
   const [newChatMessage, setNewChatMessage] = useState('');
+  const [gameEnded, setGameEnded] = useState(false);
+  const [isWaiting, setIsWaiting] = useState(false);
+  const [waitingPosition, setWaitingPosition] = useState<number | null>(null);
 
   // 3個賓果房間
   const [rooms] = useState<BingoRoom[]>([
-    { id: 1, name: 'room A', players: [], currentNumbers: [], isActive: false },
-    { id: 2, name: 'room B', players: [], currentNumbers: [], isActive: false },
-    { id: 3, name: 'room C', players: [], currentNumbers: [], isActive: false }
+    { 
+      id: 1, 
+      name: 'room A', 
+      players: [], 
+      currentNumbers: [], 
+      isActive: false,
+      maxPlayers: 6,  // 每個房間最多6個玩家
+      isFull: false,
+      waitingPlayers: 0
+    },
+    { 
+      id: 2, 
+      name: 'room B', 
+      players: [], 
+      currentNumbers: [], 
+      isActive: false,
+      maxPlayers: 6,
+      isFull: false,
+      waitingPlayers: 0
+    },
+    { 
+      id: 3, 
+      name: 'room C', 
+      players: [], 
+      currentNumbers: [], 
+      isActive: false,
+      maxPlayers: 6,
+      isFull: false,
+      waitingPlayers: 0
+    }
   ]);
 
   useEffect(() => {
@@ -90,15 +122,79 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     return players;
   };
 
+  const checkRoomStatus = (roomId: number) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    const isFull = room.players.length >= room.maxPlayers;
+    const waitingCount = Math.max(0, room.waitingPlayers);
+
+    if (isFull) {
+      toast.info(t('room_full'), {
+        description: t('room_full_desc')
+      });
+      return false;
+    }
+
+    if (waitingCount > 0) {
+      const position = waitingCount + 1;
+      toast.info(t('waiting_for_room'), {
+        description: t('waiting_position', { position })
+      });
+      return false;
+    }
+
+    return true;
+  };
+
   const joinRoom = (roomId: number) => {
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    // 檢查房間狀態
+    if (!checkRoomStatus(roomId)) {
+      // 如果房間已滿，加入等待列表
+      if (room.isFull) {
+        setIsWaiting(true);
+        setWaitingPosition(room.waitingPlayers + 1);
+        room.waitingPlayers++;
+        
+        // 模擬等待過程
+        const checkInterval = setInterval(() => {
+          if (room.players.length < room.maxPlayers) {
+            clearInterval(checkInterval);
+            setIsWaiting(false);
+            setWaitingPosition(null);
+            room.waitingPlayers--;
+            actuallyJoinRoom(roomId);
+          }
+        }, 5000); // 每5秒檢查一次
+
+        return;
+      }
+      return;
+    }
+
+    actuallyJoinRoom(roomId);
+  };
+
+  const actuallyJoinRoom = (roomId: number) => {
     setCurrentRoom(roomId);
     setBingoCard(generateBingoCard());
     setDrawnNumbers([]);
     setCompletedLines(0);
     setGameWon(false);
+    setGameEnded(false);
     setRoomPlayers(generateRoomPlayers());
     setRoomChatMessages([]);
     setNewChatMessage('');
+    
+    // 更新房間狀態
+    const room = rooms.find(r => r.id === roomId);
+    if (room) {
+      room.players.push(deviceName);
+      room.isFull = room.players.length >= room.maxPlayers;
+    }
     
     // 模擬號碼抽取
     setTimeout(() => {
@@ -108,6 +204,11 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
 
   const startDrawingNumbers = () => {
     const drawInterval = setInterval(() => {
+      if (gameEnded) {
+        clearInterval(drawInterval);
+        return;
+      }
+
       const availableNumbers = Array.from({length: 60}, (_, i) => i + 1)
         .filter(num => !drawnNumbers.includes(num));
       
@@ -119,30 +220,35 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
       const newNumber = availableNumbers[Math.floor(Math.random() * availableNumbers.length)];
       setDrawnNumbers(prev => [...prev, newNumber]);
       
-      // 模擬其他玩家的進度
       simulateOtherPlayersProgress();
-    }, 4000); // 改為4秒間隔
-
-    // 模擬遊戲結束
-    setTimeout(() => {
-      clearInterval(drawInterval);
-    }, 180000);
+    }, 4000);
   };
 
   const simulateOtherPlayersProgress = () => {
     setRoomPlayers(prev => 
       prev.map(player => {
-        if (player.name === deviceName || player.hasWon) return player;
+        if (player.name === deviceName || player.hasWon || gameEnded) return player;
         
-        // 隨機機會增加線數
         if (Math.random() < 0.3) {
           const newLines = player.completedLines + 1;
           const hasWon = newLines >= 6;
           
           if (newLines > player.completedLines) {
-            toast.info(`${player.name} 完成了 ${newLines} 條線！`, {
-              description: hasWon ? '🎉 獲勝了！' : '繼續加油！'
+            toast.info(`${player.name} ${t('player_completed_lines')} ${newLines} ${t('lines')}!`, {
+              description: hasWon ? t('player_won') : t('keep_going')
             });
+
+            if (hasWon) {
+              setGameEnded(true);
+              const gameEndMessage: RoomChatMessage = {
+                id: crypto.randomUUID(),
+                message: `${player.name} ${t('game_end_message')}`,
+                playerName: t('system_message'),
+                timestamp: Date.now(),
+                isOwn: false
+              };
+              setRoomChatMessages(prev => [gameEndMessage, ...prev]);
+            }
           }
           
           return {
@@ -157,7 +263,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
   };
 
   const markNumber = (index: number) => {
-    if (!bingoCard || gameWon) return;
+    if (!bingoCard || gameWon || gameEnded) return;
     
     const number = bingoCard.numbers[index];
     if (!drawnNumbers.includes(number) || bingoCard.marked[index]) return;
@@ -166,11 +272,9 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     newMarked[index] = true;
     setBingoCard({ ...bingoCard, marked: newMarked });
     
-    // 檢查完成的線
     const lines = checkCompletedLines(newMarked);
     setCompletedLines(lines);
     
-    // 更新自己在房間玩家列表中的進度
     setRoomPlayers(prev => 
       prev.map(player => 
         player.name === deviceName 
@@ -181,9 +285,20 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     
     if (lines >= 6 && !gameWon) {
       setGameWon(true);
+      setGameEnded(true);
       updateLeaderboard(lines);
-      toast.success('🎉 恭喜獲勝！', {
-        description: `完成了 ${lines} 條線！`
+      
+      const winMessage: RoomChatMessage = {
+        id: crypto.randomUUID(),
+        message: t('win_message'),
+        playerName: t('system_message'),
+        timestamp: Date.now(),
+        isOwn: false
+      };
+      setRoomChatMessages(prev => [winMessage, ...prev]);
+      
+      toast.success(t('congratulations'), {
+        description: t('completed_lines_count', { count: lines })
       });
     }
   };
@@ -247,42 +362,71 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     setRoomChatMessages(prev => [message, ...prev].slice(0, 30));
     setNewChatMessage('');
 
-    // 模擬其他玩家的聊天回應
-    setTimeout(() => {
-      const responses = [
-        '加油！',
-        '好運氣！',
-        '快中了！',
-        '我也差一條線',
-        '這個號碼不錯'
-      ];
+    // 修改模擬其他玩家的聊天回應
+    const responses = [
+      t('chat_response_1'),
+      t('chat_response_2'),
+      t('chat_response_3'),
+      t('chat_response_4'),
+      t('chat_response_5')
+    ];
+    
+    const randomPlayer = roomPlayers.find(p => p.name !== deviceName);
+    if (randomPlayer && Math.random() < 0.4) {
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+      const responseMessage: RoomChatMessage = {
+        id: crypto.randomUUID(),
+        message: randomResponse,
+        playerName: randomPlayer.name,
+        timestamp: Date.now(),
+        isOwn: false
+      };
       
-      const randomPlayer = roomPlayers.find(p => p.name !== deviceName);
-      if (randomPlayer && Math.random() < 0.4) {
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        const responseMessage: RoomChatMessage = {
-          id: crypto.randomUUID(),
-          message: randomResponse,
-          playerName: randomPlayer.name,
-          timestamp: Date.now(),
-          isOwn: false
-        };
-        
-        setRoomChatMessages(prev => [responseMessage, ...prev].slice(0, 30));
-      }
-    }, 1000 + Math.random() * 2000);
+      setRoomChatMessages(prev => [responseMessage, ...prev].slice(0, 30));
+    }
   };
 
   const leaveRoom = () => {
+    if (currentRoom) {
+      const room = rooms.find(r => r.id === currentRoom);
+      if (room) {
+        room.players = room.players.filter(p => p !== deviceName);
+        room.isFull = room.players.length >= room.maxPlayers;
+      }
+    }
+
     setCurrentRoom(null);
     setBingoCard(null);
     setDrawnNumbers([]);
     setCompletedLines(0);
     setGameWon(false);
+    setGameEnded(false);
     setRoomPlayers([]);
     setRoomChatMessages([]);
     setNewChatMessage('');
+    setIsWaiting(false);
+    setWaitingPosition(null);
   };
+
+  if (isWaiting && waitingPosition !== null) {
+    return (
+      <div className="space-y-6">
+        <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">
+            {t('waiting_for_room')}
+          </h3>
+          <p className="text-sm text-yellow-700">
+            {t('waiting_position', { position: waitingPosition })}
+          </p>
+          <div className="mt-4">
+            <Button variant="outline" onClick={leaveRoom}>
+              {t('cancel_waiting')}
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (currentRoom) {
     const room = rooms.find(r => r.id === currentRoom);
@@ -291,15 +435,23 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
         {/* Game Header */}
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold text-gray-900 text-left">
-            {room?.name} - 賓果遊戲
+            {room?.name} - {t('bingo_game_room')}
+            {gameEnded && ` (${t('game_ended_title')})`}
           </h3>
           <div className="text-sm text-gray-600">
-            完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
+            {t('completed_lines')}: {completedLines}/6 {gameWon && '🎉 ' + t('congratulations')}
           </div>
         </div>
         
         {/* Game Content */}
         <div className="space-y-4">
+          {gameEnded && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
+              <p className="text-sm text-yellow-800">
+                {gameWon ? '🎉 ' + t('congratulations') : t('waiting_next_game')}
+              </p>
+            </div>
+          )}
           <PlayerList players={roomPlayers} deviceName={deviceName} />
           <DrawnNumbers drawnNumbers={drawnNumbers} />
           
@@ -314,7 +466,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
 
           <div className="text-center">
             <Button variant="outline" onClick={leaveRoom}>
-              離開房間
+              {t('leave_room')}
             </Button>
           </div>
 
@@ -332,17 +484,12 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-2">
-        <h3 className="text-base font-semibold text-gray-900 text-left">賓果遊戲室</h3>
-      </div>
+      {/* 直接顯示房間選擇器 */}
+      <RoomSelector rooms={rooms} onJoinRoom={joinRoom} />
       
-      {/* Game Selection Content */}
-      <div className="space-y-4">
-        <RoomSelector rooms={rooms} onJoinRoom={joinRoom} />
-        <GameRules />
-        <Leaderboard leaderboard={leaderboard} />
-      </div>
+      {/* 其他內容 */}
+      <GameRules />
+      <Leaderboard leaderboard={leaderboard} />
     </div>
   );
 };

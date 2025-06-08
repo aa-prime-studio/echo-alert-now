@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { Navigation } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface DirectionCompassProps {
   direction: 'N' | 'NE' | 'E' | 'SE' | 'S' | 'SW' | 'W' | 'NW';
@@ -19,15 +19,15 @@ const directionAngles = {
   NW: 315
 };
 
-const directionLabels = {
-  N: '北方',
-  NE: '東北方',
-  E: '東方',
-  SE: '東南方',
-  S: '南方',
-  SW: '西南方',
-  W: '西方',
-  NW: '西北方'
+const directionKeys = {
+  N: 'direction_n',
+  NE: 'direction_ne',
+  E: 'direction_e',
+  SE: 'direction_se',
+  S: 'direction_s',
+  SW: 'direction_sw',
+  W: 'direction_w',
+  NW: 'direction_nw'
 };
 
 export const DirectionCompass: React.FC<DirectionCompassProps> = ({ 
@@ -35,8 +35,9 @@ export const DirectionCompass: React.FC<DirectionCompassProps> = ({
   distance, 
   className = '' 
 }) => {
+  const { t } = useLanguage();
   const angle = directionAngles[direction];
-  const label = directionLabels[direction];
+  const label = t(directionKeys[direction]);
   
   const formatDistance = (dist: number) => {
     if (dist < 1000) {

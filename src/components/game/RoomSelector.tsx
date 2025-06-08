@@ -1,7 +1,8 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { BingoRoom } from '@/types/game';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Separator } from '@/components/ui/separator';
 
 interface RoomSelectorProps {
   rooms: BingoRoom[];
@@ -9,29 +10,48 @@ interface RoomSelectorProps {
 }
 
 export const RoomSelector: React.FC<RoomSelectorProps> = ({ rooms, onJoinRoom }) => {
+  const { t } = useLanguage();
+  
   return (
-    <div>
-      <h4 className="text-base font-semibold text-gray-900 mb-3 text-left">選擇房間</h4>
+    <div className="space-y-4">
+      <h3 className="text-base font-semibold text-gray-900 text-left mb-4">
+        {t('select_room')}
+      </h3>
       <div className="grid grid-cols-1 gap-3">
-        {rooms.map((room) => (
-          <Button
-            key={room.id}
-            variant="outline"
-            className="w-full text-left justify-start border-black hover:text-white"
-            style={{ 
-              backgroundColor: '#00d76a',
-              color: '#263ee4',
-              borderColor: 'black'
-            }}
-            onClick={() => onJoinRoom(room.id)}
-          >
-            <div className="flex items-center justify-between w-full">
-              <span>{room.name}</span>
-              <span className="text-sm opacity-80" style={{ color: '#263ee4' }}>
-                {room.players.length} 玩家
-              </span>
+        {rooms.map((room, index) => (
+          <React.Fragment key={room.id}>
+            <div className="flex items-center justify-between py-2">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                <span className="text-sm font-medium text-gray-900">
+                  {t('room')} {room.id}
+                </span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-500">
+                  {room.players.length}/{room.maxPlayers} {t('players_count')}
+                  {room.waitingPlayers > 0 && ` +${room.waitingPlayers}`}
+                </span>
+                <div className="w-[120px]">
+                  <Button
+                    onClick={() => onJoinRoom(room.id)}
+                    disabled={room.isFull && room.waitingPlayers >= 3}
+                    variant={room.isFull ? "outline" : "default"}
+                    className={`w-full h-[36px] ${
+                      room.isFull 
+                        ? "bg-[#00d66a] hover:bg-[#00c35f] text-white border-none" 
+                        : "bg-[#283ee4] hover:bg-[#1d32d4] text-white border-none"
+                    } flex items-center justify-center font-semibold transition-all duration-200 transform active:scale-95 rounded-xl text-xs`}
+                  >
+                    {room.isFull ? t('join_waiting_list') : t('join_room')}
+                  </Button>
+                </div>
+              </div>
             </div>
-          </Button>
+            {index < rooms.length - 1 && (
+              <Separator className="my-2 h-px bg-black" />
+            )}
+          </React.Fragment>
         ))}
       </div>
     </div>
