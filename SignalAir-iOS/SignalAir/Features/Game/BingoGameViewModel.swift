@@ -12,7 +12,7 @@ class BingoGameViewModel: ObservableObject {
     @Published var gameState: GameState = .waitingForPlayers
     @Published var countdown: Int = 0
     
-    let deviceName = UIDevice.current.name
+    @Published var deviceName: String = UIDevice.current.name
     private var drawTimer: Timer?
     private var simulationTimer: Timer?
     private var countdownTimer: Timer?

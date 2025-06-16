@@ -3,6 +3,7 @@ import Foundation
 
 struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
+    @EnvironmentObject var nicknameService: NicknameService
     
     var body: some View {
         VStack(spacing: 0) {
@@ -13,6 +14,12 @@ struct ChatView: View {
             inputSection.padding()
         }
         .background(Color.gray.opacity(0.05))
+        .onAppear {
+            viewModel.deviceName = nicknameService.nickname
+        }
+        .onChange(of: nicknameService.nickname) { newNickname in
+            viewModel.deviceName = newNickname
+        }
     }
     
     private var headerSection: some View {

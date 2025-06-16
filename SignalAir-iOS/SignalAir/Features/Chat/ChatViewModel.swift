@@ -1,11 +1,12 @@
 import Foundation
 import SwiftUI
+import UIKit
 
 class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var newMessage: String = ""
     
-    private let deviceName = "Device-\(String(Int.random(in: 100000...999999)))"
+    @Published var deviceName: String = UIDevice.current.name
     private var cleanupTimer: Timer?
     
     init() {

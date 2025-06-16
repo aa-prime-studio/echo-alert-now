@@ -1,8 +1,9 @@
 import SwiftUI
 
 struct ContentView: View {
-    @StateObject private var purchaseService = PurchaseService()
-    @StateObject private var languageService = LanguageService()
+    @EnvironmentObject var purchaseService: PurchaseService
+    @EnvironmentObject var languageService: LanguageService
+    @EnvironmentObject var nicknameService: NicknameService
     
     var body: some View {
         TabView {
@@ -35,13 +36,12 @@ struct ContentView: View {
                 .tag(3)
         }
         .accentColor(.blue)
-        .environmentObject(purchaseService)
-        .environmentObject(languageService)
     }
 }
 
 struct SignalTabView: View {
     @StateObject private var signalViewModel = SignalViewModel()
+    @EnvironmentObject var nicknameService: NicknameService
     
     var body: some View {
         NavigationView {
@@ -81,6 +81,12 @@ struct SignalTabView: View {
             }
             .background(Color.gray.opacity(0.05))
             .navigationBarHidden(true)
+            .onAppear {
+                signalViewModel.deviceName = nicknameService.nickname
+            }
+            .onChange(of: nicknameService.nickname) { newNickname in
+                signalViewModel.deviceName = newNickname
+            }
         }
     }
     

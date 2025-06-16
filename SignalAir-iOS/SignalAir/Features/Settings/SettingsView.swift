@@ -3,8 +3,10 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var languageService: LanguageService
     @EnvironmentObject var purchaseService: PurchaseService
+    @EnvironmentObject var nicknameService: NicknameService
     @State private var showingPurchaseSheet = false
     @State private var showingLanguageSheet = false
+    @State private var showingNicknameSheet = false
     
     var body: some View {
         NavigationView {
@@ -30,6 +32,9 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingLanguageSheet) {
             LanguageSelectionView(languageService: languageService)
+        }
+        .sheet(isPresented: $showingNicknameSheet) {
+            NicknameEditView(nicknameService: nicknameService)
         }
     }
     
@@ -159,6 +164,27 @@ struct SettingsView: View {
     private var deviceSection: some View {
         VStack(spacing: 0) {
             SettingsRowView(
+                icon: "person.circle",
+                title: "暱稱",
+                value: nicknameService.nickname,
+                action: nicknameService.canChangeNickname() ? { showingNicknameSheet = true } : nil
+            )
+            
+            if !nicknameService.canChangeNickname() {
+                HStack {
+                    Spacer()
+                    Text(nicknameService.getRemainingChangesText())
+                        .font(.caption)
+                        .foregroundColor(.red)
+                    Spacer()
+                }
+                .padding(.horizontal)
+                .padding(.bottom, 8)
+            }
+            
+            Divider()
+            
+            SettingsRowView(
                 icon: "iphone",
                 title: "裝置名稱",
                 value: UIDevice.current.name,
@@ -286,6 +312,90 @@ struct LanguageSelectionView: View {
             .navigationTitle("選擇語言")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(trailing: Button("完成") { dismiss() })
+        }
+    }
+}
+
+struct NicknameEditView: View {
+    @ObservedObject var nicknameService: NicknameService
+    @Environment(\.dismiss) private var dismiss
+    @State private var tempNickname: String = ""
+    @State private var showingAlert = false
+    @State private var alertMessage = ""
+    
+    var body: some View {
+        NavigationView {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("設定暱稱")
+                        .font(.headline)
+                    
+                    Text(nicknameService.getRemainingChangesText())
+                        .font(.caption)
+                        .foregroundColor(nicknameService.canChangeNickname() ? .secondary : .red)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("輸入新暱稱", text: $tempNickname)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .disabled(!nicknameService.canChangeNickname())
+                    
+                    Text("暱稱最多20個字元")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            .padding()
+            .navigationTitle("編輯暱稱")
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarItems(
+                leading: Button("取消") { dismiss() },
+                trailing: Button("儲存") {
+                    saveNickname()
+                }
+                .disabled(!nicknameService.canChangeNickname() || tempNickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+            )
+        }
+        .onAppear {
+            tempNickname = nicknameService.nickname
+        }
+        .alert("提示", isPresented: $showingAlert) {
+            Button("確定") { }
+        } message: {
+            Text(alertMessage)
+        }
+    }
+    
+    private func saveNickname() {
+        let trimmedNickname = tempNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedNickname.isEmpty {
+            alertMessage = "暱稱不能為空"
+            showingAlert = true
+            return
+        }
+        
+        if trimmedNickname.count > 20 {
+            alertMessage = "暱稱不能超過20個字元"
+            showingAlert = true
+            return
+        }
+        
+        if nicknameService.updateNickname(trimmedNickname) {
+            alertMessage = "暱稱更新成功！\n\(nicknameService.getRemainingChangesText())"
+            showingAlert = true
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                dismiss()
+            }
+        } else if !nicknameService.canChangeNickname() {
+            alertMessage = "已用完修改次數"
+            showingAlert = true
+        } else {
+            alertMessage = "暱稱沒有變更"
+            showingAlert = true
         }
     }
 }

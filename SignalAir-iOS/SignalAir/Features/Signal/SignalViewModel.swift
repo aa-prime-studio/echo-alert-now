@@ -4,7 +4,7 @@ import SwiftUI
 class SignalViewModel: ObservableObject {
     @Published var messages: [SignalMessage] = []
     
-    private let deviceName = "Device-\(String(Int.random(in: 100000...999999)))"
+    @Published var deviceName: String = UIDevice.current.name
     
     init() {
         // 初始化空的訊息列表，等待真實的訊號傳輸

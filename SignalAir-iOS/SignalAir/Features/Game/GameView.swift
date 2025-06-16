@@ -119,6 +119,7 @@ struct BingoGameView: View {
     let onLeaveRoom: () -> Void
     
     @StateObject private var gameViewModel = BingoGameViewModel()
+    @EnvironmentObject var nicknameService: NicknameService
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -207,7 +208,11 @@ struct BingoGameView: View {
             .padding(.bottom, 20)
         }
         .onAppear {
+            gameViewModel.deviceName = nicknameService.nickname
             gameViewModel.joinRoom(room)
+        }
+        .onChange(of: nicknameService.nickname) { newNickname in
+            gameViewModel.deviceName = newNickname
         }
         .onDisappear {
             gameViewModel.leaveRoom()

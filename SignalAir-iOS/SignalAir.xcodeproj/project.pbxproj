@@ -18,6 +18,7 @@
 		4C1E9F6A67400ABFAE2054DB /* LanguageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A405827F77F43F163DF5806F /* LanguageService.swift */; };
 		52ECEA634CFE985CCB64F816 /* SignalModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 097BEF283912255E62C5FEFC /* SignalModels.swift */; };
 		6CA07FE33D9B7FB255AAB657 /* RoomSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */; };
+		7E2641270816505417034FE3 /* NicknameService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF2290F315B0BF1025CBE9B /* NicknameService.swift */; };
 		800078A6B0F8D3C2CA0298D5 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E117FB89370E8E7E8C05434 /* PurchaseService.swift */; };
 		83232FB79B9CC0BAB46EDF25 /* PlayerListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3072289CDECAC4232A444F1 /* PlayerListView.swift */; };
 		9BF11577DA1B4C96894B8919 /* SignalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41887481BE4A89489FF6D968 /* SignalViewModel.swift */; };
@@ -37,6 +38,7 @@
 /* Begin PBXFileReference section */
 		043D3BB2D63EB6A7CAC28681 /* GameModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModels.swift; sourceTree = "<group>"; };
 		097BEF283912255E62C5FEFC /* SignalModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalModels.swift; sourceTree = "<group>"; };
+		0BF2290F315B0BF1025CBE9B /* NicknameService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameService.swift; sourceTree = "<group>"; };
 		14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawnNumbersView.swift; sourceTree = "<group>"; };
 		1E117FB89370E8E7E8C05434 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		3A918DE39A56052433134489 /* BingoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoCardView.swift; sourceTree = "<group>"; };
@@ -78,6 +80,7 @@
 			isa = PBXGroup;
 			children = (
 				A405827F77F43F163DF5806F /* LanguageService.swift */,
+				0BF2290F315B0BF1025CBE9B /* NicknameService.swift */,
 				1E117FB89370E8E7E8C05434 /* PurchaseService.swift */,
 			);
 			path = Services;
@@ -270,6 +273,7 @@
 				DB85D0AA91F19320D952EB8A /* HelpView.swift in Sources */,
 				4C1E9F6A67400ABFAE2054DB /* LanguageService.swift in Sources */,
 				2697875E9CB3723D8822198D /* LeaderboardView.swift in Sources */,
+				7E2641270816505417034FE3 /* NicknameService.swift in Sources */,
 				83232FB79B9CC0BAB46EDF25 /* PlayerListView.swift in Sources */,
 				ADFA42D772FD6BE714C68327 /* PrivacyPolicyView.swift in Sources */,
 				E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */,
