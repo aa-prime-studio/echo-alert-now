@@ -123,19 +123,52 @@ struct BingoGameView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(spacing: 20) {
-                // Game Status Info (簡化版，不含離開按鈕)
-                HStack {
-                    Text("完成線數: \(gameViewModel.completedLines)/6")
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    if gameViewModel.gameWon {
-                        Text("🎉 獲勝!")
+                // Game Status Info
+                VStack(spacing: 8) {
+                    // 房間狀態和人數
+                    HStack {
+                        Text("房間狀態:")
                             .font(.headline)
-                            .foregroundColor(.green)
+                            .foregroundColor(.secondary)
+                        
+                        switch gameViewModel.gameState {
+                        case .waitingForPlayers:
+                            Text("等待玩家 (\(gameViewModel.roomPlayers.count)/6人, 需4人開始)")
+                                .font(.headline)
+                                .foregroundColor(.orange)
+                        case .countdown:
+                            Text("準備開始 (\(gameViewModel.countdown)秒)")
+                                .font(.headline)
+                                .foregroundColor(.blue)
+                        case .playing:
+                            Text("遊戲進行中 (\(gameViewModel.roomPlayers.count)/6人)")
+                                .font(.headline)
+                                .foregroundColor(.green)
+                        case .finished:
+                            Text("遊戲結束")
+                                .font(.headline)
+                                .foregroundColor(.gray)
+                        }
+                        
+                        Spacer()
                     }
                     
-                    Spacer()
+                    // 個人遊戲狀態
+                    if gameViewModel.gameState == .playing {
+                        HStack {
+                            Text("完成線數: \(gameViewModel.completedLines)/6")
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
+                            
+                            if gameViewModel.gameWon {
+                                Text("🎉 獲勝!")
+                                    .font(.headline)
+                                    .foregroundColor(.green)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
                 }
                 .padding(.top, 16)
                 .padding(.horizontal)

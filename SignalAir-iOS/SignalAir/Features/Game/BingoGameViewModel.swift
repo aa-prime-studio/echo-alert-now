@@ -9,10 +9,21 @@ class BingoGameViewModel: ObservableObject {
     @Published var roomPlayers: [RoomPlayer] = []
     @Published var roomChatMessages: [RoomChatMessage] = []
     @Published var newChatMessage: String = ""
+    @Published var gameState: GameState = .waitingForPlayers
+    @Published var countdown: Int = 0
     
     let deviceName = UIDevice.current.name
     private var drawTimer: Timer?
     private var simulationTimer: Timer?
+    private var countdownTimer: Timer?
+    private var playerCheckTimer: Timer?
+    
+    enum GameState {
+        case waitingForPlayers  // 等待玩家加入 (需要4人)
+        case countdown         // 倒數準備開始 (10秒倒數)
+        case playing          // 遊戲進行中
+        case finished         // 遊戲結束
+    }
     
     func joinRoom(_ room: BingoRoom) {
         // Generate new bingo card
@@ -24,19 +35,21 @@ class BingoGameViewModel: ObservableObject {
         gameWon = false
         roomChatMessages = []
         newChatMessage = ""
+        gameState = .waitingForPlayers
+        countdown = 0
         
-        // Generate room players
+        // Generate room players (including self)
         roomPlayers = generateRoomPlayers()
         
-        // Start drawing numbers after 2 seconds
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.startDrawingNumbers()
-        }
+        // Start checking player count
+        startPlayerCountCheck()
     }
     
     func leaveRoom() {
         drawTimer?.invalidate()
         simulationTimer?.invalidate()
+        countdownTimer?.invalidate()
+        playerCheckTimer?.invalidate()
         
         bingoCard = nil
         drawnNumbers = []
@@ -45,6 +58,8 @@ class BingoGameViewModel: ObservableObject {
         roomPlayers = []
         roomChatMessages = []
         newChatMessage = ""
+        gameState = .waitingForPlayers
+        countdown = 0
     }
     
     private func generateBingoCard() -> BingoCard {
@@ -65,8 +80,10 @@ class BingoGameViewModel: ObservableObject {
     
     private func generateRoomPlayers() -> [RoomPlayer] {
         let playerNames = ["BingoKing", "LuckyStrike", "NumberHunter", "LineChaser", "BingoMaster"]
-        let randomCount = Int.random(in: 2...4)
-        var players = playerNames.prefix(randomCount).map { name in
+        
+        // 模擬其他玩家加入房間 (1-5個其他玩家，總共最多6人)
+        let otherPlayersCount = Int.random(in: 1...5)
+        var players = playerNames.prefix(otherPlayersCount).map { name in
             RoomPlayer(name: name)
         }
         
@@ -76,7 +93,127 @@ class BingoGameViewModel: ObservableObject {
         return players
     }
     
+    private func startPlayerCountCheck() {
+        playerCheckTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
+            self?.checkPlayerCount()
+        }
+        
+        // 模擬玩家逐漸加入
+        simulatePlayersJoining()
+    }
+    
+    private func simulatePlayersJoining() {
+        // 每3-5秒隨機增加一個玩家，直到達到6人滿房
+        guard roomPlayers.count < 6 else { return }
+        
+        let delay = Double.random(in: 3...5)
+        DispatchQueue.main.asyncAfter(deadline: .now() + delay) {
+            self.addRandomPlayer()
+            self.simulatePlayersJoining()
+        }
+    }
+    
+    private func addRandomPlayer() {
+        guard roomPlayers.count < 6, gameState == .waitingForPlayers else { return }
+        
+        let availableNames = ["BingoKing", "LuckyStrike", "NumberHunter", "LineChaser", "BingoMaster", "WinnerTaker"]
+        let usedNames = Set(roomPlayers.map { $0.name })
+        let availableNewNames = availableNames.filter { !usedNames.contains($0) }
+        
+        guard let newName = availableNewNames.randomElement() else { return }
+        
+        let newPlayer = RoomPlayer(name: newName)
+        roomPlayers.append(newPlayer)
+        
+        // 添加系統訊息通知新玩家加入
+        let joinMessage = RoomChatMessage(
+            message: "\(newName) 加入了房間！",
+            playerName: "系統",
+            timestamp: Date().timeIntervalSince1970,
+            isOwn: false
+        )
+        roomChatMessages.insert(joinMessage, at: 0)
+    }
+    
+    private func checkPlayerCount() {
+        let playerCount = roomPlayers.count
+        
+        switch gameState {
+        case .waitingForPlayers:
+            if playerCount >= 4 {
+                // 4人及以上可以開始遊戲，開始倒數
+                startCountdown()
+            }
+        case .countdown:
+            // 倒數期間，如果人數不足4人，回到等待狀態
+            if playerCount < 4 {
+                gameState = .waitingForPlayers
+                countdown = 0
+                countdownTimer?.invalidate()
+            }
+        case .playing, .finished:
+            break // 遊戲中或結束時不檢查人數
+        }
+    }
+    
+    private func startCountdown() {
+        guard gameState == .waitingForPlayers else { return }
+        
+        playerCheckTimer?.invalidate()
+        gameState = .countdown
+        countdown = 10
+        
+        // 添加倒數開始訊息
+        let countdownMessage = RoomChatMessage(
+            message: "人數已達4人！遊戲將在10秒後開始...",
+            playerName: "系統",
+            timestamp: Date().timeIntervalSince1970,
+            isOwn: false
+        )
+        roomChatMessages.insert(countdownMessage, at: 0)
+        
+        countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.updateCountdown()
+        }
+    }
+    
+    private func updateCountdown() {
+        countdown -= 1
+        
+        if countdown <= 0 {
+            countdownTimer?.invalidate()
+            startGame()
+        } else if countdown <= 3 {
+            // 最後3秒倒數提醒
+            let countdownMessage = RoomChatMessage(
+                message: "遊戲開始倒數：\(countdown)",
+                playerName: "系統",
+                timestamp: Date().timeIntervalSince1970,
+                isOwn: false
+            )
+            roomChatMessages.insert(countdownMessage, at: 0)
+        }
+    }
+    
+    private func startGame() {
+        gameState = .playing
+        
+        // 添加遊戲開始訊息
+        let startMessage = RoomChatMessage(
+            message: "🎯 遊戲開始！祝大家好運！",
+            playerName: "系統",
+            timestamp: Date().timeIntervalSince1970,
+            isOwn: false
+        )
+        roomChatMessages.insert(startMessage, at: 0)
+        
+        // 開始抽號碼
+        startDrawingNumbers()
+    }
+    
     private func startDrawingNumbers() {
+        guard gameState == .playing else { return }
+        
         drawTimer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { _ in
             self.drawNextNumber()
         }
@@ -88,9 +225,23 @@ class BingoGameViewModel: ObservableObject {
         
         // Stop after 3 minutes
         DispatchQueue.main.asyncAfter(deadline: .now() + 180) {
-            self.drawTimer?.invalidate()
-            self.simulationTimer?.invalidate()
+            self.finishGame()
         }
+    }
+    
+    private func finishGame() {
+        drawTimer?.invalidate()
+        simulationTimer?.invalidate()
+        gameState = .finished
+        
+        // 添加遊戲結束訊息
+        let endMessage = RoomChatMessage(
+            message: "⏰ 遊戲時間結束！",
+            playerName: "系統",
+            timestamp: Date().timeIntervalSince1970,
+            isOwn: false
+        )
+        roomChatMessages.insert(endMessage, at: 0)
     }
     
     private func drawNextNumber() {
