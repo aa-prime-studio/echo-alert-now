@@ -42,6 +42,7 @@ struct ContentView: View {
 struct SignalTabView: View {
     @StateObject private var signalViewModel = SignalViewModel()
     @EnvironmentObject var nicknameService: NicknameService
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         NavigationView {
@@ -97,7 +98,7 @@ struct SignalTabView: View {
                     Circle()
                         .fill(Color.green)
                         .frame(width: 8, height: 8)
-                    Text("已連線 - 可發送和接收訊號")
+                    Text(languageService.t("connected_status"))
                         .font(.caption)
                         .foregroundColor(.black.opacity(0.8))
                 }

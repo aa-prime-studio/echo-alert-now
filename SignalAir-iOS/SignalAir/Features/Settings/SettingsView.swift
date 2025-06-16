@@ -61,7 +61,7 @@ struct SettingsView: View {
                 Image(systemName: "globe")
                     .foregroundColor(.blue)
                     .frame(width: 24)
-                Text("語言")
+                Text(languageService.t("language"))
                     .font(.headline)
                 Spacer()
                 Text(languageService.currentLanguage.displayName)
@@ -83,7 +83,7 @@ struct SettingsView: View {
     private var subscriptionSection: some View {
         VStack(spacing: 12) {
             HStack {
-                Text("訂購狀態")
+                Text(languageService.t("subscription_status"))
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
@@ -91,17 +91,17 @@ struct SettingsView: View {
             
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(purchaseService.isPremiumUser ? "付費用戶" : "免費用戶")
+                    Text(purchaseService.isPremiumUser ? languageService.t("premium_user") : languageService.t("free_user"))
                         .font(.headline)
                         .fontWeight(.semibold)
                         .foregroundColor(purchaseService.isPremiumUser ? .green : .orange)
                     
                     if purchaseService.isPremiumUser {
-                        Text("享有完整功能")
+                        Text(languageService.t("full_features"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     } else {
-                        Text("訊號、聊天室功能")
+                        Text(languageService.t("signal_chat_features"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                     }
@@ -130,7 +130,7 @@ struct SettingsView: View {
                 Button(action: { showingPurchaseSheet = true }) {
                     HStack {
                         Image(systemName: "crown.fill")
-                        Text("升級解鎖遊戲功能")
+                        Text(languageService.t("upgrade_unlock_games"))
                     }
                     .font(.headline)
                     .foregroundColor(.white)
@@ -146,7 +146,7 @@ struct SettingsView: View {
                     await purchaseService.restorePurchases()
                 }
             }) {
-                Text("恢復購買")
+                Text(languageService.t("restore_purchases"))
                     .font(.headline)
                     .foregroundColor(.blue)
                     .frame(maxWidth: .infinity)
@@ -165,7 +165,7 @@ struct SettingsView: View {
         VStack(spacing: 0) {
             SettingsRowView(
                 icon: "person.circle",
-                title: "暱稱",
+                title: languageService.t("nickname"),
                 value: nicknameService.nickname,
                 action: nicknameService.canChangeNickname() ? { showingNicknameSheet = true } : nil
             )
@@ -186,7 +186,7 @@ struct SettingsView: View {
             
             SettingsRowView(
                 icon: "iphone",
-                title: "裝置名稱",
+                title: languageService.t("device_name"),
                 value: UIDevice.current.name,
                 action: nil
             )
@@ -195,7 +195,7 @@ struct SettingsView: View {
             
             SettingsRowView(
                 icon: "info.circle",
-                title: "版本",
+                title: languageService.t("version"),
                 value: "1.0.0",
                 action: nil
             )
@@ -209,7 +209,7 @@ struct SettingsView: View {
             NavigationLink(destination: PrivacyPolicyView()) {
                 SettingsRowView(
                     icon: "lock.shield",
-                    title: "隱私權政策",
+                    title: languageService.t("privacy_policy"),
                     value: nil,
                     action: {}
                 )
@@ -220,7 +220,7 @@ struct SettingsView: View {
             NavigationLink(destination: TermsOfServiceView()) {
                 SettingsRowView(
                     icon: "doc.text",
-                    title: "服務條款",
+                    title: languageService.t("terms_of_service"),
                     value: nil,
                     action: {}
                 )
@@ -231,7 +231,7 @@ struct SettingsView: View {
             NavigationLink(destination: HelpView()) {
                 SettingsRowView(
                     icon: "questionmark.circle",
-                    title: "使用說明",
+                    title: languageService.t("help_guide"),
                     value: nil,
                     action: {}
                 )
@@ -309,15 +309,16 @@ struct LanguageSelectionView: View {
                 Spacer()
             }
             .background(Color.white)
-            .navigationTitle("選擇語言")
+            .navigationTitle(languageService.t("select_language"))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button("完成") { dismiss() })
+            .navigationBarItems(trailing: Button(languageService.t("done")) { dismiss() })
         }
     }
 }
 
 struct NicknameEditView: View {
     @ObservedObject var nicknameService: NicknameService
+    @EnvironmentObject var languageService: LanguageService
     @Environment(\.dismiss) private var dismiss
     @State private var tempNickname: String = ""
     @State private var showingAlert = false
@@ -327,7 +328,7 @@ struct NicknameEditView: View {
         NavigationView {
             VStack(spacing: 20) {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("設定暱稱")
+                    Text(languageService.t("set_nickname"))
                         .font(.headline)
                     
                     Text(nicknameService.getRemainingChangesText())
@@ -337,11 +338,11 @@ struct NicknameEditView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("輸入新暱稱", text: $tempNickname)
+                    TextField(languageService.t("enter_new_nickname"), text: $tempNickname)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .disabled(!nicknameService.canChangeNickname())
                     
-                    Text("暱稱最多20個字元")
+                    Text(languageService.t("nickname_max_chars"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
@@ -349,11 +350,11 @@ struct NicknameEditView: View {
                 Spacer()
             }
             .padding()
-            .navigationTitle("編輯暱稱")
+            .navigationTitle(languageService.t("edit_nickname"))
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarItems(
-                leading: Button("取消") { dismiss() },
-                trailing: Button("儲存") {
+                leading: Button(languageService.t("cancel")) { dismiss() },
+                trailing: Button(languageService.t("save")) {
                     saveNickname()
                 }
                 .disabled(!nicknameService.canChangeNickname() || tempNickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -362,8 +363,8 @@ struct NicknameEditView: View {
         .onAppear {
             tempNickname = nicknameService.nickname
         }
-        .alert("提示", isPresented: $showingAlert) {
-            Button("確定") { }
+        .alert(languageService.t("alert"), isPresented: $showingAlert) {
+            Button(languageService.t("confirm")) { }
         } message: {
             Text(alertMessage)
         }
@@ -373,28 +374,28 @@ struct NicknameEditView: View {
         let trimmedNickname = tempNickname.trimmingCharacters(in: .whitespacesAndNewlines)
         
         if trimmedNickname.isEmpty {
-            alertMessage = "暱稱不能為空"
+            alertMessage = languageService.t("nickname_empty")
             showingAlert = true
             return
         }
         
         if trimmedNickname.count > 20 {
-            alertMessage = "暱稱不能超過20個字元"
+            alertMessage = languageService.t("nickname_too_long")
             showingAlert = true
             return
         }
         
         if nicknameService.updateNickname(trimmedNickname) {
-            alertMessage = "暱稱更新成功！\n\(nicknameService.getRemainingChangesText())"
+            alertMessage = languageService.t("nickname_updated") + "\n\(nicknameService.getRemainingChangesText())"
             showingAlert = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                 dismiss()
             }
         } else if !nicknameService.canChangeNickname() {
-            alertMessage = "已用完修改次數"
+            alertMessage = languageService.t("nickname_max_reached")
             showingAlert = true
         } else {
-            alertMessage = "暱稱沒有變更"
+            alertMessage = languageService.t("nickname_no_change")
             showingAlert = true
         }
     }

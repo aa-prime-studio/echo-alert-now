@@ -3,6 +3,7 @@ import SwiftUI
 struct GameView: View {
     @State private var currentRoom: BingoRoom?
     @State private var leaderboard: [BingoScore] = []
+    @EnvironmentObject var languageService: LanguageService
     
     // 3個賓果房間
     private let rooms: [BingoRoom] = [
@@ -49,7 +50,7 @@ struct GameView: View {
                     .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
                 
                 if let room = currentRoom {
-                    Text("正在遊戲: \(room.name.uppercased())")
+                    Text("\(languageService.t("playing_in")) \(room.name.uppercased())")
                         .font(.caption)
                         .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475).opacity(0.8))
                 }
@@ -57,7 +58,7 @@ struct GameView: View {
             Spacer()
             
             if currentRoom != nil {
-                Button("離開") {
+                Button(languageService.t("leave")) {
                     currentRoom = nil
                 }
                 .font(.headline)
@@ -120,6 +121,7 @@ struct BingoGameView: View {
     
     @StateObject private var gameViewModel = BingoGameViewModel()
     @EnvironmentObject var nicknameService: NicknameService
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
@@ -128,25 +130,25 @@ struct BingoGameView: View {
                 VStack(spacing: 8) {
                     // 房間狀態和人數
                     HStack {
-                        Text("房間狀態:")
+                        Text("\(languageService.t("room_status"))")
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
                         switch gameViewModel.gameState {
                         case .waitingForPlayers:
-                            Text("等待玩家 (\(gameViewModel.roomPlayers.count)/6人, 需4人開始)")
+                            Text("\(languageService.t("waiting_players")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")), \(languageService.t("needs_4_to_start")))")
                                 .font(.headline)
                                 .foregroundColor(.orange)
                         case .countdown:
-                            Text("準備開始 (\(gameViewModel.countdown)秒)")
+                            Text("\(languageService.t("ready_to_start")) (\(gameViewModel.countdown)\(languageService.t("seconds")))")
                                 .font(.headline)
                                 .foregroundColor(.blue)
                         case .playing:
-                            Text("遊戲進行中 (\(gameViewModel.roomPlayers.count)/6人)")
+                            Text("\(languageService.t("game_in_progress")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")))")
                                 .font(.headline)
                                 .foregroundColor(.green)
                         case .finished:
-                            Text("遊戲結束")
+                            Text(languageService.t("game_finished"))
                                 .font(.headline)
                                 .foregroundColor(.gray)
                         }
@@ -157,12 +159,12 @@ struct BingoGameView: View {
                     // 個人遊戲狀態
                     if gameViewModel.gameState == .playing {
                         HStack {
-                            Text("完成線數: \(gameViewModel.completedLines)/6")
+                            Text("\(languageService.t("completed_lines")): \(gameViewModel.completedLines)/6")
                                 .font(.subheadline)
                                 .foregroundColor(.primary)
                             
                             if gameViewModel.gameWon {
-                                Text("🎉 獲勝!")
+                                Text(languageService.t("won"))
                                     .font(.headline)
                                     .foregroundColor(.green)
                             }
@@ -198,21 +200,12 @@ struct BingoGameView: View {
                     onMessageChange: { gameViewModel.newChatMessage = $0 },
                     onSendMessage: gameViewModel.sendRoomChatMessage
                 )
-                .frame(minHeight: 300) // 增加最小高度，確保聊天室有足夠空間
-                
-                // 底部額外間距，確保最後內容不會被遮擋
-                Spacer()
-                    .frame(height: 100)
+                .frame(minHeight: 300)
             }
-            .padding(.horizontal)
-            .padding(.bottom, 20)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            gameViewModel.deviceName = nicknameService.nickname
             gameViewModel.joinRoom(room)
-        }
-        .onChange(of: nicknameService.nickname) { newNickname in
-            gameViewModel.deviceName = newNickname
         }
         .onDisappear {
             gameViewModel.leaveRoom()
