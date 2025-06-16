@@ -68,6 +68,27 @@ class LanguageService: ObservableObject {
                 
                 // 訊號頁面
                 "connected_status": "已連線 - 可發送和接收訊號",
+                "signal_safe": "我安全",
+                "signal_supplies": "需要物資",
+                "signal_medical": "需要醫療",
+                "signal_danger": "危險警告",
+                "nearby_signals": "附近訊號",
+                "no_signals": "目前沒有訊息",
+                "signals_will_show": "當附近有人發送訊號時，會顯示在這裡",
+                "from": "來自:",
+                "just_now": "剛剛",
+                "minutes_ago": "分鐘前",
+                "hours_ago": "小時前",
+                
+                // 方向
+                "direction_north": "北方",
+                "direction_northeast": "東北方",
+                "direction_east": "東方",
+                "direction_southeast": "東南方",
+                "direction_south": "南方",
+                "direction_southwest": "西南方",
+                "direction_west": "西方",
+                "direction_northwest": "西北方",
                 
                 // 聊天室頁面
                 "auto_delete_24h": "24小時自動清除",
@@ -136,6 +157,27 @@ class LanguageService: ObservableObject {
                 
                 // Signal page
                 "connected_status": "Connected - Can send and receive signals",
+                "signal_safe": "I'm Safe",
+                "signal_supplies": "Need Supplies",
+                "signal_medical": "Need Medical",
+                "signal_danger": "Danger Alert",
+                "nearby_signals": "Nearby Signals",
+                "no_signals": "No messages yet",
+                "signals_will_show": "When someone nearby sends a signal, it will appear here",
+                "from": "From:",
+                "just_now": "Just now",
+                "minutes_ago": "minutes ago",
+                "hours_ago": "hours ago",
+                
+                // Directions
+                "direction_north": "North",
+                "direction_northeast": "Northeast",
+                "direction_east": "East",
+                "direction_southeast": "Southeast",
+                "direction_south": "South",
+                "direction_southwest": "Southwest",
+                "direction_west": "West",
+                "direction_northwest": "Northwest",
                 
                 // Chat page
                 "auto_delete_24h": "Auto-delete in 24 hours",

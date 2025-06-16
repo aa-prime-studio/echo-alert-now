@@ -6,6 +6,15 @@ enum SignalType: String, CaseIterable, Codable {
     case medical = "medical"
     case danger = "danger"
     
+    func label(languageService: LanguageService) -> String {
+        switch self {
+        case .safe: return languageService.t("signal_safe")
+        case .supplies: return languageService.t("signal_supplies")
+        case .medical: return languageService.t("signal_medical")
+        case .danger: return languageService.t("signal_danger")
+        }
+    }
+    
     var label: String {
         switch self {
         case .safe: return "我安全"
@@ -38,6 +47,19 @@ enum CompassDirection: String, CaseIterable, Codable {
         case .SW: return 225
         case .W: return 270
         case .NW: return 315
+        }
+    }
+    
+    func displayName(languageService: LanguageService) -> String {
+        switch self {
+        case .N: return languageService.t("direction_north")
+        case .NE: return languageService.t("direction_northeast")
+        case .E: return languageService.t("direction_east")
+        case .SE: return languageService.t("direction_southeast")
+        case .S: return languageService.t("direction_south")
+        case .SW: return languageService.t("direction_southwest")
+        case .W: return languageService.t("direction_west")
+        case .NW: return languageService.t("direction_northwest")
         }
     }
     
@@ -79,6 +101,23 @@ struct DistanceFormatter {
             return "\(Int(distance))m"
         } else {
             return String(format: "%.1fkm", distance / 1000)
+        }
+    }
+}
+
+struct TimeFormatter {
+    static func formatRelativeTime(_ timestamp: TimeInterval, languageService: LanguageService) -> String {
+        let now = Date().timeIntervalSince1970
+        let diff = now - timestamp
+        let minutes = Int(diff / 60)
+        let hours = Int(diff / 3600)
+        
+        if hours > 0 {
+            return "\(hours)\(languageService.t("hours_ago"))"
+        } else if minutes > 0 {
+            return "\(minutes)\(languageService.t("minutes_ago"))"
+        } else {
+            return languageService.t("just_now")
         }
     }
 }

@@ -5,6 +5,7 @@ struct SignalButtonView: View {
     let onSend: (SignalType) -> Void
     let disabled: Bool
     let size: ButtonSize
+    @EnvironmentObject var languageService: LanguageService
     
     enum ButtonSize {
         case large, small
@@ -17,7 +18,7 @@ struct SignalButtonView: View {
                     Image(systemName: type.iconName)
                         .font(.title)
                         .foregroundColor(.white)
-                    Text(type.label)
+                    Text(type.label(languageService: languageService))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
@@ -31,7 +32,7 @@ struct SignalButtonView: View {
                     Image(systemName: type.iconName)
                         .font(.title3)
                         .foregroundColor(textColorForType(type))
-                    Text(type.label)
+                    Text(type.label(languageService: languageService))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(textColorForType(type))
@@ -64,11 +65,12 @@ struct SignalButtonView: View {
 
 struct MessageListView: View {
     let messages: [SignalMessage]
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("附近訊號")
+                Text(languageService.t("nearby_signals"))
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
@@ -82,10 +84,10 @@ struct MessageListView: View {
                     Image(systemName: "antenna.radiowaves.left.and.right")
                         .font(.system(size: 48))
                         .foregroundColor(.gray.opacity(0.6))
-                    Text("目前沒有訊息")
+                    Text(languageService.t("no_signals"))
                         .font(.headline)
                         .foregroundColor(.secondary)
-                    Text("當附近有人發送訊號時，會顯示在這裡")
+                    Text(languageService.t("signals_will_show"))
                         .font(.subheadline)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -112,6 +114,7 @@ struct MessageListView: View {
 
 struct MessageRowView: View {
     let message: SignalMessage
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -123,13 +126,13 @@ struct MessageRowView: View {
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(message.type.label)
+                Text(message.type.label(languageService: languageService))
                     .font(.headline)
                     .fontWeight(.medium)
-                Text("來自: \(message.deviceName)")
+                Text("\(languageService.t("from")) \(message.deviceName)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Text(formatTime(message.timestamp))
+                Text(TimeFormatter.formatRelativeTime(message.timestamp, languageService: languageService))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -151,26 +154,12 @@ struct MessageRowView: View {
         case .danger: return Color(red: 254/255, green: 201/255, blue: 27/255)
         }
     }
-    
-    private func formatTime(_ timestamp: TimeInterval) -> String {
-        let now = Date().timeIntervalSince1970
-        let diff = now - timestamp
-        let minutes = Int(diff / 60)
-        let hours = Int(diff / 3600)
-        
-        if hours > 0 {
-            return "\(hours)小時前"
-        } else if minutes > 0 {
-            return "\(minutes)分鐘前"
-        } else {
-            return "剛剛"
-        }
-    }
 }
 
 struct DirectionCompassView: View {
     let direction: CompassDirection
     let distance: Double
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .trailing, spacing: 2) {
@@ -183,7 +172,7 @@ struct DirectionCompassView: View {
                     .font(.headline)
                     .fontWeight(.semibold)
             }
-            Text(direction.displayName)
+            Text(direction.displayName(languageService: languageService))
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
