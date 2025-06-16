@@ -33,7 +33,6 @@ class ChatViewModel: ObservableObject {
         }
         
         print("發送訊息: \(message.message)")
-        simulateResponse()
     }
     
     func clearMessages() {
@@ -66,22 +65,5 @@ class ChatViewModel: ObservableObject {
         messages = messages.filter { $0.timestamp > twentyFourHoursAgo }
     }
     
-    private func simulateResponse() {
-        let responses = ["收到！", "了解狀況", "正在前往", "需要更多資訊", "已通知相關單位"]
-        
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 1...4)) {
-            guard let randomResponse = responses.randomElement() else { return }
-            
-            let responseMessage = ChatMessage(
-                message: randomResponse,
-                deviceName: "救援隊-\(String(Int.random(in: 100...999)))",
-                isOwn: false
-            )
-            
-            self.messages.insert(responseMessage, at: 0)
-            if self.messages.count > 50 {
-                self.messages = Array(self.messages.prefix(50))
-            }
-        }
-    }
+
 }

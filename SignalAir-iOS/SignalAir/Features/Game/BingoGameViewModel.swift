@@ -210,30 +210,7 @@ class BingoGameViewModel: ObservableObject {
         }
         
         newChatMessage = ""
-        
-        // Simulate other players' responses
-        DispatchQueue.main.asyncAfter(deadline: .now() + Double.random(in: 1...3)) {
-            self.simulateOtherPlayerChat()
-        }
     }
     
-    private func simulateOtherPlayerChat() {
-        let responses = ["加油！", "好運氣！", "快中了！", "我也差一條線", "這個號碼不錯"]
-        
-        guard let randomPlayer = roomPlayers.first(where: { $0.name != deviceName }),
-              Double.random(in: 0...1) < 0.4 else { return }
-        
-        let randomResponse = responses.randomElement()!
-        let responseMessage = RoomChatMessage(
-            message: randomResponse,
-            playerName: randomPlayer.name,
-            timestamp: Date().timeIntervalSince1970,
-            isOwn: false
-        )
-        
-        roomChatMessages.insert(responseMessage, at: 0)
-        if roomChatMessages.count > 30 {
-            roomChatMessages = Array(roomChatMessages.prefix(30))
-        }
-    }
+
 } 
