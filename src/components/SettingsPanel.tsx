@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Settings, User, Bell, Shield, Trash2, Info, UserX, Edit3, CreditCard, Crown, Star, HelpCircle, FileText, Languages, Calendar, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -153,7 +152,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
               {isPremium && (
                 <div className="mt-2 flex items-center text-xs text-gray-500">
                   <Calendar className="w-3 h-3 mr-1" />
-                  <span>到期日期: {subscriptionEndDate}</span>
+                  <span>{t('expiry_date')} {subscriptionEndDate}</span>
                 </div>
               )}
             </div>
@@ -168,13 +167,13 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   <Crown className="w-4 h-4 mr-2" />
                   {t('upgrade_unlock_games')}
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleRestorePurchases}
-                  className="w-full border-gray-300"
-                >
-                  恢復購買
-                </Button>
+                                    <Button
+                      variant="outline"
+                      onClick={handleRestorePurchases}
+                      className="w-full border-gray-300"
+                    >
+                      {t('restore_purchases')}
+                    </Button>
               </div>
             )}
 
@@ -187,7 +186,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     className="text-sm border-gray-300"
                   >
                     <Info className="w-4 h-4 mr-1" />
-                    查看詳情
+                    {t('view_details')}
                   </Button>
                   <Button
                     variant="outline"
@@ -204,7 +203,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                     onClick={handleRestorePurchases}
                     className="text-sm border-gray-300"
                   >
-                    恢復購買
+                    {t('restore_purchases')}
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
@@ -213,23 +212,23 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                         className="text-sm text-red-600 hover:text-red-700 hover:bg-red-50 border-red-300"
                       >
                         <X className="w-4 h-4 mr-1" />
-                        取消訂閱
+                        {t('cancel_subscription')}
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>確定要取消訂閱嗎？</AlertDialogTitle>
+                        <AlertDialogTitle>{t('confirm_cancel_subscription')}</AlertDialogTitle>
                         <AlertDialogDescription>
-                          取消後您將失去所有付費功能的存取權限。您可以繼續使用到訂閱期結束 ({subscriptionEndDate})。
+                          {t('cancel_subscription_desc')} ({subscriptionEndDate})。
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel>保留訂閱</AlertDialogCancel>
+                        <AlertDialogCancel>{t('keep_subscription')}</AlertDialogCancel>
                         <AlertDialogAction 
                           onClick={handleCancelSubscription}
                           className="bg-red-600 hover:bg-red-700"
                         >
-                          確定取消
+                          {t('confirm_cancel')}
                         </AlertDialogAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
@@ -261,7 +260,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                       onChange={(e) => setTempDeviceName(e.target.value)}
                       className="flex-1 border-gray-300"
                       maxLength={16}
-                      placeholder="輸入裝置名稱..."
+                      placeholder={t('input_device_name')}
                     />
                     <Button
                       size="sm"
@@ -412,7 +411,7 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>取消</AlertDialogCancel>
+                  <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
                   <AlertDialogAction 
                     onClick={handleDeleteAccount}
                     className="bg-red-600 hover:bg-red-700"
@@ -466,9 +465,8 @@ export const SettingsPanel: React.FC<SettingsPanelProps> = ({
             <h4 className="text-sm font-medium text-gray-900">{t('about')}</h4>
           </div>
           <div className="text-xs text-gray-500 space-y-1">
-            <p>Signal-Lite v1.0.0</p>
-            <p>緊急通訊概念驗證</p>
-            <p>實際版本將使用 MultipeerConnectivity</p>
+            <p>{t('emergency_communication_demo')}</p>
+            <p>{t('actual_version_note')}</p>
           </div>
         </div>
       </div>

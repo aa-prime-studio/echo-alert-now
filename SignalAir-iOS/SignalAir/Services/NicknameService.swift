@@ -8,10 +8,11 @@ class NicknameService: ObservableObject {
     private let userDefaults = UserDefaults.standard
     private let nicknameKey = "user_nickname"
     private let remainingChangesKey = "nickname_remaining_changes"
+    private let temporaryIDManager = TemporaryIDManager()
     
     init() {
-        // 從 UserDefaults 讀取，如果沒有則使用裝置名稱作為預設暱稱
-        self.nickname = userDefaults.string(forKey: nicknameKey) ?? UIDevice.current.name
+        // 從 UserDefaults 讀取，如果沒有則使用台灣小吃裝置名稱作為預設暱稱
+        self.nickname = userDefaults.string(forKey: nicknameKey) ?? temporaryIDManager.deviceID
         
         // 檢查是否第一次使用，如果是則給予3次修改機會
         if userDefaults.object(forKey: remainingChangesKey) == nil {
@@ -54,5 +55,13 @@ class NicknameService: ObservableObject {
         } else {
             return "已用完修改次數"
         }
+    }
+    
+    func setNickname(_ newNickname: String) {
+        let trimmedNickname = newNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedNickname.isEmpty else { return }
+        
+        self.nickname = trimmedNickname
+        userDefaults.set(trimmedNickname, forKey: nicknameKey)
     }
 } 

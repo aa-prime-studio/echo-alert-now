@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Grid3X3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { BingoCard } from '@/components/game/BingoCard';
 import { RoomChat } from '@/components/game/RoomChat';
 import { PlayerList } from '@/components/game/PlayerList';
@@ -22,6 +23,7 @@ interface GameRoomProps {
 }
 
 export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
+  const { t } = useLanguage();
   const [currentRoom, setCurrentRoom] = useState<number | null>(null);
   const [leaderboard, setLeaderboard] = useState<BingoScore[]>([]);
   const [bingoCard, setBingoCard] = useState<BingoCardType | null>(null);
@@ -137,7 +139,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
         // 隨機機會增加線數
         if (Math.random() < 0.3) {
           const newLines = player.completedLines + 1;
-          const hasWon = newLines >= 6;
+          const hasWon = newLines >= 5;
           
           if (newLines > player.completedLines) {
             toast.info(`${player.name} 完成了 ${newLines} 條線！`, {
@@ -174,12 +176,12 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
     setRoomPlayers(prev => 
       prev.map(player => 
         player.name === deviceName 
-          ? { ...player, completedLines: lines, hasWon: lines >= 6 }
+          ? { ...player, completedLines: lines, hasWon: lines >= 5 }
           : player
       )
     );
     
-    if (lines >= 6 && !gameWon) {
+    if (lines >= 5 && !gameWon) {
       setGameWon(true);
       updateLeaderboard(lines);
       toast.success('🎉 恭喜獲勝！', {
@@ -294,7 +296,7 @@ export const GameRoom: React.FC<GameRoomProps> = ({ deviceName }) => {
             {room?.name} - 賓果遊戲
           </h3>
           <div className="text-sm text-gray-600">
-            完成線數: {completedLines}/6 {gameWon && '🎉 獲勝!'}
+            完成線數: {completedLines}/5 {gameWon && '🎉 獲勝!'}
           </div>
         </div>
         

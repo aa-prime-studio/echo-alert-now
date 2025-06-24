@@ -1,3 +1,5 @@
+import Foundation
+import CoreLocation
 import SwiftUI
 
 struct SignalButtonView: View {
@@ -18,7 +20,7 @@ struct SignalButtonView: View {
                     Image(systemName: type.iconName)
                         .font(.title)
                         .foregroundColor(.white)
-                    Text(type.label(languageService: languageService))
+                    Text(languageService.t(type.translationKey))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.white)
@@ -32,7 +34,7 @@ struct SignalButtonView: View {
                     Image(systemName: type.iconName)
                         .font(.title3)
                         .foregroundColor(textColorForType(type))
-                    Text(type.label(languageService: languageService))
+                    Text(languageService.t(type.translationKey))
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(textColorForType(type))
@@ -96,6 +98,10 @@ struct MessageListView: View {
                 .padding(.vertical, 40)
                 .background(Color.gray.opacity(0.05))
                 .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.black, lineWidth: 1)
+                )
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(messages.enumerated()), id: \.element.id) { index, message in
@@ -126,13 +132,16 @@ struct MessageRowView: View {
                 .clipShape(Circle())
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(message.type.label(languageService: languageService))
+                Text(languageService.t(message.type.translationKey))
                     .font(.headline)
                     .fontWeight(.medium)
+                    .foregroundColor(.primary)
+                
                 Text("\(languageService.t("from")) \(message.deviceName)")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
-                Text(TimeFormatter.formatRelativeTime(message.timestamp, languageService: languageService))
+                
+                Text(formatTimestamp(message.timestamp))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -146,12 +155,75 @@ struct MessageRowView: View {
         .padding()
     }
     
+    private func formatTimestamp(_ timestamp: Date) -> String {
+        let now = Date()
+        let diff = now.timeIntervalSince(timestamp)
+        let minutes = Int(diff / 60)
+        let hours = Int(diff / 3600)
+        let days = Int(diff / 86400)
+        
+        if days > 0 {
+            return "\(days)\(languageService.t("days_ago"))"
+        } else if hours > 0 {
+            return "\(hours)\(languageService.t("hours_ago"))"
+        } else if minutes > 0 {
+            return "\(minutes)\(languageService.t("minutes_ago"))"
+        } else {
+            return languageService.t("just_now")
+        }
+    }
+    
     private func backgroundColorForType(_ type: SignalType) -> Color {
         switch type {
         case .safe: return Color(red: 38/255, green: 62/255, blue: 234/255)
         case .supplies: return Color(red: 177/255, green: 153/255, blue: 234/255)
         case .medical: return Color(red: 255/255, green: 86/255, blue: 98/255)
         case .danger: return Color(red: 254/255, green: 201/255, blue: 27/255)
+        }
+    }
+    
+    private func formatDistance(_ meters: Double) -> String {
+        switch meters {
+        case 0..<50:
+            return "< 50m"
+        case 50..<100:
+            return "約 \(Int(meters/10)*10)m"
+        case 100..<500:
+            return "約 \(Int(meters/50)*50)m"
+        case 500..<1000:
+            return "約 \(Int(meters/100)*100)m"
+        case 1000..<5000:
+            let km = meters / 1000
+            return "約 \(String(format: "%.1f", km)) 公里"
+        default:
+            let km = Int(meters / 1000)
+            return "約 \(km) 公里"
+        }
+    }
+    
+    private func getDirectionText(_ direction: CompassDirection) -> String {
+        switch direction {
+        case .north: return "北方"
+        case .northeast: return "東北方"
+        case .east: return "東方"
+        case .southeast: return "東南方"
+        case .south: return "南方"
+        case .southwest: return "西南方"
+        case .west: return "西方"
+        case .northwest: return "西北方"
+        }
+    }
+    
+    private func getDirectionAngle(_ direction: CompassDirection) -> Double {
+        switch direction {
+        case .north: return 0
+        case .northeast: return 45
+        case .east: return 90
+        case .southeast: return 135
+        case .south: return 180
+        case .southwest: return 225
+        case .west: return 270
+        case .northwest: return 315
         }
     }
 }
@@ -162,19 +234,56 @@ struct DirectionCompassView: View {
     @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
-        VStack(alignment: .trailing, spacing: 2) {
-            HStack(spacing: 4) {
-                Image(systemName: "navigation.fill")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .rotationEffect(.degrees(direction.angle))
-                Text(DistanceFormatter.format(distance))
+        HStack(spacing: 8) {
+            Image(systemName: "navigation.fill")
+                .font(.system(size: 16))
+                .foregroundColor(.gray)
+                .rotationEffect(.degrees(getDirectionAngle(direction)))
+            
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(formatDistance(distance))
                     .font(.headline)
                     .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                
+                Text(getDirectionText(direction))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
             }
-            Text(direction.displayName(languageService: languageService))
-                .font(.caption)
-                .foregroundColor(.secondary)
+        }
+    }
+    
+    private func formatDistance(_ meters: Double) -> String {
+        if meters < 1000 {
+            return "\(Int(meters))m"
+        } else {
+            return String(format: "%.1fkm", meters / 1000)
+        }
+    }
+    
+    private func getDirectionText(_ direction: CompassDirection) -> String {
+        switch direction {
+        case .north: return "北方"
+        case .northeast: return "東北方"
+        case .east: return "東方"
+        case .southeast: return "東南方"
+        case .south: return "南方"
+        case .southwest: return "西南方"
+        case .west: return "西方"
+        case .northwest: return "西北方"
+        }
+    }
+    
+    private func getDirectionAngle(_ direction: CompassDirection) -> Double {
+        switch direction {
+        case .north: return 0
+        case .northeast: return 45
+        case .east: return 90
+        case .southeast: return 135
+        case .south: return 180
+        case .southwest: return 225
+        case .west: return 270
+        case .northwest: return 315
         }
     }
 }

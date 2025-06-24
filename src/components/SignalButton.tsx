@@ -1,7 +1,7 @@
-
 import React from 'react';
 import { AlertTriangle, Heart, Package, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SignalButtonProps {
   type: 'safe' | 'supplies' | 'medical' | 'danger';
@@ -12,25 +12,25 @@ interface SignalButtonProps {
 
 const signalConfig = {
   safe: {
-    label: '我安全',
+    translationKey: 'signal_safe',
     color: 'text-white',
     bgColor: 'bg-[#263eea] hover:bg-[#1d32d4]',
     icon: Shield
   },
   supplies: {
-    label: '需要物資',
+    translationKey: 'signal_supplies',
     color: 'text-white',
     bgColor: 'bg-[#b199ea] hover:bg-[#a085e6]',
     icon: Package
   },
   medical: {
-    label: '需要醫療',
+    translationKey: 'signal_medical',
     color: 'text-white',
     bgColor: 'bg-[#ff5662] hover:bg-[#ff4553]',
     icon: Heart
   },
   danger: {
-    label: '危險警告',
+    translationKey: 'signal_danger',
     color: 'text-black',
     bgColor: 'bg-[#fec91b] hover:bg-[#fdc107]',
     icon: AlertTriangle
@@ -38,8 +38,10 @@ const signalConfig = {
 };
 
 export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabled, size = 'large' }) => {
+  const { t } = useLanguage();
   const config = signalConfig[type];
   const Icon = config.icon;
+  const label = t(config.translationKey);
 
   if (size === 'large') {
     // Large button for "我安全" - adjusted height to align bottom edge with small buttons (3 * 36px + 2 * 12px gap = 132px)
@@ -51,7 +53,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
       >
         <Icon className="w-8 h-8 mb-2" />
         <div className="text-center">
-          <div className="text-xs font-medium leading-tight">{config.label}</div>
+          <div className="text-xs font-medium leading-tight">{label}</div>
         </div>
       </Button>
     );
@@ -64,7 +66,7 @@ export const SignalButton: React.FC<SignalButtonProps> = ({ type, onSend, disabl
         className={`h-[36px] w-full ${config.bgColor} ${config.color} flex items-center justify-center px-3 font-semibold transition-all duration-200 transform active:scale-95 rounded-xl border border-black`}
       >
         <Icon className="w-4 h-4 mr-2 flex-shrink-0" />
-        <div className="text-xs font-medium">{config.label}</div>
+        <div className="text-xs font-medium">{label}</div>
       </Button>
     );
   }

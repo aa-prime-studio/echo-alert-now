@@ -2,21 +2,22 @@ import SwiftUI
 
 struct DrawnNumbersView: View {
     let drawnNumbers: [Int]
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("已抽取號碼")
+                Text(languageService.t("drawn_numbers"))
                     .font(.headline)
                     .fontWeight(.semibold)
                 Spacer()
-                Text("共 \(drawnNumbers.count) 個")
+                Text("\(languageService.t("total_count")) \(drawnNumbers.count) \(languageService.t("count_unit"))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
             }
             
             if drawnNumbers.isEmpty {
-                Text("等待抽號中...")
+                Text(languageService.t("waiting_draw"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)

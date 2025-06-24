@@ -5,6 +5,7 @@ struct BingoCardView: View {
     let drawnNumbers: [Int]
     let gameWon: Bool
     let onMarkNumber: (Int) -> Void
+    @StateObject private var languageService = LanguageService()
     
     var body: some View {
         VStack(spacing: 16) {
@@ -45,7 +46,7 @@ struct BingoCardView: View {
             
             // Instructions - 對齊 React 版本
             VStack(spacing: 8) {
-                Text("點擊已抽取的號碼來標記")
+                Text(languageService.t("click_drawn_numbers"))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

@@ -1,42 +1,37 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Wifi, WifiOff, Radio, MessageCircle, Gamepad2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 import { SignalButton } from '@/components/SignalButton';
 import { MessageList } from '@/components/MessageList';
 import { ChatRoom } from '@/components/ChatRoom';
 import { GameRoom } from '@/components/GameRoom';
 import { SettingsPanel } from '@/components/SettingsPanel';
 import { useSignals } from '@/hooks/useSignals';
-import { toast } from 'sonner';
+import { type SignalMessage } from '@/services/webrtc';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 type TabType = 'signals' | 'chat' | 'games' | 'settings';
 
 const SignalApp = () => {
-  const { messages, connectionState, deviceName, setDeviceName, sendSignal, clearMessages } = useSignals();
+  const { t } = useLanguage();
+  const { toast } = useToast();
+  const { messages, connectionState, deviceName, setDeviceName, sendSignal, clearMessages, isConnected, toggleConnection } = useSignals();
   const [activeTab, setActiveTab] = useState<TabType>('signals');
-  const [isConnected, setIsConnected] = useState(true);
 
   const handleSendSignal = async (type: 'safe' | 'supplies' | 'medical' | 'danger') => {
-    await sendSignal(type);
-    
-    const signalNames = {
-      safe: '安全訊號',
-      supplies: '物資需求',
-      medical: '醫療需求',
-      danger: '危險警告'
-    };
-    
-    toast.success(`${signalNames[type]}已發送`, {
-      description: '訊號已廣播至附近裝置'
-    });
-  };
-
-  const toggleConnection = () => {
-    setIsConnected(!isConnected);
-    toast.info(isConnected ? '已斷開連線' : '正在連線...', {
-      description: isConnected ? '停止廣播訊號' : '開始搜尋附近裝置'
-    });
+    try {
+      await sendSignal(type, deviceName);
+      const signalLabels = {
+        safe: t('signal_safe'),
+        supplies: t('signal_supplies'),
+        medical: t('signal_medical'),
+        danger: t('signal_danger')
+      };
+      toast.success(`已發送: ${signalLabels[type]}`);
+    } catch (error) {
+      toast.error('發送訊號失敗');
+    }
   };
 
   const getHeaderConfig = () => {
@@ -62,7 +57,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">{t('send_signal')}</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -94,7 +89,7 @@ const SignalApp = () => {
                 </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
-                訊號會廣播至 50-500 公尺範圍內的裝置
+                {t('signal_broadcast_range')}
               </p>
             </div>
             <div className="flex-1">
@@ -121,7 +116,7 @@ const SignalApp = () => {
         return (
           <div className="space-y-6">
             <div>
-              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">發送訊息</h2>
+              <h2 className="text-base font-semibold text-gray-900 mb-4 text-left">{t('send_signal')}</h2>
               <div className="flex gap-3 mb-4">
                 <div className="w-1/2">
                   <SignalButton
@@ -153,7 +148,7 @@ const SignalApp = () => {
                 </div>
               </div>
               <p className="text-xs text-gray-500 text-center">
-                訊號會廣播至 50-500 公尺範圍內的裝置
+                {t('signal_broadcast_range')}
               </p>
             </div>
             <div className="flex-1">
@@ -165,10 +160,10 @@ const SignalApp = () => {
   };
 
   const tabConfig = [
-    { id: 'signals' as TabType, label: '訊號', icon: Radio },
-    { id: 'chat' as TabType, label: '聊天室', icon: MessageCircle },
-    { id: 'games' as TabType, label: '遊戲', icon: Gamepad2 },
-    { id: 'settings' as TabType, label: '設定', icon: Settings },
+    { id: 'signals' as TabType, label: t('signals'), icon: Radio },
+    { id: 'chat' as TabType, label: t('chat'), icon: MessageCircle },
+    { id: 'games' as TabType, label: t('games'), icon: Gamepad2 },
+    { id: 'settings' as TabType, label: t('settings'), icon: Settings },
   ];
 
   return (
@@ -183,7 +178,7 @@ const SignalApp = () => {
             {activeTab === 'signals' && (
               <div className="flex items-center mb-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                <p className="text-sm opacity-80">已連線 - 可發送和接收訊號</p>
+                <p className="text-sm opacity-80">{t('connected_status')}</p>
               </div>
             )}
             <h1 className="text-5xl font-bold whitespace-pre-line">{headerConfig.title}</h1>

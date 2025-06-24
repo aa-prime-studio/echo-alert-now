@@ -3,10 +3,11 @@ import SwiftUI
 struct PlayerListView: View {
     let players: [RoomPlayer]
     let deviceName: String
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("房間玩家")
+            Text(languageService.t("room_players"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -32,7 +33,7 @@ struct PlayerListView: View {
                         
                         // Progress and status
                         HStack(spacing: 8) {
-                            Text("\(player.completedLines)線")
+                            Text("\(player.completedLines)\(languageService.t("lines_score"))")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.secondary)

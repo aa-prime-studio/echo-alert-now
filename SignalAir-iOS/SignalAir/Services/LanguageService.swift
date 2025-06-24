@@ -75,6 +75,7 @@ class LanguageService: ObservableObject {
                 "nearby_signals": "附近訊號",
                 "no_signals": "目前沒有訊息",
                 "signals_will_show": "當附近有人發送訊號時，會顯示在這裡",
+                "broadcast_range_info": "訊號會廣播至 50-500 公尺範圍內的裝置",
                 "from": "來自:",
                 "just_now": "剛剛",
                 "minutes_ago": "分鐘前",
@@ -89,6 +90,7 @@ class LanguageService: ObservableObject {
                 "direction_southwest": "西南方",
                 "direction_west": "西方",
                 "direction_northwest": "西北方",
+                "distance_only": "僅距離",
                 
                 // 聊天室頁面
                 "auto_delete_24h": "24小時自動清除",
@@ -111,6 +113,39 @@ class LanguageService: ObservableObject {
                 "won": "🎉 獲勝!",
                 "leave": "離開",
                 "playing_in": "正在遊戲:",
+                "select_room": "選擇房間",
+                "players": "玩家",
+                "game_rules": "遊戲規則",
+                "number_range": "數字範圍",
+                "number_range_desc": "1-60的數字",
+                "win_condition": "勝利條件",
+                "win_condition_desc": "完成5條線即獲勝",
+                "daily_leaderboard": "每日排行榜",
+                "daily_leaderboard_desc": "每日最佳成績",
+                "room_players": "房間玩家",
+                "lines_score": "線",
+                "chat_room": "聊天室",
+                "drawn_numbers": "已抽取號碼",
+                "total_count": "共",
+                "count_unit": "個",
+                "waiting_draw": "等待抽取...",
+                "todays_leaderboard": "今日排行榜",
+                "no_leaderboard_data": "目前沒有排行榜數據",
+                
+                // 遊戲狀態和連線
+                "offline": "離線",
+                "waiting_sync": "等待同步",
+                "connected_devices": "已連線 %d 個裝置",
+                "click_drawn_numbers": "點擊已抽取的號碼來標記",
+                "room_created": "🏠 已創建遊戲房間:",
+                "joining_room": "🔍 正在加入遊戲房間:",
+                "left_room": "👋 已離開遊戲房間",
+                "system": "系統",
+                
+                // 聊天訊息
+                "chat_cheer": "加油！",
+                "chat_almost_win": "我差一條線就贏了！",
+                "chat_good_luck": "好運氣！",
                 
                 // 暱稱編輯
                 "set_nickname": "設定暱稱",
@@ -164,6 +199,7 @@ class LanguageService: ObservableObject {
                 "nearby_signals": "Nearby Signals",
                 "no_signals": "No messages yet",
                 "signals_will_show": "When someone nearby sends a signal, it will appear here",
+                "broadcast_range_info": "Signals broadcast to devices within 50-500 meters range",
                 "from": "From:",
                 "just_now": "Just now",
                 "minutes_ago": "minutes ago",
@@ -178,6 +214,7 @@ class LanguageService: ObservableObject {
                 "direction_southwest": "Southwest",
                 "direction_west": "West",
                 "direction_northwest": "Northwest",
+                "distance_only": "Distance Only",
                 
                 // Chat page
                 "auto_delete_24h": "Auto-delete in 24 hours",
@@ -200,6 +237,24 @@ class LanguageService: ObservableObject {
                 "won": "🎉 Won!",
                 "leave": "Leave",
                 "playing_in": "Playing in:",
+                "select_room": "Select Room",
+                "players": "Players",
+                "game_rules": "Game Rules",
+                "number_range": "Number Range",
+                "number_range_desc": "Numbers 1-60",
+                "win_condition": "Win Condition",
+                "win_condition_desc": "Complete 5 lines to win",
+                "daily_leaderboard": "Daily Leaderboard",
+                "daily_leaderboard_desc": "Daily best scores",
+                "room_players": "Room Players",
+                "lines_score": " lines",
+                "chat_room": "Chat Room",
+                "drawn_numbers": "Drawn Numbers",
+                "total_count": "Total",
+                "count_unit": "numbers",
+                "waiting_draw": "Waiting to draw...",
+                "todays_leaderboard": "Today's Leaderboard",
+                "no_leaderboard_data": "No leaderboard data yet",
                 
                 // Nickname editing
                 "set_nickname": "Set Nickname",
@@ -214,7 +269,22 @@ class LanguageService: ObservableObject {
                 "nickname_too_long": "Nickname cannot exceed 20 characters",
                 "nickname_updated": "Nickname updated successfully!",
                 "nickname_no_change": "Nickname not changed",
-                "nickname_max_reached": "Maximum changes reached"
+                "nickname_max_reached": "Maximum changes reached",
+                
+                // Game status and connection
+                "offline": "Offline",
+                "waiting_sync": "Waiting for sync",
+                "connected_devices": "Connected %d devices",
+                "click_drawn_numbers": "Click drawn numbers to mark",
+                "room_created": "🏠 Created game room:",
+                "joining_room": "🔍 Joining game room:",
+                "left_room": "👋 Left game room",
+                "system": "System",
+                
+                // Chat messages
+                "chat_cheer": "Good luck!",
+                "chat_almost_win": "Almost got a line!",
+                "chat_good_luck": "Great job!"
             ]
         }
     }

@@ -11,14 +11,14 @@
 ## 執行後會得到什麼
 
 ✅ **完整的 Xcode 專案**
-- `SignalAir-iOS/SignalAir.xcodeproj` - Xcode 專案檔案
+- `SignalAir-iOS/SignalAir Rescue.xcodeproj` - Xcode 專案檔案
 - 完整的 Swift 原始碼結構
 - Info.plist 配置檔案
 
 ✅ **專案結構**
 ```
 SignalAir-iOS/
-├── SignalAir.xcodeproj/          # Xcode 專案檔案
+├── SignalAir Rescue.xcodeproj/          # Xcode 專案檔案
 └── SignalAir/                    # 主要原始碼
     ├── App/                      # 應用程式進入點
     │   ├── SignalAirApp.swift
@@ -48,7 +48,7 @@ SignalAir-iOS/
 
 ### 2. 開啟 Xcode
 ```bash
-open SignalAir-iOS/SignalAir.xcodeproj
+open SignalAir-iOS/SignalAir Rescue.xcodeproj
 ```
 
 ### 3. 在 Cursor 中編輯
@@ -60,7 +60,7 @@ code SignalAir-iOS/
 ## 雙編輯器工作流程
 
 ### Xcode（預覽和測試）
-- 開啟 `SignalAir.xcodeproj`
+- 開啟 `SignalAir Rescue.xcodeproj`
 - 選擇模擬器或實體裝置
 - 按 `Cmd+R` 執行應用程式
 - 使用 SwiftUI 預覽功能
@@ -106,7 +106,7 @@ brew install xcodegen
 ### 如果無法開啟專案
 1. 確認 Xcode 已安裝並為最新版本
 2. 檢查檔案權限：`ls -la SignalAir-iOS/`
-3. 手動開啟：`open SignalAir-iOS/SignalAir.xcodeproj`
+3. 手動開啟：`open SignalAir-iOS/SignalAir Rescue.xcodeproj`
 
 ## 專案亮點
 

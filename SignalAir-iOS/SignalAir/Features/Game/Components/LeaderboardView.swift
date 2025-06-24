@@ -2,16 +2,17 @@ import SwiftUI
 
 struct LeaderboardView: View {
     let leaderboard: [BingoScore]
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("今日排行榜")
+            Text(languageService.t("todays_leaderboard"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             if leaderboard.isEmpty {
-                Text("暫無排行數據")
+                Text(languageService.t("no_leaderboard_data"))
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                     .frame(maxWidth: .infinity, alignment: .center)
@@ -37,7 +38,7 @@ struct LeaderboardView: View {
                             Spacer()
                             
                             // Score
-                            Text("\(score.score)線")
+                            Text("\(score.score)\(languageService.t("lines_score"))")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundColor(.secondary)

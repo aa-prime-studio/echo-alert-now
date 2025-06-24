@@ -1,7 +1,6 @@
 import Foundation
 import StoreKit
 
-@MainActor
 class PurchaseService: ObservableObject {
     @Published var purchasedTiers: Set<String> = []
     @Published var isLoading = false
@@ -14,7 +13,7 @@ class PurchaseService: ObservableObject {
         
         var displayName: String {
             switch self {
-            case .coffee: return "喝杯咖啡"
+            case .coffee: return "喝杯楊枝甘露"
             case .bingoUnlock: return "解鎖賓果遊戲"
             case .fullVersion: return "完整版"
             }
@@ -24,7 +23,7 @@ class PurchaseService: ObservableObject {
             switch self {
             case .coffee: return "NT$90"
             case .bingoUnlock: return "NT$330"
-            case .fullVersion: return "NT$1,480"
+            case .fullVersion: return "NT$1,680"
             }
         }
         
@@ -32,7 +31,7 @@ class PurchaseService: ObservableObject {
             switch self {
             case .coffee: return "純贊助，無解鎖功能"
             case .bingoUnlock: return "解鎖賓果遊戲室"
-            case .fullVersion: return "解鎖賓果遊戲室 + 未來擴充語言包"
+            case .fullVersion: return "全功能 + 未來擴充語言包，幫助更多地球人！"
             }
         }
     }

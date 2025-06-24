@@ -103,7 +103,7 @@ python3 ../create_xcodeproj.py
 
 echo "✅ SignalAir iOS Project created successfully!"
 echo "📱 You can now:"
-echo "   1. Open SignalAir.xcodeproj in Xcode for preview and testing"
+echo "   1. Open SignalAir Rescue.xcodeproj in Xcode for preview and testing"
 echo "   2. Open this folder in Cursor for code editing"
 echo "   3. Files will sync automatically between both editors"
 echo ""

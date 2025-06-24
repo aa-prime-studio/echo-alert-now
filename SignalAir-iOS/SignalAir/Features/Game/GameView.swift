@@ -1,9 +1,14 @@
 import SwiftUI
+import Foundation
 
 struct GameView: View {
     @State private var currentRoom: BingoRoom?
     @State private var leaderboard: [BingoScore] = []
     @EnvironmentObject var languageService: LanguageService
+    @EnvironmentObject var nicknameService: NicknameService
+    
+    // 持久化存儲鍵
+    private let leaderboardKey = "SignalAir_Rescue_BingoLeaderboard"
     
     // 3個賓果房間
     private let rooms: [BingoRoom] = [
@@ -20,9 +25,9 @@ struct GameView: View {
             
             // Content Section - 確保可以滑動，使用 Spacer() 佔用剩餘空間
             if let room = currentRoom {
-                BingoGameView(room: room) {
-                    currentRoom = nil
-                }
+                BingoGameView(room: room, onLeaveRoom: { currentRoom = nil }, onGameWon: { deviceName, score in
+                    addGameResult(deviceName: deviceName, score: score)
+                })
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 RoomListView(
@@ -44,7 +49,7 @@ struct GameView: View {
     private var headerSection: some View {
         HStack {
             VStack(alignment: .leading, spacing: 4) {
-                Text(currentRoom != nil ? "Bingo Game\nRoom" : "Bingo Game\nRoom")
+                Text("Bingo\nGame Room")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
@@ -70,17 +75,68 @@ struct GameView: View {
     }
     
     private func setupLeaderboard() {
-        let today = Date()
+        loadLeaderboardFromStorage()
+    }
+    
+    // MARK: - 排行榜數據管理
+    
+    /// 從本地存儲讀取排行榜數據
+    private func loadLeaderboardFromStorage() {
+        if let data = UserDefaults.standard.data(forKey: leaderboardKey),
+           let savedLeaderboard = try? JSONDecoder().decode([BingoScore].self, from: data) {
+            // 過濾今日數據
+            let today = getTodayString()
+            leaderboard = savedLeaderboard
+                .filter { $0.date == today }
+                .sorted { $0.score > $1.score }
+                .prefix(10) // 最多顯示前10名
+                .map { $0 }
+        } else {
+            leaderboard = []
+        }
+    }
+    
+    /// 保存排行榜數據到本地存儲
+    private func saveLeaderboardToStorage() {
+        if let encoded = try? JSONEncoder().encode(leaderboard) {
+            UserDefaults.standard.set(encoded, forKey: leaderboardKey)
+        }
+    }
+    
+    /// 添加新的遊戲記錄到排行榜
+    func addGameResult(deviceName: String, score: Int) {
+        let today = getTodayString()
+        let newScore = BingoScore(
+            deviceName: deviceName,
+            score: score,
+            timestamp: Date().timeIntervalSince1970,
+            date: today
+        )
+        
+        // 讀取完整的歷史數據
+        var allScores: [BingoScore] = []
+        if let data = UserDefaults.standard.data(forKey: leaderboardKey),
+           let savedScores = try? JSONDecoder().decode([BingoScore].self, from: data) {
+            allScores = savedScores
+        }
+        
+        // 添加新記錄
+        allScores.append(newScore)
+        
+        // 保存完整歷史數據
+        if let encoded = try? JSONEncoder().encode(allScores) {
+            UserDefaults.standard.set(encoded, forKey: leaderboardKey)
+        }
+        
+        // 更新今日排行榜顯示
+        loadLeaderboardFromStorage()
+    }
+    
+    /// 獲取今日日期字串
+    private func getTodayString() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
-        let todayString = formatter.string(from: today)
-        
-        leaderboard = [
-            BingoScore(deviceName: "BingoMaster", score: 6, timestamp: Date().timeIntervalSince1970 - 300, date: todayString),
-            BingoScore(deviceName: "LineHunter", score: 5, timestamp: Date().timeIntervalSince1970 - 600, date: todayString),
-            BingoScore(deviceName: "NumberWiz", score: 4, timestamp: Date().timeIntervalSince1970 - 900, date: todayString),
-            BingoScore(deviceName: "LuckyPlayer", score: 3, timestamp: Date().timeIntervalSince1970 - 1200, date: todayString)
-        ]
+        return formatter.string(from: Date())
     }
 }
 
@@ -89,18 +145,22 @@ struct RoomListView: View {
     let rooms: [BingoRoom]
     let leaderboard: [BingoScore]
     let onJoinRoom: (BingoRoom) -> Void
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         ScrollView {
             VStack(spacing: 20) {
                 // Room Selector
                 RoomSelectorView(rooms: rooms, onJoinRoom: onJoinRoom)
+                    .environmentObject(languageService)
                 
                 // Game Rules
                 GameRulesView()
+                    .environmentObject(languageService)
                 
                 // Leaderboard
                 LeaderboardView(leaderboard: leaderboard)
+                    .environmentObject(languageService)
             }
             .padding()
         }
@@ -108,16 +168,11 @@ struct RoomListView: View {
     }
 }
 
-
-
-
-
-
-
 // MARK: - Bingo Game View (第二層)
 struct BingoGameView: View {
     let room: BingoRoom
     let onLeaveRoom: () -> Void
+    let onGameWon: (String, Int) -> Void
     
     @StateObject private var gameViewModel = BingoGameViewModel()
     @EnvironmentObject var nicknameService: NicknameService
@@ -137,8 +192,9 @@ struct BingoGameView: View {
                         switch gameViewModel.gameState {
                         case .waitingForPlayers:
                             Text("\(languageService.t("waiting_players")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")), \(languageService.t("needs_4_to_start")))")
-                                .font(.headline)
-                                .foregroundColor(.orange)
+                                .font(.caption)
+                                .foregroundColor(.gray)
+                                .padding(.top, 8)
                         case .countdown:
                             Text("\(languageService.t("ready_to_start")) (\(gameViewModel.countdown)\(languageService.t("seconds")))")
                                 .font(.headline)
@@ -159,7 +215,7 @@ struct BingoGameView: View {
                     // 個人遊戲狀態
                     if gameViewModel.gameState == .playing {
                         HStack {
-                            Text("\(languageService.t("completed_lines")): \(gameViewModel.completedLines)/6")
+                            Text("\(languageService.t("completed_lines")): \(gameViewModel.completedLines)/5")
                                 .font(.subheadline)
                                 .foregroundColor(.primary)
                             
@@ -177,7 +233,9 @@ struct BingoGameView: View {
                 .padding(.horizontal)
                 
                 // Player List
-                PlayerListView(players: gameViewModel.roomPlayers, deviceName: gameViewModel.deviceName)
+                PlayerListView(players: gameViewModel.roomPlayers.map { player in
+                    RoomPlayer(name: player.name, completedLines: player.completedLines, hasWon: player.hasWon)
+                }, deviceName: gameViewModel.deviceName)
                 
                 // Drawn Numbers Display
                 DrawnNumbersView(drawnNumbers: gameViewModel.drawnNumbers)
@@ -205,10 +263,14 @@ struct BingoGameView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            gameViewModel.joinRoom(room)
+            gameViewModel.joinGameRoom(room.id.description)
+            // 設置遊戲獲勝回調
+            gameViewModel.onGameWon = { deviceName, score in
+                onGameWon(deviceName, score)
+            }
         }
         .onDisappear {
-            gameViewModel.leaveRoom()
+            gameViewModel.leaveGameRoom()
         }
     }
 }

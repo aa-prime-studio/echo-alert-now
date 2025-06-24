@@ -1,22 +1,24 @@
-
 import React from 'react';
 import { AlertTriangle, Heart, Package, Shield, Clock } from 'lucide-react';
 import { SignalMessage } from '@/services/webrtc';
 import { DirectionCompass } from '@/components/DirectionCompass';
 import { Separator } from '@/components/ui/separator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MessageListProps {
   messages: SignalMessage[];
 }
 
 const signalConfig = {
-  safe: { icon: Shield, color: 'text-white bg-[#263eea]', label: '我安全' },
-  supplies: { icon: Package, color: 'text-white bg-[#b199ea]', label: '需要物資' },
-  medical: { icon: Heart, color: 'text-white bg-[#ff5662]', label: '需要醫療' },
-  danger: { icon: AlertTriangle, color: 'text-black bg-[#fec91b]', label: '危險警告' }
+  safe: { icon: Shield, color: 'text-white bg-[#263eea]', translationKey: 'signal_safe' },
+  supplies: { icon: Package, color: 'text-white bg-[#b199ea]', translationKey: 'signal_supplies' },
+  medical: { icon: Heart, color: 'text-white bg-[#ff5662]', translationKey: 'signal_medical' },
+  danger: { icon: AlertTriangle, color: 'text-black bg-[#fec91b]', translationKey: 'signal_danger' }
 };
 
 export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
+  const { t } = useLanguage();
+
   const formatTime = (timestamp: number) => {
     const now = Date.now();
     const diff = now - timestamp;
@@ -24,19 +26,19 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     
     if (hours > 0) {
-      return `${hours}小時前`;
+      return `${hours}${t('hours_ago')}`;
     } else if (minutes > 0) {
-      return `${minutes}分鐘前`;
+      return `${minutes}${t('minutes_ago')}`;
     } else {
-      return '剛剛';
+      return t('just_now');
     }
   };
 
   if (messages.length === 0) {
     return (
       <div className="flex flex-col justify-center items-center p-8 text-center text-gray-500 border border-black rounded-lg bg-gray-50">
-        <p className="text-gray-600 mb-2">目前沒有訊息</p>
-        <p className="text-sm text-gray-400">當附近有人發送訊號時，會顯示在這裡</p>
+        <p className="text-gray-600 mb-2">{t('no_messages')}</p>
+        <p className="text-sm text-gray-400">{t('signals_will_show')}</p>
       </div>
     );
   };
@@ -47,7 +49,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
-        <h3 className="text-base font-semibold text-gray-900 text-left">附近訊號</h3>
+        <h3 className="text-base font-semibold text-gray-900 text-left">{t('nearby_signals')}</h3>
         <span className="text-sm text-gray-500">({messages.length})</span>
       </div>
       
@@ -56,6 +58,7 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
           const config = signalConfig[message.type];
           const Icon = config.icon;
           const isLastMessage = index === sortedMessages.length - 1;
+          const signalLabel = t(config.translationKey);
           
           return (
             <React.Fragment key={message.id}>
@@ -66,8 +69,8 @@ export const MessageList: React.FC<MessageListProps> = ({ messages }) => {
                 <div className="flex-1 min-w-0 relative">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <span className="font-medium text-gray-900">{config.label}</span>
-                      <div className="text-sm text-gray-600 mb-1 mt-1">來自: {message.deviceName}</div>
+                      <span className="font-medium text-gray-900">{signalLabel}</span>
+                      <div className="text-sm text-gray-600 mb-1 mt-1">{t('from')} {message.deviceName}</div>
                       <div className="text-sm text-gray-500">{formatTime(message.timestamp)}</div>
                     </div>
                     

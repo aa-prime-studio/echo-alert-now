@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Hash, Target, Calendar } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,7 +21,7 @@ export const GameRules: React.FC = () => {
               <Target className="w-6 h-6" style={{ color: '#263ee4' }} />
             </div>
             <p style={{ fontSize: '1rem' }} className="font-semibold text-gray-900 mb-1">獲勝條件</p>
-            <p className="text-sm text-gray-600">完成 6 條線即獲勝</p>
+            <p className="text-sm text-gray-600">完成 5 條線即獲勝</p>
           </div>
           
           <div className="text-left">

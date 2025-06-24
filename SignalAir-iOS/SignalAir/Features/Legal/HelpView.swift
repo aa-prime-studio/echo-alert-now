@@ -5,7 +5,7 @@ struct HelpView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("使用說明")
-                    .font(.largeTitle)
+                    .font(.system(size: 15))
                     .fontWeight(.bold)
                     .padding(.bottom)
                 
@@ -52,7 +52,6 @@ struct HelpView: View {
             .padding()
         }
         .navigationTitle("使用說明")
-        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -68,16 +67,14 @@ struct HelpSection: View {
                     .foregroundColor(.blue)
                     .frame(width: 24)
                 Text(title)
-                    .font(.headline)
+                    .font(.system(size: 15))
                     .fontWeight(.semibold)
             }
             
             Text(content)
-                .font(.body)
+                .font(.system(size: 15))
                 .foregroundColor(.secondary)
         }
         .padding()
-        .background(Color.gray.opacity(0.05))
-        .cornerRadius(8)
     }
 }

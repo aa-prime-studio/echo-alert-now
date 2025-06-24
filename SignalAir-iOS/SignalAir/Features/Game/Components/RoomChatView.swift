@@ -6,10 +6,11 @@ struct RoomChatView: View {
     let newMessage: String
     let onMessageChange: (String) -> Void
     let onSendMessage: () -> Void
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("\(roomName) 聊天室")
+            Text("\(roomName) \(languageService.t("chat_room"))")
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -29,7 +30,7 @@ struct RoomChatView: View {
             
             // Input Section
             HStack(spacing: 12) {
-                TextField("輸入訊息...", text: Binding(
+                TextField(languageService.t("enter_message"), text: Binding(
                     get: { newMessage },
                     set: onMessageChange
                 ))
@@ -54,6 +55,7 @@ struct RoomChatView: View {
 
 struct ChatMessageRow: View {
     let message: RoomChatMessage
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         HStack {
@@ -75,7 +77,7 @@ struct ChatMessageRow: View {
                         .foregroundColor(.secondary)
                     
                     if message.isOwn {
-                        Text("我")
+                        Text(languageService.t("me"))
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4

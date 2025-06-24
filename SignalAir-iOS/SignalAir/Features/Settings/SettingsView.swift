@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var languageService: LanguageService
     @EnvironmentObject var purchaseService: PurchaseService
     @EnvironmentObject var nicknameService: NicknameService
+    @EnvironmentObject var serviceContainer: ServiceContainer
     @State private var showingPurchaseSheet = false
     @State private var showingLanguageSheet = false
     @State private var showingNicknameSheet = false
@@ -57,71 +58,48 @@ struct SettingsView: View {
     
     private var languageSection: some View {
         VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "globe")
-                    .foregroundColor(.blue)
-                    .frame(width: 24)
-                Text(languageService.t("language"))
-                    .font(.headline)
-                Spacer()
-                Text(languageService.currentLanguage.displayName)
-                    .foregroundColor(.secondary)
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.secondary)
-                    .font(.caption)
-            }
-            .padding()
-            .contentShape(Rectangle())
-            .onTapGesture {
-                showingLanguageSheet = true
-            }
+            SettingsRowView(
+                icon: "globe",
+                title: languageService.t("language"),
+                value: languageService.currentLanguage.displayName,
+                action: { showingLanguageSheet = true }
+            )
         }
         .background(Color.white)
         .cornerRadius(12)
     }
     
     private var subscriptionSection: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Text(languageService.t("subscription_status"))
-                    .font(.headline)
-                    .fontWeight(.semibold)
-                Spacer()
-            }
+        VStack(spacing: 0) {
+            SettingsRowView(
+                icon: "crown.fill",
+                title: languageService.t("subscription_status"),
+                value: purchaseService.isPremiumUser ? languageService.t("premium_user") : languageService.t("free_user"),
+                action: nil
+            )
             
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(purchaseService.isPremiumUser ? languageService.t("premium_user") : languageService.t("free_user"))
-                        .font(.headline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(purchaseService.isPremiumUser ? .green : .orange)
-                    
-                    if purchaseService.isPremiumUser {
-                        Text(languageService.t("full_features"))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text(languageService.t("signal_chat_features"))
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                Spacer()
+            if purchaseService.isPremiumUser {
+                Divider()
                 
-                if purchaseService.isPremiumUser {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.green)
-                        .font(.title2)
-                } else {
-                    Image(systemName: "lock.circle")
-                        .foregroundColor(.orange)
-                        .font(.title2)
-                }
+                SettingsRowView(
+                    icon: "checkmark.circle.fill",
+                    title: languageService.t("full_features"),
+                    value: nil,
+                    action: nil
+                )
+            } else {
+                Divider()
+                
+                SettingsRowView(
+                    icon: "antenna.radiowaves.left.and.right",
+                    title: languageService.t("signal_chat_features"),
+                    value: nil,
+                    action: nil
+                )
             }
-            .padding()
-            .background(Color.white)
-            .cornerRadius(12)
         }
+        .background(Color.white)
+        .cornerRadius(12)
     }
     
     private var upgradeSection: some View {
@@ -187,7 +165,7 @@ struct SettingsView: View {
             SettingsRowView(
                 icon: "iphone",
                 title: languageService.t("device_name"),
-                value: UIDevice.current.name,
+                value: "珍珠奶茶-42",
                 action: nil
             )
             
@@ -206,35 +184,65 @@ struct SettingsView: View {
     
     private var legalSection: some View {
         VStack(spacing: 0) {
-            NavigationLink(destination: PrivacyPolicyView()) {
-                SettingsRowView(
-                    icon: "lock.shield",
-                    title: languageService.t("privacy_policy"),
-                    value: nil,
-                    action: {}
-                )
+            NavigationLink(destination: PrivacyPolicyView().environmentObject(languageService)) {
+                HStack {
+                    Image(systemName: "lock.shield")
+                        .foregroundColor(.blue)
+                        .frame(width: 24)
+                    
+                    Text(languageService.t("privacy_policy"))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
             }
             
             Divider()
             
-            NavigationLink(destination: TermsOfServiceView()) {
-                SettingsRowView(
-                    icon: "doc.text",
-                    title: languageService.t("terms_of_service"),
-                    value: nil,
-                    action: {}
-                )
+            NavigationLink(destination: TermsOfServiceView().environmentObject(languageService)) {
+                HStack {
+                    Image(systemName: "doc.text")
+                        .foregroundColor(.blue)
+                        .frame(width: 24)
+                    
+                    Text(languageService.t("terms_of_service"))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
             }
             
             Divider()
             
-            NavigationLink(destination: HelpView()) {
-                SettingsRowView(
-                    icon: "questionmark.circle",
-                    title: languageService.t("help_guide"),
-                    value: nil,
-                    action: {}
-                )
+            NavigationLink(destination: HelpView().environmentObject(languageService)) {
+                HStack {
+                    Image(systemName: "questionmark.circle")
+                        .foregroundColor(.blue)
+                        .frame(width: 24)
+                    
+                    Text(languageService.t("help_guide"))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
             }
         }
         .background(Color.white)
@@ -399,4 +407,4 @@ struct NicknameEditView: View {
             showingAlert = true
         }
     }
-}
+} 

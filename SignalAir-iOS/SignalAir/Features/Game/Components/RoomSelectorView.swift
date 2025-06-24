@@ -3,10 +3,11 @@ import SwiftUI
 struct RoomSelectorView: View {
     let rooms: [BingoRoom]
     let onJoinRoom: (BingoRoom) -> Void
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("選擇房間")
+            Text(languageService.t("select_room"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -19,7 +20,7 @@ struct RoomSelectorView: View {
                                 .font(.headline)
                                 .fontWeight(.medium)
                             Spacer()
-                            Text("\(room.players.count) 玩家")
+                            Text("\(room.players.count) \(languageService.t("players"))")
                                 .font(.subheadline)
                                 .opacity(0.8)
                         }
@@ -28,10 +29,6 @@ struct RoomSelectorView: View {
                         .frame(maxWidth: .infinity)
                         .background(Color(red: 0.0, green: 0.843, blue: 0.416)) // #00d76a
                         .cornerRadius(8)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color.black, lineWidth: 1)
-                        )
                     }
                 }
             }
