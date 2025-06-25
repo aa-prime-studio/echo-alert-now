@@ -40,17 +40,14 @@ struct AppContainerView: View {
 
 /// 主應用程式內容視圖 - 包裝現有的 ContentView 和所有服務
 struct MainAppContentView: View {
-    @StateObject private var serviceContainer = ServiceContainer()
-    @StateObject private var languageService = LanguageService()
-    @StateObject private var purchaseService = PurchaseService()
-    @StateObject private var nicknameService = NicknameService()
+    @StateObject private var serviceContainer = ServiceContainer.shared
     
     var body: some View {
         ContentView()
             .environmentObject(serviceContainer)
-            .environmentObject(languageService)
-            .environmentObject(purchaseService)
-            .environmentObject(nicknameService)
+            .environmentObject(serviceContainer.languageService)
+            .environmentObject(serviceContainer.nicknameService)
+            .environmentObject(serviceContainer.purchaseService)
             .onAppear {
                 configureStoreKit()
             }

@@ -90,6 +90,9 @@ class ServiceContainer: ObservableObject {
     @Published var deviceFingerprintManager: DeviceFingerprintManager
     @Published var trustScoreManager: TrustScoreManager
     
+    // MARK: - Autonomous System Services (NEW - 待整合)
+    // @Published var autonomousSystemManager: AutonomousSystemManager
+    
     // MARK: - Utility Services
     @Published var selfDestructManager: SelfDestructManager
     @Published var temporaryIDManager: TemporaryIDManager
@@ -156,7 +159,7 @@ class ServiceContainer: ObservableObject {
             await initializeServices()
         }
         
-        print("✅ ServiceContainer: 服務容器初始化完成")
+        print("✅ ServiceContainer: 服務容器初始化完成（包含自治系統）")
     }
     
     // MARK: - Service Configuration
@@ -258,7 +261,7 @@ class ServiceContainer: ObservableObject {
     
     /// 創建 BingoGameViewModel 實例
     func createBingoGameViewModel() -> BingoGameViewModel {
-        let viewModel = BingoGameViewModel()
+        let viewModel = BingoGameViewModel(languageService: languageService)
         // 配置依賴
         return viewModel
     }

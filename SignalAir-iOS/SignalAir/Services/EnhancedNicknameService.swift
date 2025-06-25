@@ -139,7 +139,7 @@ class EnhancedNicknameService: ObservableObject {
         )
     }
     
-    /// 重設暱稱變更次數（管理員功能）
+    /// 重設暱稱變更次數（系統維護功能）
     func resetNicknameChanges() {
         remainingChanges = maxNicknameChanges
         userDefaults.set(maxNicknameChanges, forKey: remainingChangesKey)
@@ -208,8 +208,8 @@ class EnhancedNicknameService: ObservableObject {
     /// 檢查是否包含不當內容
     private func containsInappropriateContent(_ nickname: String) -> Bool {
         let inappropriateWords = [
-            "admin", "system", "root", "null", "undefined",
-            "測試", "test", "管理員", "系統"
+            "system", "root", "null", "undefined",
+            "測試", "test", "系統"
         ]
         
         let lowercased = nickname.lowercased()

@@ -1,0 +1,64 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/PurchaseOptionsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "升級選項",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 33,
+          "startingLine": 31
+        }
+      },
+      {
+        "comment": "",
+        "key": "解鎖完整功能",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 42
+        }
+      },
+      {
+        "comment": "",
+        "key": "選擇最適合您的方案",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 46
+        }
+      },
+      {
+        "comment": "",
+        "key": "購買 %@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 64
+        }
+      },
+      {
+        "comment": "",
+        "key": "恢復購買",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 81
+        }
+      },
+      {
+        "comment": "",
+        "key": "推薦方案",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 132
+        }
+      }
+    ]
+  },
+  "version": 1
+}

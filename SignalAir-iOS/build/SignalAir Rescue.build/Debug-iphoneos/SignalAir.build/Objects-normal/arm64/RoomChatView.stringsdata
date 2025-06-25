@@ -1,0 +1,16 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/RoomChatView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%@ %@",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 13
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -1,0 +1,16 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/ContentView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Broadcast\nSignal",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 132
+        }
+      }
+    ]
+  },
+  "version": 1
+}

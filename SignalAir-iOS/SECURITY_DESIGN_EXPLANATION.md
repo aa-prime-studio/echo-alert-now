@@ -60,166 +60,29 @@ func getRecentProcessedMessagesUnsafe(limit: Int = 10) -> [MessageFingerprint] {
 - 降低緊急修復需求
 - 支援平滑升級
 
-## 🔐 管理員權限設計演進
+## 🔐 管理員系統移除說明
 
-### 問題：原始設計的安全漏洞
+### 系統變更
 
-```swift
-// ❌ 原始不安全設計：信任呼叫者
-func getRecentProcessedMessages(
-    limit: Int = 10, 
-    includeContent: Bool = false, 
-    hasAdminPermission: Bool = false  // 🚨 任何人都可以聲稱是管理員！
-) -> [SafeMessageFingerprint]
+管理員權限系統已完全移除，原因如下：
 
-// 攻擊範例：
-let sensitiveData = viewModel.getRecentProcessedMessages(
-    limit: 100,
-    includeContent: true,
-    hasAdminPermission: true  // 🚨 偽造管理員權限
-)
-```
+1. **簡化架構**：移除複雜的權限管理系統
+2. **提高安全性**：消除權限升級攻擊向量
+3. **降低維護成本**：減少安全相關的程式碼複雜度
+4. **統一使用者體驗**：所有使用者享有相同的基本功能
 
-### 解決方案：真實權限驗證系統
+### 影響的功能
 
-#### 1. **會話式認證系統**
+以下管理員專用功能已被移除：
+- 管理員登入系統
+- 會話管理
+- 敏感資料的完整存取
+- 管理員專用的訊息查看功能
 
-```swift
-class AdminPermissionValidator {
-    // 🔐 安全密碼（生產環境應存在Keychain）
-    private static let adminPasscode = "SignalAir_Admin_2024"
-    
-    // 📱 會話管理
-    private static var currentAdminSession: String?
-    private static var sessionExpiry: Date?
-    private static let sessionDuration: TimeInterval = 3600 // 1小時
-    
-    // 🔒 防暴力破解
-    private static var failedAttempts = 0
-    private static let maxFailedAttempts = 5
-    private static var lockoutUntil: Date?
-}
-```
+### 系統行為變更
 
-#### 2. **三層安全防護**
+- 所有 API 現在僅提供基本資訊
+- 嘗試存取管理員功能會記錄安全警告
+- 系統始終以標準使用者權限運行
 
-**第一層：認證（Authentication）**
-```swift
-// 管理員必須提供正確密碼
-let success = AdminPermissionValidator.authenticateAdmin(passcode: "密碼")
-```
-
-**第二層：會話驗證（Session Validation）**
-```swift
-// 系統自動驗證會話有效性
-let hasValidSession = AdminPermissionValidator.hasValidAdminSession()
-```
-
-**第三層：即時驗證（Real-time Verification）**
-```swift
-// 每次存取敏感資料都重新驗證
-func getRecentProcessedMessagesAdmin(adminPasscode: String) -> [MessageFingerprint] {
-    guard AdminPermissionValidator.authenticateAdmin(passcode: adminPasscode) else {
-        return []  // 認證失敗，拒絕存取
-    }
-    // 提供完整資料
-}
-```
-
-#### 3. **安全特性對比**
-
-| 特性 | 原始設計 | 改進設計 |
-|------|---------|----------|
-| 權限驗證 | ❌ 信任呼叫者 | ✅ 真實認證 |
-| 會話管理 | ❌ 無 | ✅ 1小時過期 |
-| 暴力破解防護 | ❌ 無 | ✅ 5次失敗鎖定15分鐘 |
-| 審計追蹤 | ❌ 基本 | ✅ 完整記錄 |
-| 自動登出 | ❌ 無 | ✅ 會話過期自動登出 |
-
-### 使用範例對比
-
-#### ❌ 不安全的舊方式：
-```swift
-// 任何人都可以偽造權限
-let messages = viewModel.getRecentProcessedMessages(
-    limit: 10,
-    includeContent: true,
-    hasAdminPermission: true  // 🚨 無法驗證真偽
-)
-```
-
-#### ✅ 安全的新方式：
-
-**方式1：會話式存取**
-```swift
-// 先認證
-AdminPermissionValidator.authenticateAdmin(passcode: "正確密碼")
-
-// 後存取（自動驗證會話）
-let safeMessages = viewModel.getRecentProcessedMessages(
-    limit: 10,
-    includeContent: true  // 系統自動檢查管理員會話
-)
-```
-
-**方式2：即時認證存取**
-```swift
-// 每次都需要密碼（最安全）
-let fullMessages = viewModel.getRecentProcessedMessagesAdmin(
-    limit: 10,
-    adminPasscode: "正確密碼"
-)
-```
-
-## 🛡️ 安全效益總結
-
-### 1. **資料保護**
-- ✅ 防止敏感資訊洩露
-- ✅ 實施最小權限原則
-- ✅ 提供分級資料存取
-
-### 2. **攻擊防護**
-- ✅ 防止權限偽造攻擊
-- ✅ 防止暴力破解攻擊
-- ✅ 防止會話劫持攻擊
-
-### 3. **合規審計**
-- ✅ 完整的存取記錄
-- ✅ 權限變更追蹤
-- ✅ 安全事件監控
-
-### 4. **運維友好**
-- ✅ 平滑的升級路徑
-- ✅ 詳細的錯誤提示
-- ✅ 靈活的權限管理
-
-## 🚀 生產環境建議
-
-### 1. **密碼管理**
-```swift
-// 🔐 使用Keychain存儲密碼
-let adminPasscode = KeychainService.getAdminPasscode()
-
-// 🔄 定期輪換密碼
-AdminPasswordRotation.scheduleRotation(interval: .monthly)
-```
-
-### 2. **多因素認證**
-```swift
-// 📱 加入生物識別
-let biometricAuth = BiometricAuthenticator()
-let success = biometricAuth.authenticate() && passwordAuth.authenticate()
-```
-
-### 3. **審計整合**
-```swift
-// 📊 整合企業審計系統
-SecurityAuditLogger.logAdminAccess(
-    userId: currentUser.id,
-    action: "sensitive_data_access",
-    timestamp: Date(),
-    ipAddress: NetworkInfo.currentIP
-)
-```
-
-這種設計確保了既有系統的穩定性，又提供了強大的安全保護，是企業級應用的最佳實踐。 
+這種簡化設計提供了更一致和安全的使用者體驗。 

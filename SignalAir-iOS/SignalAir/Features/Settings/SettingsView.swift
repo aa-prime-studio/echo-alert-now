@@ -47,7 +47,7 @@ struct SettingsView: View {
                 .foregroundColor(.black)
             Spacer()
             Button(action: { showingPurchaseSheet = true }) {
-                Image(systemName: "crown.fill")
+                Image(systemName: "heart.fill")
                     .font(.title2)
                     .foregroundColor(.black)
             }
@@ -72,7 +72,7 @@ struct SettingsView: View {
     private var subscriptionSection: some View {
         VStack(spacing: 0) {
             SettingsRowView(
-                icon: "crown.fill",
+                icon: "heart.fill",
                 title: languageService.t("subscription_status"),
                 value: purchaseService.isPremiumUser ? languageService.t("premium_user") : languageService.t("free_user"),
                 action: nil
@@ -107,14 +107,14 @@ struct SettingsView: View {
             if !purchaseService.isPremiumUser {
                 Button(action: { showingPurchaseSheet = true }) {
                     HStack {
-                        Image(systemName: "crown.fill")
+                        Image(systemName: "heart.fill")
                         Text(languageService.t("upgrade_unlock_games"))
                     }
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color(red: 0.67, green: 0.57, blue: 0.89))
+                    .background(Color(red: 0.0, green: 0.843, blue: 0.416))
                     .cornerRadius(12)
                 }
             }
@@ -126,14 +126,14 @@ struct SettingsView: View {
             }) {
                 Text(languageService.t("restore_purchases"))
                     .font(.headline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                     .frame(maxWidth: .infinity)
                     .padding()
                     .background(Color.white)
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.blue, lineWidth: 1)
+                            .stroke(Color(red: 0.0, green: 0.843, blue: 0.416), lineWidth: 1)
                     )
             }
         }
@@ -184,31 +184,10 @@ struct SettingsView: View {
     
     private var legalSection: some View {
         VStack(spacing: 0) {
-            NavigationLink(destination: PrivacyPolicyView().environmentObject(languageService)) {
-                HStack {
-                    Image(systemName: "lock.shield")
-                        .foregroundColor(.blue)
-                        .frame(width: 24)
-                    
-                    Text(languageService.t("privacy_policy"))
-                        .font(.headline)
-                        .foregroundColor(.primary)
-                    
-                    Spacer()
-                    
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                }
-                .padding()
-            }
-            
-            Divider()
-            
             NavigationLink(destination: TermsOfServiceView().environmentObject(languageService)) {
                 HStack {
                     Image(systemName: "doc.text")
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                         .frame(width: 24)
                     
                     Text(languageService.t("terms_of_service"))
@@ -226,10 +205,31 @@ struct SettingsView: View {
             
             Divider()
             
+            NavigationLink(destination: PrivacyPolicyView().environmentObject(languageService)) {
+                HStack {
+                    Image(systemName: "lock.shield")
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                        .frame(width: 24)
+                    
+                    Text(languageService.t("privacy_policy"))
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
+            }
+            
+            Divider()
+            
             NavigationLink(destination: HelpView().environmentObject(languageService)) {
                 HStack {
                     Image(systemName: "questionmark.circle")
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                         .frame(width: 24)
                     
                     Text(languageService.t("help_guide"))
@@ -259,7 +259,7 @@ struct SettingsRowView: View {
     var body: some View {
         HStack {
             Image(systemName: icon)
-                .foregroundColor(.blue)
+                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                 .frame(width: 24)
             
             Text(title)
@@ -300,7 +300,7 @@ struct LanguageSelectionView: View {
                         Spacer()
                         if languageService.currentLanguage == language {
                             Image(systemName: "checkmark")
-                                .foregroundColor(.blue)
+                                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                         }
                     }
                     .padding()

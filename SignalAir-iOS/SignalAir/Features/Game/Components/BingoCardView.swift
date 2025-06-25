@@ -5,7 +5,7 @@ struct BingoCardView: View {
     let drawnNumbers: [Int]
     let gameWon: Bool
     let onMarkNumber: (Int) -> Void
-    @StateObject private var languageService = LanguageService()
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 16) {

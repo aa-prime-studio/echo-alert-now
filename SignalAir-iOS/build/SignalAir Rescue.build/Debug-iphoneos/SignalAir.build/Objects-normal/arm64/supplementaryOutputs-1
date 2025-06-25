@@ -1,0 +1,18 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/BingoCardView.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/BingoGameViewModel.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.d"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Chat/ChatView.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.dia"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.swiftconstvalues"

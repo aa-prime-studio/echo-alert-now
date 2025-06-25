@@ -152,15 +152,12 @@ struct RoomListView: View {
             VStack(spacing: 20) {
                 // Room Selector
                 RoomSelectorView(rooms: rooms, onJoinRoom: onJoinRoom)
-                    .environmentObject(languageService)
                 
                 // Game Rules
                 GameRulesView()
-                    .environmentObject(languageService)
                 
                 // Leaderboard
                 LeaderboardView(leaderboard: leaderboard)
-                    .environmentObject(languageService)
             }
             .padding()
         }
@@ -174,9 +171,16 @@ struct BingoGameView: View {
     let onLeaveRoom: () -> Void
     let onGameWon: (String, Int) -> Void
     
-    @StateObject private var gameViewModel = BingoGameViewModel()
     @EnvironmentObject var nicknameService: NicknameService
     @EnvironmentObject var languageService: LanguageService
+    @StateObject private var gameViewModel: BingoGameViewModel
+    
+    init(room: BingoRoom, onLeaveRoom: @escaping () -> Void, onGameWon: @escaping (String, Int) -> Void) {
+        self.room = room
+        self.onLeaveRoom = onLeaveRoom
+        self.onGameWon = onGameWon
+        self._gameViewModel = StateObject(wrappedValue: BingoGameViewModel(languageService: ServiceContainer.shared.languageService))
+    }
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {

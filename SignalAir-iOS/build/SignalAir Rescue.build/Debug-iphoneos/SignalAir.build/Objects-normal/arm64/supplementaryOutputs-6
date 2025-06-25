@@ -1,0 +1,18 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/PrivacyPolicyContent.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/PrivacyPolicyView.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/PurchaseOptionsView.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.swiftdeps"

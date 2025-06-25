@@ -92,10 +92,10 @@ func getBanHistory(for peerID: String) -> Int
 // 获取所有节点封禁历史
 func getAllBanHistory() -> [String: Int]
 
-// 重置节点封禁历史（管理员功能）
+// 重置节点封禁历史（系統維護功能）
 func resetBanHistory(for peerID: String)
 
-// 清除所有封禁历史（管理员功能）
+// 清除所有封禁历史（系統維護功能）
 func clearAllBanHistory()
 
 // 获取封禁统计信息
@@ -137,9 +137,9 @@ func clearSuspiciousActivity(for peerID: String)
 📊 节点 peer_A 累计封禁次数: 3/3
 ```
 
-## 🛠️ 管理员功能
+## 🛠️ 系統管理功能
 
-### 查看封禁统计
+### 查看封禁統計
 ```swift
 let stats = floodProtection.getBanStatistics()
 print("当前被封禁节点: \(stats.currentlyBanned)")
@@ -162,15 +162,15 @@ print("独特可疑内容: \(suspiciousStats.uniqueSuspiciousHashes)")
 print("最高重复次数: \(suspiciousStats.mostFrequentCount)")
 ```
 
-### 管理员干预
+### 自動化系統干預
 ```swift
-// 重置节点封禁历史（给予第二次机会）
+// 重置节点封禁历史（系統自動評估）
 floodProtection.resetBanHistory(for: "peer_A")
 
 // 清理节点可疑活动记录
 floodProtection.clearSuspiciousActivity(for: "peer_A")
 
-// 手动解封节点
+// 自動解封节点
 floodProtection.unbanPeer("peer_A")
 ```
 

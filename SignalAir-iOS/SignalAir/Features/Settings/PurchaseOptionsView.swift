@@ -35,9 +35,9 @@ struct PurchaseOptionsView: View {
     
     private var headerSection: some View {
         VStack(spacing: 8) {
-            Image(systemName: "crown.fill")
+            Image(systemName: "heart.fill")
                 .font(.system(size: 50))
-                .foregroundColor(.orange)
+                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
             
             Text("解鎖完整功能")
                 .font(.title2)
@@ -60,14 +60,14 @@ struct PurchaseOptionsView: View {
                     }
                 }) {
                     HStack {
-                        Image(systemName: "crown.fill")
+                        Image(systemName: "heart.fill")
                         Text("購買 \(selectedTier.displayName)")
                     }
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(Color.blue)
+                    .background(Color(red: 0.0, green: 0.843, blue: 0.416))
                     .cornerRadius(12)
                 }
                 .disabled(purchaseService.isLoading)
@@ -80,7 +80,7 @@ struct PurchaseOptionsView: View {
             }) {
                 Text("恢復購買")
                     .font(.headline)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
             }
             .disabled(purchaseService.isLoading)
         }
@@ -104,14 +104,14 @@ struct PurchaseCardView: View {
                     Text(tier.price)
                         .font(.title2)
                         .fontWeight(.bold)
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                 }
                 
                 Spacer()
                 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.blue)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                         .font(.title2)
                 } else {
                     Image(systemName: "circle")
@@ -128,20 +128,20 @@ struct PurchaseCardView: View {
             if tier == .fullVersion {
                 HStack {
                     Image(systemName: "star.fill")
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                     Text("推薦方案")
                         .font(.subheadline)
                         .fontWeight(.semibold)
-                        .foregroundColor(.orange)
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                 }
             }
         }
         .padding()
-        .background(isSelected ? Color.blue.opacity(0.1) : Color.white)
+        .background(isSelected ? Color(red: 0.0, green: 0.843, blue: 0.416).opacity(0.1) : Color.white)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
+                .stroke(isSelected ? Color(red: 0.0, green: 0.843, blue: 0.416) : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
         )
         .onTapGesture {
             onSelect()

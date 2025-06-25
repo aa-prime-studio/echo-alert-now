@@ -9,9 +9,7 @@
 /* Begin PBXBuildFile section */
 		02EB7726777C6830C30A87D2 /* GameView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A73D1ABC847E0D82253134E6 /* GameView.swift */; };
 		08B44250552D022165BFC1A3 /* GameRulesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5192F2009B446E7217B88B40 /* GameRulesView.swift */; };
-		49397941C1034B38AA1924D9 /* SplashScreenView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9F6D2F302A534AA88F108C81 /* SplashScreenView.swift */; };
-		978F032435CC4C6D9376D139 /* AppContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D67D9E0904824F82957FE0B4 /* AppContainerView.swift */; };
-		2ADE823A3ECF49CC98B6F61B /* SplashTestView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA01D05E7F1A4519B801A74F /* SplashTestView.swift */; };
+		09B24F8EE8754DCDAC8A3EFE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ADA9D8E49B9B481E9015E577 /* Assets.xcassets */; };
 		0A00C0E881064AA39F4FE064 /* SignalViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71231F5D38B178E38EFDBDB4 /* SignalViews.swift */; };
 		0D9F8ADFC96E776680BED966 /* BingoCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A918DE39A56052433134489 /* BingoCardView.swift */; };
 		13502A4C13EAD04A326A48FF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */; };
@@ -37,8 +35,11 @@
 		EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61DCAC113E68FF9FF70983D /* ChatView.swift */; };
 		EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */; };
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
-		09B24F8EE8754DCDAC8A3EFE /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = ADA9D8E49B9B481E9015E577 /* Assets.xcassets */; };
-/* End PBXBuildFile section */
+		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
+		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
+		5D284D6CBFDA43798074F3BA /* LegalContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA202372BE5435383B9DB69 /* LegalContent.swift */; };
+			F663CC3F61814F22B0D62147 /* LegalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB85C285D81413699714934 /* LegalTextView.swift */; };
+	/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
@@ -54,9 +55,6 @@
 		6E5B9C7F83A4D1E2B5F8C960 /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		71231F5D38B178E38EFDBDB4 /* SignalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalViews.swift; sourceTree = "<group>"; };
 		7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSelectorView.swift; sourceTree = "<group>"; };
-		9F6D2F302A534AA88F108C81 /* SplashScreenView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashScreenView.swift; sourceTree = "<group>"; };
-		D67D9E0904824F82957FE0B4 /* AppContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppContainerView.swift; sourceTree = "<group>"; };
-		EA01D05E7F1A4519B801A74F /* SplashTestView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplashTestView.swift; sourceTree = "<group>"; };
 		7FFD325B2E09750F00CCD5B8 /* logo_20x20.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_20x20.png; sourceTree = "<group>"; };
 		7FFD325C2E09750F00CCD5B8 /* logo_29x29.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_29x29.png; sourceTree = "<group>"; };
 		7FFD325D2E09750F00CCD5B8 /* logo_40x40.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_40x40.png; sourceTree = "<group>"; };
@@ -75,13 +73,13 @@
 		7FFD326A2E09750F00CCD5B8 /* logo_256x256.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_256x256.png; sourceTree = "<group>"; };
 		7FFD326B2E09750F00CCD5B8 /* logo_512x512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_512x512.png; sourceTree = "<group>"; };
 		7FFD326C2E09750F00CCD5B8 /* logo_1024x1024.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_1024x1024.png; sourceTree = "<group>"; };
-		ADA9D8E49B9B481E9015E577 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		8646010A59FE784B8B8EDC17 /* SignalAir.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = SignalAir.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		8646010A59FE784B8B8EDC17 /* SignalAir.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SignalAir.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomChatView.swift; sourceTree = "<group>"; };
 		A0C593762D72DB0ECC701D91 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoGameViewModel.swift; sourceTree = "<group>"; };
 		A405827F77F43F163DF5806F /* LanguageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageService.swift; sourceTree = "<group>"; };
 		A73D1ABC847E0D82253134E6 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
+		ADA9D8E49B9B481E9015E577 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B5C097EAB9070EA06F6FCE3A /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		B61DCAC113E68FF9FF70983D /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		B7FFEFE7869FB9357F45681B /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
@@ -92,7 +90,11 @@
 		E3072289CDECAC4232A444F1 /* PlayerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerListView.swift; sourceTree = "<group>"; };
 		F79A8B99132792ECBB45F81E /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAirApp.swift; sourceTree = "<group>"; };
-/* End PBXFileReference section */
+		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
+		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
+		3BA202372BE5435383B9DB69 /* LegalContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalContent.swift; sourceTree = "<group>"; };
+			2EB85C285D81413699714934 /* LegalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalTextView.swift; sourceTree = "<group>"; };
+	/* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		0F2C5F106562648042E25C83 /* App */ = {
@@ -136,7 +138,9 @@
 			children = (
 				A0C593762D72DB0ECC701D91 /* HelpView.swift */,
 				B7FFEFE7869FB9357F45681B /* PrivacyPolicyView.swift */,
+				PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */,
 				D633E8DF7577872B38031B72 /* TermsOfServiceView.swift */,
+				TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */,
 			);
 			path = Legal;
 			sourceTree = "<group>";
@@ -158,7 +162,6 @@
 				197C7DE33DA8792995EDBD65 /* Legal */,
 				88327C3EF129394E78732E2B /* Settings */,
 				19FA9811BB2A479F946D6A72 /* Signal */,
-				B32D928B0AF64FECA7CCE162 /* SplashScreen */,
 			);
 			path = Features;
 			sourceTree = "<group>";
@@ -270,16 +273,6 @@
 			path = Game;
 			sourceTree = "<group>";
 		};
-		B32D928B0AF64FECA7CCE162 /* SplashScreen */ = {
-			isa = PBXGroup;
-			children = (
-				9F6D2F302A534AA88F108C81 /* SplashScreenView.swift */,
-				D67D9E0904824F82957FE0B4 /* AppContainerView.swift */,
-				EA01D05E7F1A4519B801A74F /* SplashTestView.swift */,
-			);
-			path = SplashScreen;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -308,7 +301,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 1430;
+				LastUpgradeCheck = 1640;
 			};
 			buildConfigurationList = 84C3E3B820FE940F2469E05B /* Build configuration list for PBXProject "SignalAir Rescue" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -328,12 +321,22 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		D91205CDCCA54BF886306318 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				09B24F8EE8754DCDAC8A3EFE /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		C5D5AF3111D5540DBAC48728 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				978F032435CC4C6D9376D139 /* AppContainerView.swift in Sources */,
 				0D9F8ADFC96E776680BED966 /* BingoCardView.swift in Sources */,
 				EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */,
 				EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */,
@@ -350,6 +353,7 @@
 				7E2641270816505417034FE3 /* NicknameService.swift in Sources */,
 				83232FB79B9CC0BAB46EDF25 /* PlayerListView.swift in Sources */,
 				ADFA42D772FD6BE714C68327 /* PrivacyPolicyView.swift in Sources */,
+				PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */,
 				E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */,
 				800078A6B0F8D3C2CA0298D5 /* PurchaseService.swift in Sources */,
 				B52C444AE867E00D138D3147 /* RoomChatView.swift in Sources */,
@@ -360,30 +364,19 @@
 				A7F3F26BC95CC15F3C401CD8 /* SignalAirApp.swift in Sources */,
 				9BF11577DA1B4C96894B8919 /* SignalViewModel.swift in Sources */,
 				0A00C0E881064AA39F4FE064 /* SignalViews.swift in Sources */,
-				49397941C1034B38AA1924D9 /* SplashScreenView.swift in Sources */,
-				2ADE823A3ECF49CC98B6F61B /* SplashTestView.swift in Sources */,
 				4836117A73E2E3AD6073F544 /* TermsOfServiceView.swift in Sources */,
+				TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXResourcesBuildPhase section */
-		D91205CDCCA54BF886306318 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				09B24F8EE8754DCDAC8A3EFE /* Assets.xcassets in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXResourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		58B813376EBFAD52FCC8621D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -417,6 +410,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -440,6 +434,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -473,6 +468,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;

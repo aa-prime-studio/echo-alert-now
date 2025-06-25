@@ -38,7 +38,7 @@ struct HelpView: View {
                         HelpSection(
                             icon: "location",
                             title: "位置資訊",
-                            content: "距離與方向顯示：\n• 自動計算與訊號源的距離\n• 顯示相對方向（北、東南等）\n• 僅用於改善使用體驗\n• 可在設定中關閉位置服務"
+                            content: "距離與方向顯示：\n• 自動計算與訊號源的距離\n• 顯示模糊方位\n• 僅用於改善使用體驗\n"
                         )
                         
                         HelpSection(

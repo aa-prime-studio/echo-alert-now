@@ -85,62 +85,8 @@ class SecurityLogger {
     }
 }
 
-// MARK: - Admin Permission System
-
-/// 管理員權限驗證器
-class AdminPermissionValidator {
-    private static let adminPasscode = "SignalAir_Admin_2024"
-    private static var currentAdminSession: String?
-    private static var sessionExpiry: Date?
-    private static let sessionDuration: TimeInterval = 3600 // 1小時
-    
-    /// 驗證管理員權限
-    /// - Parameter passcode: 管理員密碼
-    /// - Returns: 是否驗證成功
-    static func authenticateAdmin(passcode: String) -> Bool {
-        guard passcode == adminPasscode else {
-            print("🚨 AdminValidator: 管理員認證失敗")
-            return false
-        }
-        
-        // 創建新的管理員會話
-        currentAdminSession = UUID().uuidString
-        sessionExpiry = Date().addingTimeInterval(sessionDuration)
-        
-        print("✅ AdminValidator: 管理員認證成功，會話有效期1小時")
-        return true
-    }
-    
-    /// 檢查當前是否有有效的管理員會話
-    static func hasValidAdminSession() -> Bool {
-        guard let expiry = sessionExpiry,
-              currentAdminSession != nil,
-              Date() < expiry else {
-            if currentAdminSession != nil {
-                print("⏰ AdminValidator: 管理員會話已過期")
-                currentAdminSession = nil
-                sessionExpiry = nil
-            }
-            return false
-        }
-        return true
-    }
-    
-    /// 登出管理員會話
-    static func logoutAdmin() {
-        currentAdminSession = nil
-        sessionExpiry = nil
-        print("👋 AdminValidator: 管理員已登出")
-    }
-    
-    /// 獲取會話剩餘時間
-    static func getSessionRemainingTime() -> TimeInterval? {
-        guard let expiry = sessionExpiry, hasValidAdminSession() else {
-            return nil
-        }
-        return expiry.timeIntervalSinceNow
-    }
-}
+// MARK: - Admin System Removed
+// 管理員系統已完全移除
 
 // MARK: - Replay Attack Protection
 
@@ -153,19 +99,9 @@ struct SafeMessageFingerprint {
     
     /// 從完整的 MessageFingerprint 創建安全版本
     static func createSafe(from fingerprint: MessageFingerprint, includeFullContent: Bool = false, hasAdminPermission: Bool = false) -> SafeMessageFingerprint {
-        // 根據權限決定暴露的資訊量
-        let messageType: String
-        let securityLevel: String
-        
-        if hasAdminPermission && includeFullContent {
-            // 管理員權限：可以看到更多詳細資訊
-            messageType = "Signal_\(fingerprint.senderID.prefix(8))"
-            securityLevel = "Admin_Full"
-        } else {
-            // 一般用戶：只能看到基本資訊
-            messageType = "Signal_Message"
-            securityLevel = "User_Limited"
-        }
+        // 管理員系統已移除，始終使用一般用戶權限
+        let messageType = "Signal_Message"
+        let securityLevel = "User_Limited"
         
         return SafeMessageFingerprint(
             timestamp: fingerprint.timestamp,
@@ -494,48 +430,35 @@ class MessageDeduplicator {
         // 檢查系統健康狀態
         try checkSystemHealth()
         
-        do {
-            let fingerprint = MessageFingerprint.create(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: content
-            )
-            
-            let uniqueKey = fingerprint.uniqueID
-            
-            // 檢查是否已存在
-            if lruCache.contains(uniqueKey) {
-                consecutiveErrors = 0 // 重置錯誤計數
-                print("🔁 MessageDeduplicator: 檢測到重複訊息 - \(uniqueKey)")
-                return true
-            }
-            
-            // 檢查時間窗口
-            let messageAge = Date().timeIntervalSince(timestamp)
-            if messageAge > timeWindow {
-                consecutiveErrors = 0 // 重置錯誤計數
-                print("⏰ MessageDeduplicator: 訊息過期 - 年齡: \(Int(messageAge))秒，窗口: \(Int(timeWindow))秒")
-                return true // 過期訊息也視為重複
-            }
-            
-            // 添加到快取
-            lruCache.set(uniqueKey, fingerprint)
+        let fingerprint = MessageFingerprint.create(
+            messageID: messageID,
+            senderID: senderID,
+            timestamp: timestamp,
+            content: content
+        )
+        
+        let uniqueKey = fingerprint.uniqueID
+        
+        // 檢查是否已存在
+        if lruCache.contains(uniqueKey) {
             consecutiveErrors = 0 // 重置錯誤計數
-            print("✅ MessageDeduplicator: 新訊息已記錄 - \(messageID)")
-            return false
-            
-        } catch {
-            consecutiveErrors += 1
-            print("❌ MessageDeduplicator: 處理錯誤 - \(error.localizedDescription)")
-            
-            if consecutiveErrors >= maxConsecutiveErrors {
-                print("🚨 MessageDeduplicator: 連續錯誤過多，觸發系統保護")
-                throw DeduplicationError.systemOverload
-            }
-            
-            throw error
+            print("🔁 MessageDeduplicator: 檢測到重複訊息 - \(uniqueKey)")
+            return true
         }
+        
+        // 檢查時間窗口
+        let messageAge = Date().timeIntervalSince(timestamp)
+        if messageAge > timeWindow {
+            consecutiveErrors = 0 // 重置錯誤計數
+            print("⏰ MessageDeduplicator: 訊息過期 - 年齡: \(Int(messageAge))秒，窗口: \(Int(timeWindow))秒")
+            return true // 過期訊息也視為重複
+        }
+        
+        // 添加到快取
+        lruCache.set(uniqueKey, fingerprint)
+        consecutiveErrors = 0 // 重置錯誤計數
+        print("✅ MessageDeduplicator: 新訊息已記錄 - \(messageID)")
+        return false
     }
 
     /// 安全版本的重複檢查（不拋出異常）
@@ -1114,48 +1037,41 @@ class SignalViewModel: ObservableObject {
     /// 獲取最近處理的訊息（安全版本）
     /// - Parameters:
     ///   - limit: 返回的訊息數量限制
-    ///   - includeContent: 是否包含完整內容（需要管理員權限）
-    /// - Returns: 安全的訊息指紋陣列，預設不包含敏感資訊
+    ///   - includeContent: 是否包含完整內容（管理員系統已移除，此參數無效）
+    /// - Returns: 安全的訊息指紋陣列，僅包含基本資訊
     func getRecentProcessedMessages(limit: Int = 10, includeContent: Bool = false) -> [SafeMessageFingerprint] {
-        // 🔐 真實的權限驗證：不再信任呼叫者的聲明
-        let hasValidAdminSession = AdminPermissionValidator.hasValidAdminSession()
+        // 管理員系統已移除，始終使用基本權限
+        let hasValidAdminSession = false
         
         // 記錄安全事件：訊息查詢請求
         securityLogger.logEvent(
             .dataAccess,
             peerID: idManager.deviceID,
-            details: "Recent messages query - limit: \(limit), includeContent: \(includeContent), verified_admin: \(hasValidAdminSession)",
-            severity: includeContent ? .medium : .low
+            details: "Recent messages query - limit: \(limit), admin_system_removed",
+            severity: .low
         )
         
-        // 🛡️ 安全檢查：只有經過驗證的管理員才能查看完整內容
-        let allowFullContent = hasValidAdminSession && includeContent
-        
-        if includeContent && !hasValidAdminSession {
-            // 記錄安全警告：未授權嘗試存取敏感資料
+        if includeContent {
+            // 記錄警告：嘗試存取完整內容但管理員系統已移除
             securityLogger.logEvent(
                 .securityWarning,
                 peerID: idManager.deviceID,
-                details: "Unauthorized attempt to access sensitive message content",
-                severity: .high
+                details: "Attempt to access full content but admin system removed",
+                severity: .medium
             )
-            print("🚨 SignalViewModel: 未授權嘗試存取敏感訊息內容")
+            print("⚠️ SignalViewModel: 嘗試存取完整內容，但管理員系統已移除")
         }
         
-        if allowFullContent {
-            print("🔐 SignalViewModel: 已驗證管理員查詢最近訊息 - 包含完整內容")
-        } else {
-            print("👤 SignalViewModel: 一般用戶查詢最近訊息 - 僅基本資訊")
-        }
+        print("👤 SignalViewModel: 查詢最近訊息 - 僅基本資訊（管理員系統已移除）")
         
         // 獲取原始訊息指紋
         let rawFingerprints = messageDeduplicator.getRecentMessages(limit: limit)
         
-        // 轉換為安全版本
+        // 轉換為安全版本（始終使用基本權限）
         let safeFingerprints = rawFingerprints.map { fingerprint in
             SafeMessageFingerprint.createSafe(
                 from: fingerprint,
-                includeFullContent: allowFullContent,
+                includeFullContent: false,
                 hasAdminPermission: hasValidAdminSession
             )
         }
@@ -1166,36 +1082,7 @@ class SignalViewModel: ObservableObject {
         return safeFingerprints
     }
     
-    /// 管理員專用：獲取完整訊息指紋（需要先認證）
-    /// - Parameters:
-    ///   - limit: 返回的訊息數量限制
-    ///   - adminPasscode: 管理員密碼
-    /// - Returns: 完整的訊息指紋陣列，如果認證失敗則返回空陣列
-    func getRecentProcessedMessagesAdmin(limit: Int = 10, adminPasscode: String) -> [MessageFingerprint] {
-        // 🔐 即時認證：每次調用都需要提供密碼
-        guard AdminPermissionValidator.authenticateAdmin(passcode: adminPasscode) else {
-            // 記錄安全事件：管理員認證失敗
-            securityLogger.logEvent(
-                .securityWarning,
-                peerID: idManager.deviceID,
-                details: "Failed admin authentication for sensitive message access",
-                severity: .high
-            )
-            print("🚨 SignalViewModel: 管理員認證失敗，拒絕存取敏感資料")
-            return []
-        }
-        
-        // 記錄安全事件：管理員成功存取敏感資料
-        securityLogger.logEvent(
-            .dataAccess,
-            peerID: idManager.deviceID,
-            details: "Admin authenticated access to full message fingerprints",
-            severity: .critical
-        )
-        
-        print("🔐 SignalViewModel: 管理員認證成功，提供完整訊息指紋")
-        return messageDeduplicator.getRecentMessages(limit: limit)
-    }
+    // 管理員專用方法已完全移除
     
     /// 獲取最近處理的訊息（原始版本 - 已棄用，僅供向後相容）
     @available(*, deprecated, message: "使用 getRecentProcessedMessages(limit:includeContent:hasAdminPermission:) 以獲得更好的安全性")

@@ -1,0 +1,24 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/LeaderboardView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 25
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld%@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 41
+        }
+      }
+    ]
+  },
+  "version": 1
+}

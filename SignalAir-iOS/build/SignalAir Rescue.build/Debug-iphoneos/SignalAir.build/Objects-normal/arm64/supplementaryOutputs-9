@@ -1,0 +1,18 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Signal/SignalViews.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/SignalAirApp.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.o"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Signal/SignalViewModel.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.swiftdeps"

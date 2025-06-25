@@ -1,0 +1,24 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/HelpView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "使用說明",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 54
+        }
+      },
+      {
+        "comment": "",
+        "key": "使用說明",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 7
+        }
+      }
+    ]
+  },
+  "version": 1
+}

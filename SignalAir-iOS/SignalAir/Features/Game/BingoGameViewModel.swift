@@ -53,12 +53,13 @@ class BingoGameViewModel: ObservableObject {
     init(
         meshManager: MeshManager = MeshManager(),
         securityService: SecurityService = SecurityService(),
-        settingsViewModel: SettingsViewModel = SettingsViewModel()
+        settingsViewModel: SettingsViewModel = SettingsViewModel(),
+        languageService: LanguageService
     ) {
         self.meshManager = meshManager
         self.securityService = securityService
         self.settingsViewModel = settingsViewModel
-        self.languageService = LanguageService()
+        self.languageService = languageService
         
         // 初始化玩家資訊
         self.deviceName = self.settingsViewModel.userNickname

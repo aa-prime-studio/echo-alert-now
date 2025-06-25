@@ -207,6 +207,7 @@ struct ChatTabView: View {
 struct GameTabView: View {
     let isPremiumUser: Bool
     @EnvironmentObject var purchaseService: PurchaseService
+    @EnvironmentObject var languageService: LanguageService
     @State private var showingUpgradeSheet = false
     
     var body: some View {
