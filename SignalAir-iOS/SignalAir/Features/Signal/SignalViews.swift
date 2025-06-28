@@ -60,7 +60,7 @@ struct SignalButtonView: View {
     private func textColorForType(_ type: SignalType) -> Color {
         switch type {
         case .safe, .supplies, .medical: return .white
-        case .danger: return .black
+        case .danger: return .white
         }
     }
 }
@@ -133,9 +133,9 @@ struct MessageRowView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(languageService.t(message.type.translationKey))
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.medium)
-                    .foregroundColor(.primary)
+                    .foregroundColor(.black)
                 
                 Text("\(languageService.t("from")) \(message.deviceName)")
                     .font(.subheadline)
@@ -235,14 +235,9 @@ struct DirectionCompassView: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "navigation.fill")
-                .font(.system(size: 16))
-                .foregroundColor(.gray)
-                .rotationEffect(.degrees(getDirectionAngle(direction)))
-            
             VStack(alignment: .trailing, spacing: 2) {
                 Text(formatDistance(distance))
-                    .font(.headline)
+                    .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
                 

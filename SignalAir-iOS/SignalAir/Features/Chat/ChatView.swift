@@ -99,7 +99,7 @@ struct ChatView: View {
                         .font(.title3)
                         .foregroundColor(.white)
                         .frame(width: 44, height: 44)
-                        .background(Color.blue)
+                        .background(Color(red: 0.671, green: 0.576, blue: 0.898))
                         .cornerRadius(8)
                 }
                 .disabled(viewModel.newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -109,7 +109,6 @@ struct ChatView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
         }
-        .background(Color.white)
     }
 }
 

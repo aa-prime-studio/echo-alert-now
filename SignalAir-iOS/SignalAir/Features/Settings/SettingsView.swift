@@ -241,7 +241,7 @@ struct SettingsView: View {
                     
                     Text(languageService.t("terms_of_service"))
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.black)
                     
                     Spacer()
                     
@@ -262,7 +262,7 @@ struct SettingsView: View {
                     
                     Text(languageService.t("privacy_policy"))
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.black)
                     
                     Spacer()
                     
@@ -283,7 +283,7 @@ struct SettingsView: View {
                     
                     Text(languageService.t("help_guide"))
                         .font(.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(.black)
                     
                     Spacer()
                     
@@ -428,7 +428,7 @@ struct NicknameEditView: View {
             VStack(spacing: 16) {
                 TextField(languageService.t("enter_new_nickname"), text: $tempNickname)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .font(.title3)
+                    .font(.headline)
                 
                 Text(nicknameService.getRemainingChangesText())
                     .font(.caption)

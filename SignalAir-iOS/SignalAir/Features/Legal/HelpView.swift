@@ -64,7 +64,7 @@ struct HelpSection: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Image(systemName: icon)
-                    .foregroundColor(.blue)
+                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                     .frame(width: 24)
                 Text(title)
                     .font(.system(size: 15))
