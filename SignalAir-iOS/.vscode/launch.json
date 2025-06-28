@@ -1,0 +1,22 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SignalAir-iOS}",
+            "name": "Debug SignalAir",
+            "program": "${workspaceFolder:SignalAir-iOS}/.build/debug/SignalAir",
+            "preLaunchTask": "swift: Build Debug SignalAir"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:SignalAir-iOS}",
+            "name": "Release SignalAir",
+            "program": "${workspaceFolder:SignalAir-iOS}/.build/release/SignalAir",
+            "preLaunchTask": "swift: Build Release SignalAir"
+        }
+    ]
+}

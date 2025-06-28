@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PurchaseOptionsView: View {
     @ObservedObject var purchaseService: PurchaseService
+    @EnvironmentObject var languageService: LanguageService
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTier: PurchaseService.PurchaseTier?
     
@@ -16,7 +17,8 @@ struct PurchaseOptionsView: View {
                             PurchaseCardView(
                                 tier: tier,
                                 isSelected: selectedTier == tier,
-                                onSelect: { selectedTier = tier }
+                                onSelect: { selectedTier = tier },
+                                language: languageService.currentLanguage
                             )
                         }
                     }
@@ -39,11 +41,11 @@ struct PurchaseOptionsView: View {
                 .font(.system(size: 50))
                 .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
             
-            Text("解鎖完整功能")
-                .font(.title2)
-                .fontWeight(.bold)
+            Text(languageService.t("unlock_full_features"))
+                .font(.headline)
+                .foregroundColor(.black)
             
-            Text("選擇最適合您的方案")
+            Text(languageService.t("choose_best_plan"))
                 .font(.subheadline)
                 .foregroundColor(.secondary)
         }
@@ -61,7 +63,7 @@ struct PurchaseOptionsView: View {
                 }) {
                     HStack {
                         Image(systemName: "heart.fill")
-                        Text("購買 \(selectedTier.displayName)")
+                        Text("\(languageService.t("purchase")) \(selectedTier.displayName(language: languageService.currentLanguage))")
                     }
                     .font(.headline)
                     .foregroundColor(.white)
@@ -78,9 +80,9 @@ struct PurchaseOptionsView: View {
                     await purchaseService.restorePurchases()
                 }
             }) {
-                Text("恢復購買")
-                    .font(.headline)
-                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                Text(languageService.t("restore_purchases"))
+                    .font(.caption)
+                    .foregroundColor(.gray)
             }
             .disabled(purchaseService.isLoading)
         }
@@ -92,18 +94,18 @@ struct PurchaseCardView: View {
     let tier: PurchaseService.PurchaseTier
     let isSelected: Bool
     let onSelect: () -> Void
+    let language: LanguageService.Language
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(tier.displayName)
+                    Text(tier.displayName(language: language))
                         .font(.headline)
-                        .fontWeight(.semibold)
+                        .foregroundColor(.black)
                     
                     Text(tier.price)
-                        .font(.title2)
-                        .fontWeight(.bold)
+                        .font(.headline)
                         .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                 }
                 
@@ -120,16 +122,16 @@ struct PurchaseCardView: View {
                 }
             }
             
-            Text(tier.description)
-                .font(.body)
+            Text(tier.description(language: language))
+                .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.leading)
             
-            if tier == .fullVersion {
+            if tier == .bingoUnlock {
                 HStack {
                     Image(systemName: "star.fill")
                         .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
-                    Text("推薦方案")
+                    Text(language == .chinese ? "推薦方案" : "Recommended")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
@@ -137,11 +139,11 @@ struct PurchaseCardView: View {
             }
         }
         .padding()
-        .background(isSelected ? Color(red: 0.0, green: 0.843, blue: 0.416).opacity(0.1) : Color.white)
+        .background(Color.white)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color(red: 0.0, green: 0.843, blue: 0.416) : Color.gray.opacity(0.3), lineWidth: isSelected ? 2 : 1)
+                .stroke(isSelected ? (tier == .coffee ? Color.gray : Color(red: 0.0, green: 0.843, blue: 0.416)) : Color.gray.opacity(0.3), lineWidth: 1)
         )
         .onTapGesture {
             onSelect()

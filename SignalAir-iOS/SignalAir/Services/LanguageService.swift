@@ -151,16 +151,28 @@ class LanguageService: ObservableObject {
                 "set_nickname": "設定暱稱",
                 "edit_nickname": "編輯暱稱",
                 "enter_new_nickname": "輸入新暱稱",
-                "nickname_max_chars": "暱稱最多20個字元",
+                "nickname_max_chars": "暱稱最多8個字元",
                 "cancel": "取消",
                 "save": "儲存",
                 "alert": "提示",
                 "confirm": "確定",
                 "nickname_empty": "暱稱不能為空",
-                "nickname_too_long": "暱稱不能超過20個字元",
+                "nickname_too_long": "暱稱不能超過8個字元",
                 "nickname_updated": "暱稱更新成功！",
                 "nickname_no_change": "暱稱沒有變更",
-                "nickname_max_reached": "已用完修改次數"
+                "nickname_max_reached": "已用完修改次數",
+                "remaining_changes": "剩餘修改次數",
+                "no_changes_left": "已無修改次數",
+                
+                // 賓果遊戲解鎖
+                "bingo_locked_title": "賓果遊戲室已鎖定",
+                "bingo_locked_description": "升級至付費版本即可解鎖賓果遊戲室，與朋友一起享受刺激的遊戲體驗！",
+                "unlock_bingo_game": "解鎖賓果遊戲",
+                
+                // Purchase related
+                "unlock_full_features": "解鎖完整功能",
+                "choose_best_plan": "選擇最適合您的方案",
+                "purchase": "購買"
             ]
         case .english:
             return [
@@ -260,16 +272,18 @@ class LanguageService: ObservableObject {
                 "set_nickname": "Set Nickname",
                 "edit_nickname": "Edit Nickname",
                 "enter_new_nickname": "Enter new nickname",
-                "nickname_max_chars": "Nickname max 20 characters",
+                "nickname_max_chars": "Nickname max 8 characters",
                 "cancel": "Cancel",
                 "save": "Save",
                 "alert": "Alert",
                 "confirm": "OK",
                 "nickname_empty": "Nickname cannot be empty",
-                "nickname_too_long": "Nickname cannot exceed 20 characters",
+                "nickname_too_long": "Nickname cannot exceed 8 characters",
                 "nickname_updated": "Nickname updated successfully!",
                 "nickname_no_change": "Nickname not changed",
                 "nickname_max_reached": "Maximum changes reached",
+                "remaining_changes": "Remaining changes",
+                "no_changes_left": "No changes left",
                 
                 // Game status and connection
                 "offline": "Offline",
@@ -284,7 +298,17 @@ class LanguageService: ObservableObject {
                 // Chat messages
                 "chat_cheer": "Good luck!",
                 "chat_almost_win": "Almost got a line!",
-                "chat_good_luck": "Great job!"
+                "chat_good_luck": "Great job!",
+                
+                // Bingo game unlock
+                "bingo_locked_title": "Bingo Game Room Locked",
+                "bingo_locked_description": "Upgrade to premium to unlock the Bingo Game Room and enjoy exciting gameplay with friends!",
+                "unlock_bingo_game": "Unlock Bingo Game",
+                
+                // Purchase related
+                "unlock_full_features": "Unlock Full Features",
+                "choose_best_plan": "Choose the best plan for you",
+                "purchase": "Purchase"
             ]
         }
     }

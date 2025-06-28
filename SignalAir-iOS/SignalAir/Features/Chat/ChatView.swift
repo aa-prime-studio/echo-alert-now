@@ -16,7 +16,7 @@ struct ChatView: View {
         }
         .background(Color.gray.opacity(0.05))
         .onAppear {
-            viewModel.deviceName = nicknameService.nickname
+            viewModel.deviceName = nicknameService.userNickname
         }
         .onChange(of: nicknameService.nickname) { newNickname in
             viewModel.deviceName = newNickname

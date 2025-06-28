@@ -104,7 +104,7 @@ struct SignalTabView: View {
             .background(Color.gray.opacity(0.05))
             .navigationBarHidden(true)
             .onAppear {
-                signalViewModel.deviceName = nicknameService.nickname
+                signalViewModel.deviceName = nicknameService.userNickname
                 // 添加測試數據以展示方位功能（僅在開發模式下）
                 #if DEBUG
                 if signalViewModel.messages.isEmpty {
@@ -212,9 +212,118 @@ struct GameTabView: View {
     
     var body: some View {
         NavigationView {
-            // 暫時關閉內購檢查，直接顯示遊戲
-            GameView()
-                .navigationBarHidden(true)
+            if isPremiumUser {
+                GameView()
+                    .navigationBarHidden(true)
+            } else {
+                UpgradePromptView(showingUpgradeSheet: $showingUpgradeSheet)
+                    .navigationBarHidden(true)
+            }
+        }
+        .sheet(isPresented: $showingUpgradeSheet) {
+            PurchaseOptionsView(purchaseService: purchaseService)
+        }
+    }
+}
+
+struct UpgradePromptView: View {
+    @Binding var showingUpgradeSheet: Bool
+    @EnvironmentObject var languageService: LanguageService
+    @State private var showingTermsOfService = false
+    @State private var showingPrivacyPolicy = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            // Header Section
+            HStack {
+                Text("Bingo\nGame Room")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
+                Spacer()
+            }
+            .padding()
+            .background(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
+            
+            Spacer()
+            
+            // Lock Icon and Message
+            VStack(spacing: 24) {
+                Image(systemName: "lock.circle.fill")
+                    .font(.system(size: 56))
+                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416)) // #00d76a
+                
+                VStack(spacing: 12) {
+                    Text(languageService.t("bingo_locked_title"))
+                        .font(.headline)
+                        .foregroundColor(.black)
+                    
+                    Text("公園等你一起玩")
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 32)
+                }
+                
+                Button(action: {
+                    showingUpgradeSheet = true
+                }) {
+                    HStack {
+                        Image(systemName: "heart.fill")
+                        Text(languageService.t("unlock_bingo_game"))
+                    }
+                    .font(.headline)
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color(red: 0.0, green: 0.843, blue: 0.416))
+                    .cornerRadius(12)
+                }
+                .padding(.horizontal, 32)
+            }
+            
+            Spacer()
+            
+            // Legal Links
+            HStack(spacing: 16) {
+                Button(action: {
+                    showingTermsOfService = true
+                }) {
+                    Text("服務條款")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .underline()
+                }
+                
+                Button(action: {
+                    showingPrivacyPolicy = true
+                }) {
+                    Text("隱私權條款")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .underline()
+                }
+            }
+            .padding(.bottom, 20)
+        }
+        .background(Color.gray.opacity(0.05))
+        .sheet(isPresented: $showingTermsOfService) {
+            NavigationView {
+                TermsOfServiceView()
+                    .environmentObject(languageService)
+                    .navigationBarItems(trailing: Button("完成") {
+                        showingTermsOfService = false
+                    })
+            }
+        }
+        .sheet(isPresented: $showingPrivacyPolicy) {
+            NavigationView {
+                PrivacyPolicyView()
+                    .environmentObject(languageService)
+                    .navigationBarItems(trailing: Button("完成") {
+                        showingPrivacyPolicy = false
+                    })
+            }
         }
     }
 }

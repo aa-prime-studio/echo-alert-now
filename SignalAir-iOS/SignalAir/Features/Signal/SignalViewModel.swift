@@ -810,7 +810,10 @@ class SignalViewModel: ObservableObject {
     private let networkService: NetworkService
     private let securityService: SecurityService
     private let meshManager: MeshManager
-    private let idManager: TemporaryIDManager
+    // 移除對TemporaryIDManager的直接依賴，改用ServiceContainer
+    private var deviceID: String {
+        return ServiceContainer.shared.temporaryIDManager.deviceID
+    }
     private let selfDestructManager: SelfDestructManager
     private let floodProtection: FloodProtection
     
@@ -837,14 +840,13 @@ class SignalViewModel: ObservableObject {
     init(networkService: NetworkService = NetworkService(),
          securityService: SecurityService = SecurityService(),
          meshManager: MeshManager = MeshManager(),
-         idManager: TemporaryIDManager = TemporaryIDManager(),
          selfDestructManager: SelfDestructManager = SelfDestructManager(),
          floodProtection: FloodProtection = FloodProtection()) {
         
         // 使用注入的服務或創建新的實例
         self.networkService = networkService
         self.securityService = securityService
-        self.idManager = idManager
+        // idManager 已移除，改用計算屬性
         self.selfDestructManager = selfDestructManager
         self.floodProtection = floodProtection
         self.meshManager = meshManager
@@ -853,7 +855,7 @@ class SignalViewModel: ObservableObject {
         setupLocationServices()
         setupNotificationObservers()
         
-        print("📡 SignalViewModel: 初始化完成，裝置ID: \(self.idManager.deviceID)")
+        print("📡 SignalViewModel: 初始化完成，裝置ID: \(self.deviceID)")
     }
     
     deinit {
@@ -880,7 +882,7 @@ class SignalViewModel: ObservableObject {
             let dataToSend = try JSONSerialization.data(withJSONObject: signalData)
             
             if floodProtection.shouldAcceptMessage(
-                from: idManager.deviceID,
+                from: deviceID,
                 content: dataToSend,
                 size: dataToSend.count,
                 priority: .emergency
@@ -889,7 +891,7 @@ class SignalViewModel: ObservableObject {
                 try await meshManager.broadcast(
                     dataToSend,
                     priority: .emergency,
-                    userNickname: idManager.deviceID // 使用匿名ID而非真實暱稱
+                    userNickname: deviceID // 使用匿名ID而非真實暱稱
                 )
                 
                 // 追蹤自毀管理
@@ -1046,7 +1048,7 @@ class SignalViewModel: ObservableObject {
         // 記錄安全事件：訊息查詢請求
         securityLogger.logEvent(
             .dataAccess,
-            peerID: idManager.deviceID,
+            peerID: deviceID,
             details: "Recent messages query - limit: \(limit), admin_system_removed",
             severity: .low
         )
@@ -1055,7 +1057,7 @@ class SignalViewModel: ObservableObject {
             // 記錄警告：嘗試存取完整內容但管理員系統已移除
             securityLogger.logEvent(
                 .securityWarning,
-                peerID: idManager.deviceID,
+                peerID: deviceID,
                 details: "Attempt to access full content but admin system removed",
                 severity: .medium
             )
@@ -1090,7 +1092,7 @@ class SignalViewModel: ObservableObject {
         // 記錄安全警告：使用了不安全的API
         securityLogger.logEvent(
             .securityWarning,
-            peerID: idManager.deviceID,
+            peerID: deviceID,
             details: "Deprecated unsafe message query API used",
             severity: .high
         )
@@ -1198,7 +1200,7 @@ class SignalViewModel: ObservableObject {
                     "id": UUID().uuidString,
                     "type": type.rawValue,
                     "timestamp": Date().timeIntervalSince1970,
-                    "deviceName": idManager.deviceID // 使用匿名ID而非真實暱稱
+                    "deviceName": deviceID // 使用匿名ID而非真實暱稱
                 ]
             }
             
@@ -1254,7 +1256,7 @@ class SignalViewModel: ObservableObject {
                 // 返回加密後的廣播數據結構
                 return [
                     "messageType": "encrypted_signal",
-                    "senderID": idManager.deviceID,
+                    "senderID": deviceID,
                     "timestamp": Date().timeIntervalSince1970,
                     "encryptedForPeers": encryptedForPeers,
                     "hasEncryption": true
@@ -1266,7 +1268,7 @@ class SignalViewModel: ObservableObject {
                     "id": UUID().uuidString,
                     "type": type.rawValue,
                     "timestamp": Date().timeIntervalSince1970,
-                    "deviceName": idManager.deviceID // 使用匿名ID而非真實暱稱
+                    "deviceName": deviceID // 使用匿名ID而非真實暱稱
                 ]
             }
             
@@ -1276,7 +1278,7 @@ class SignalViewModel: ObservableObject {
                 "id": UUID().uuidString,
                 "type": type.rawValue,
                 "timestamp": Date().timeIntervalSince1970,
-                "deviceName": idManager.deviceID // 使用匿名ID而非真實暱稱
+                "deviceName": deviceID // 使用匿名ID而非真實暱稱
             ]
         }
     }

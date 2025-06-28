@@ -7,7 +7,8 @@ struct SettingsView: View {
     @EnvironmentObject var serviceContainer: ServiceContainer
     @State private var showingPurchaseSheet = false
     @State private var showingLanguageSheet = false
-    @State private var showingNicknameSheet = false
+    @State private var isEditingNickname = false
+    @State private var tempNickname: String = ""
     
     var body: some View {
         NavigationView {
@@ -21,6 +22,22 @@ struct SettingsView: View {
                         upgradeSection
                         deviceSection
                         legalSection
+                        
+                        // 恢復購買按鈕移到法律條款下方
+                        HStack {
+                            Spacer()
+                            Button(action: {
+                                Task {
+                                    await purchaseService.restorePurchases()
+                                }
+                            }) {
+                                Text(languageService.t("restore_purchases"))
+                                    .font(.caption)
+                                    .foregroundColor(.gray)
+                            }
+                            .disabled(purchaseService.isLoading)
+                        }
+                        .padding(.top, 8)
                     }
                     .padding()
                 }
@@ -33,9 +50,6 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingLanguageSheet) {
             LanguageSelectionView(languageService: languageService)
-        }
-        .sheet(isPresented: $showingNicknameSheet) {
-            NicknameEditView(nicknameService: nicknameService)
         }
     }
     
@@ -74,7 +88,13 @@ struct SettingsView: View {
             SettingsRowView(
                 icon: "heart.fill",
                 title: languageService.t("subscription_status"),
-                value: purchaseService.isPremiumUser ? languageService.t("premium_user") : languageService.t("free_user"),
+                value: {
+                    if let tierName = purchaseService.getPurchasedTierDisplayName(language: languageService.currentLanguage) {
+                        return tierName
+                    } else {
+                        return languageService.t("free_user")
+                    }
+                }(),
                 action: nil
             )
             
@@ -118,43 +138,72 @@ struct SettingsView: View {
                     .cornerRadius(12)
                 }
             }
-            
-            Button(action: {
-                Task {
-                    await purchaseService.restorePurchases()
-                }
-            }) {
-                Text(languageService.t("restore_purchases"))
-                    .font(.headline)
-                    .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.white)
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color(red: 0.0, green: 0.843, blue: 0.416), lineWidth: 1)
-                    )
-            }
         }
     }
     
     private var deviceSection: some View {
         VStack(spacing: 0) {
-            SettingsRowView(
-                icon: "person.circle",
-                title: languageService.t("nickname"),
-                value: nicknameService.nickname,
-                action: nicknameService.canChangeNickname() ? { showingNicknameSheet = true } : nil
-            )
-            
-            if !nicknameService.canChangeNickname() {
+            if isEditingNickname {
+                // 編輯模式
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "person.circle")
+                            .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                            .frame(width: 24)
+                        
+                        Text(languageService.t("nickname"))
+                            .font(.headline)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Button("取消") {
+                            isEditingNickname = false
+                        }
+                        .foregroundColor(.gray)
+                        .font(.caption)
+                        
+                        Button("完成") {
+                            saveNickname()
+                        }
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                        .font(.caption)
+                        .disabled(tempNickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+                                 tempNickname.trimmingCharacters(in: .whitespacesAndNewlines) == nicknameService.nickname)
+                    }
+                    .padding()
+                    
+                    TextField(languageService.t("enter_new_nickname"), text: $tempNickname)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                    
+                    HStack {
+                        Spacer()
+                        Text(nicknameService.getRemainingChangesText(languageService: languageService))
+                            .font(.caption)
+                            .foregroundColor(.gray)
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                }
+            } else {
+                // 顯示模式
+                SettingsRowView(
+                    icon: "person.circle",
+                    title: languageService.t("nickname"),
+                    value: nicknameService.displayName,
+                    action: { 
+                        tempNickname = nicknameService.nickname
+                        isEditingNickname = true
+                    }
+                )
+                
                 HStack {
                     Spacer()
-                    Text(nicknameService.getRemainingChangesText())
+                    Text(nicknameService.getRemainingChangesText(languageService: languageService))
                         .font(.caption)
-                        .foregroundColor(.red)
-                    Spacer()
+                        .foregroundColor(.gray)
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 8)
@@ -165,7 +214,7 @@ struct SettingsView: View {
             SettingsRowView(
                 icon: "iphone",
                 title: languageService.t("device_name"),
-                value: "珍珠奶茶-42",
+                value: serviceContainer.temporaryIDManager.deviceID,
                 action: nil
             )
             
@@ -248,6 +297,22 @@ struct SettingsView: View {
         .background(Color.white)
         .cornerRadius(12)
     }
+    
+    private func saveNickname() {
+        let trimmedNickname = tempNickname.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if trimmedNickname.isEmpty {
+            return
+        }
+        
+        if trimmedNickname.count > 8 {
+            return
+        }
+        
+        if nicknameService.updateNickname(trimmedNickname) {
+            isEditingNickname = false
+        }
+    }
 }
 
 struct SettingsRowView: View {
@@ -264,6 +329,7 @@ struct SettingsRowView: View {
             
             Text(title)
                 .font(.headline)
+                .foregroundColor(.black)
             
             Spacer()
             
@@ -327,52 +393,57 @@ struct LanguageSelectionView: View {
 struct NicknameEditView: View {
     @ObservedObject var nicknameService: NicknameService
     @EnvironmentObject var languageService: LanguageService
-    @Environment(\.dismiss) private var dismiss
-    @State private var tempNickname: String = ""
+    @Binding var tempNickname: String
+    @Binding var isPresented: Bool
     @State private var showingAlert = false
     @State private var alertMessage = ""
     
     var body: some View {
-        NavigationView {
-            VStack(spacing: 20) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(languageService.t("set_nickname"))
-                        .font(.headline)
-                    
-                    Text(nicknameService.getRemainingChangesText())
-                        .font(.caption)
-                        .foregroundColor(nicknameService.canChangeNickname() ? .secondary : .red)
+        VStack(spacing: 20) {
+            // Header
+            HStack {
+                Button(languageService.t("cancel")) {
+                    isPresented = false
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    TextField(languageService.t("enter_new_nickname"), text: $tempNickname)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .disabled(!nicknameService.canChangeNickname())
-                    
-                    Text(languageService.t("nickname_max_chars"))
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
+                .foregroundColor(.gray)
                 
                 Spacer()
-            }
-            .padding()
-            .navigationTitle(languageService.t("edit_nickname"))
-            .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button(languageService.t("cancel")) { dismiss() },
-                trailing: Button(languageService.t("save")) {
+                
+                Text(languageService.t("edit_nickname"))
+                    .font(.headline)
+                    .fontWeight(.bold)
+                
+                Spacer()
+                
+                Button(languageService.t("save")) {
                     saveNickname()
                 }
-                .disabled(!nicknameService.canChangeNickname() || tempNickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            )
-        }
-        .onAppear {
-            tempNickname = nicknameService.nickname
+                .fontWeight(.semibold)
+                .disabled(tempNickname.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || 
+                         tempNickname.trimmingCharacters(in: .whitespacesAndNewlines) == nicknameService.nickname)
+            }
+            .padding()
+            
+            // Content
+            VStack(spacing: 16) {
+                TextField(languageService.t("enter_new_nickname"), text: $tempNickname)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .font(.title3)
+                
+                Text(nicknameService.getRemainingChangesText())
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(.horizontal)
+            
+            Spacer()
         }
         .alert(languageService.t("alert"), isPresented: $showingAlert) {
-            Button(languageService.t("confirm")) { }
+            Button(languageService.t("confirm")) { 
+                if alertMessage.contains(languageService.t("nickname_updated")) {
+                    isPresented = false
+                }
+            }
         } message: {
             Text(alertMessage)
         }
@@ -394,11 +465,8 @@ struct NicknameEditView: View {
         }
         
         if nicknameService.updateNickname(trimmedNickname) {
-            alertMessage = languageService.t("nickname_updated") + "\n\(nicknameService.getRemainingChangesText())"
+            alertMessage = languageService.t("nickname_updated")
             showingAlert = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                dismiss()
-            }
         } else if !nicknameService.canChangeNickname() {
             alertMessage = languageService.t("nickname_max_reached")
             showingAlert = true

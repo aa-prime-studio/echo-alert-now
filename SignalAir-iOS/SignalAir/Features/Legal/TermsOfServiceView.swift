@@ -23,16 +23,83 @@ struct TermsOfServiceView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
-                    Text(content)
-                        .font(.body)
-                        .lineSpacing(8)
-                        .padding(.horizontal, 20)
-                        .padding(.vertical)
+                    TermsTextView(
+                        title: TermsOfServiceContent.getTermsTitle(language: currentLanguage),
+                        lastUpdated: TermsOfServiceContent.getLastUpdated(language: currentLanguage),
+                        intro: TermsOfServiceContent.getTermsIntro(language: currentLanguage),
+                        sections: [
+                            (TermsOfServiceContent.getCorePrinciplesTitle(language: currentLanguage), TermsOfServiceContent.getCorePrinciplesContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getAcceptanceTitle(language: currentLanguage), TermsOfServiceContent.getAcceptanceContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getSystemTitle(language: currentLanguage), TermsOfServiceContent.getSystemContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getEnforcementTitle(language: currentLanguage), TermsOfServiceContent.getEnforcementContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getEmergencyTitle(language: currentLanguage), TermsOfServiceContent.getEmergencyContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getDisputeTitle(language: currentLanguage), TermsOfServiceContent.getDisputeContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getDataControlTitle(language: currentLanguage), TermsOfServiceContent.getDataControlContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getIntellectualTitle(language: currentLanguage), TermsOfServiceContent.getIntellectualContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getAmendmentsTitle(language: currentLanguage), TermsOfServiceContent.getAmendmentsContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getInternationalTitle(language: currentLanguage), TermsOfServiceContent.getInternationalContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getServiceChangesTitle(language: currentLanguage), TermsOfServiceContent.getServiceChangesContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getPurchaseTitle(language: currentLanguage), TermsOfServiceContent.getPurchaseContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getExportControlTitle(language: currentLanguage), TermsOfServiceContent.getExportControlContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getGeneralTitle(language: currentLanguage), TermsOfServiceContent.getGeneralContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getClosingTitle(language: currentLanguage), TermsOfServiceContent.getClosingContent(language: currentLanguage)),
+                            (TermsOfServiceContent.getContactTitle(language: currentLanguage), TermsOfServiceContent.getContactContent(language: currentLanguage))
+                        ]
+                    )
+                    .padding(.horizontal, 20)
+                    .padding(.vertical)
                 }
             }
             .navigationTitle(title)
             .navigationTitle("Terms of Service")
         }
+    }
+}
+
+struct TermsTextView: View {
+    let title: String
+    let lastUpdated: String
+    let intro: String
+    let sections: [(String, String)]
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Last Updated
+            Text(lastUpdated)
+                .font(.subheadline.weight(.thin))
+                .foregroundColor(.black)
+                .lineSpacing(16)
+            
+            // Intro
+            Text(intro)
+                .font(.subheadline.weight(.thin))
+                .foregroundColor(.black)
+                .lineSpacing(16)
+            
+            // Sections
+            ForEach(Array(sections.enumerated()), id: \.offset) { index, section in
+                VStack(alignment: .leading, spacing: 16) {
+                    // Section Title
+                    Text(cleanSectionTitle(section.0))
+                        .font(.subheadline.weight(.regular))
+                        .foregroundColor(.black)
+                        .lineSpacing(16)
+                    
+                    // Section Content
+                    Text(section.1)
+                        .font(.subheadline.weight(.thin))
+                        .foregroundColor(.black)
+                        .lineSpacing(16)
+                }
+            }
+        }
+    }
+    
+    private func cleanSectionTitle(_ title: String) -> String {
+        if let range = title.range(of: " / ") {
+            return String(title[..<range.lowerBound])
+        }
+        return title
     }
 }
 

@@ -2,16 +2,18 @@ import Foundation
 import SwiftUI
 
 class TemporaryIDManager: ObservableObject {
-    // 台灣小吃清單（40種）
+    // 台灣小吃清單（50種）
     private let taiwanSnacks = [
-        "珍珠奶茶", "牛肉麵", "滷肉飯", "雞排", "臭豆腐",
-        "小籠包", "蚵仔煎", "鹽酥雞", "肉圓", "刈包",
+        "無糖綠茶", "牛肉麵", "滷肉飯", "雞排不切要辣", "臭豆腐",
+        "小籠包", "綜合煎", "鹽酥雞", "肉圓", "刈包",
         "豆花", "紅豆餅", "雞蛋糕", "蔥抓餅", "胡椒餅",
-        "魯味", "碳烤香腸", "花枝丸", "甜不辣", "米血糕",
-        "鹹酥龍珠", "芋圓", "仙草凍", "鳳梨酥", "太陽餅",
-        "麻糬", "車輪餅", "潤餅", "大腸包小腸", "阿給",
-        "蝦捲", "棺材板", "度小月", "虱目魚", "擔仔麵",
-        "肉粽", "碗粿", "春捲", "蚵嗲", "夜市燒餅"
+        "魯味", "碳烤香腸", "花枝丸", "不要香菜", "麻辣魚蛋",
+        "鹹酥龍珠", "芋圓", "香菜加滿", "蔓越莓酥", "抹茶拿鐵",
+        "手工薯條", "車輪餅", "潤餅", "大腸包小腸", "阿給",
+        "蝦捲", "臭豆腐泡麵", "龍珠果凍", "糖葫蘆", "擔仔麵",
+        "南部粽", "碗粿", "草莓鬆餅", "蚵嗲", "港式腸粉",
+        "烤玉米", "芒果冰", "鳳梨蝦球", "楊桃冰", "滷味",
+        "九層塔蔥油餅", "油條很油", "木須炒麵", "燒餅油條", "青草茶"
     ]
     
     // 裝置ID（系統控制，不可手動修改）
@@ -29,9 +31,12 @@ class TemporaryIDManager: ObservableObject {
     private let updateCountKey = "SignalAir_DeviceID_UpdateCount"
     
     init() {
+        print("🚀 TemporaryIDManager: 開始初始化...")
         loadOrGenerateDeviceID()
+        print("✅ TemporaryIDManager: 裝置ID已設置 = \(deviceID)")
         startAutoUpdate()
         setupBackgroundNotifications()
+        print("✅ TemporaryIDManager: 初始化完成")
     }
     
     deinit {
@@ -74,39 +79,31 @@ class TemporaryIDManager: ObservableObject {
     
     /// 載入或生成裝置ID
     private func loadOrGenerateDeviceID() {
-        // 檢查是否有儲存的 ID
-        if let savedID = UserDefaults.standard.string(forKey: deviceIDKey),
-           !savedID.isEmpty {
-            deviceID = savedID
-            
-            // 載入建立時間
-            if let savedDate = UserDefaults.standard.object(forKey: createdAtKey) as? Date {
-                createdAt = savedDate
-                nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
-                
-                // 檢查是否需要更新
-                if needsUpdate {
-                    forceUpdate()
-                    return
-                }
-            } else {
-                // 如果沒有建立時間，重新生成
-                forceUpdate()
-                return
-            }
-            
-            print("📱 TemporaryIDManager: 載入現有裝置ID = \(deviceID)")
-        } else {
-            // 首次執行，生成新的 ID
-            forceUpdate()
+        // 清理所有可能的舊數據鍵
+        print("📱 TemporaryIDManager: 清理所有舊數據並生成新格式ID")
+        let oldKeys = [
+            deviceIDKey,
+            createdAtKey,
+            updateCountKey,
+            "temporary_device_id",      // 舊的鍵
+            "device_id_last_update"     // 舊的鍵
+        ]
+        
+        for key in oldKeys {
+            UserDefaults.standard.removeObject(forKey: key)
         }
+        UserDefaults.standard.synchronize()
+        
+        // 生成新的裝置ID
+        forceUpdate()
     }
     
-    /// 生成裝置ID（格式：小吃名-數字）
+    /// 生成裝置ID（格式：小吃名-Base32字符）
     private func generateDeviceID() -> String {
         let snack = taiwanSnacks.randomElement()!
-        let number = String(format: "%02d", Int.random(in: 1...99))
-        return "\(snack)-\(number)"
+        let base32Chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
+        let suffix = String((0..<4).map { _ in base32Chars.randomElement()! })
+        return "\(snack)-\(suffix)"
     }
     
     /// 儲存到 UserDefaults
@@ -151,8 +148,10 @@ class TemporaryIDManager: ObservableObject {
     
     /// 執行排程更新
     private func performScheduledUpdate() {
-        forceUpdate()
-        print("📱 TemporaryIDManager: 執行排程更新，新ID = \(deviceID)")
+        DispatchQueue.main.async {
+            self.forceUpdate()
+            print("📱 TemporaryIDManager: 執行排程更新，新ID = \(self.deviceID)")
+        }
     }
     
     /// 停止自動更新 Timer
@@ -185,10 +184,12 @@ class TemporaryIDManager: ObservableObject {
     
     @objc private func applicationWillEnterForeground() {
         // App 進入前景時檢查是否需要更新
-        if needsUpdate {
-            forceUpdate()
+        DispatchQueue.main.async {
+            if self.needsUpdate {
+                self.forceUpdate()
+            }
+            self.startAutoUpdate() // 重新啟動 timer
         }
-        startAutoUpdate() // 重新啟動 timer
     }
     
     @objc private func applicationDidEnterBackground() {
@@ -219,9 +220,14 @@ struct DeviceIDStats {
 // MARK: - 延展功能
 
 extension TemporaryIDManager {
-    /// 驗證裝置ID格式
+    /// 驗證裝置ID格式（新格式：50種台灣小吃+4位Base32字符）
     static func isValidDeviceID(_ id: String) -> Bool {
-        let pattern = "^.+-\\d{2}$"
+        return isNewFormat(id)
+    }
+    
+    /// 判斷是否為新格式（Base32）
+    static func isNewFormat(_ id: String) -> Bool {
+        let pattern = "^.+-[ABCDEFGHJKMNPQRSTVWXYZ23456789]{4}$"
         return id.range(of: pattern, options: .regularExpression) != nil
     }
     
@@ -231,8 +237,8 @@ extension TemporaryIDManager {
         return components.first
     }
     
-    /// 從裝置ID中提取數字
-    static func extractNumber(from deviceID: String) -> String? {
+    /// 從裝置ID中提取Base32後綴
+    static func extractSuffix(from deviceID: String) -> String? {
         let components = deviceID.components(separatedBy: "-")
         return components.last
     }

@@ -1,60 +1,6 @@
 import Foundation
 import SwiftUI
 
-// MARK: - TemporaryIDManager
-class TemporaryIDManager: ObservableObject {
-    @Published var deviceID: String
-    
-    private let userDefaults = UserDefaults.standard
-    private let deviceIDKey = "temporary_device_id"
-    private let lastUpdateKey = "device_id_last_update"
-    private let updateInterval: TimeInterval = 24 * 60 * 60 // 24小時
-    
-    // 台灣小吃名稱列表
-    private let taiwanSnacks = [
-        "珍珠奶茶", "牛肉麵", "滷肉飯", "雞排", "臭豆腐",
-        "小籠包", "蚵仔煎", "鹽酥雞", "肉圓", "刈包",
-        "豆花", "紅豆餅", "雞蛋糕", "蔥抓餅", "胡椒餅",
-        "蚵仔麵線", "大腸麵線", "炸雞排", "鳳梨酥", "太陽餅",
-        "麻糬", "芋圓", "仙草", "愛玉", "木瓜牛奶",
-        "冬瓜茶", "青草茶", "酸梅湯", "檸檬愛玉", "紅茶冰",
-        "鐵蛋", "滷蛋", "茶葉蛋", "皮蛋", "鹹鴨蛋",
-        "肉鬆", "肉脯", "豬肉乾", "牛肉乾", "魷魚絲"
-    ]
-    
-    init() {
-        // 檢查是否需要更新ID
-        if userDefaults.double(forKey: lastUpdateKey) > 0 && 
-           Date().timeIntervalSince1970 - userDefaults.double(forKey: lastUpdateKey) > updateInterval {
-            // 需要更新
-            let snack = taiwanSnacks.randomElement()!
-            let number = String(format: "%02d", Int.random(in: 1...99))
-            self.deviceID = "\(snack)-\(number)"
-            userDefaults.set(deviceID, forKey: deviceIDKey)
-            userDefaults.set(Date().timeIntervalSince1970, forKey: lastUpdateKey)
-        } else {
-            // 從UserDefaults讀取現有ID，如果沒有則生成新的
-            if let existingID = userDefaults.string(forKey: deviceIDKey) {
-                self.deviceID = existingID
-            } else {
-                let snack = taiwanSnacks.randomElement()!
-                let number = String(format: "%02d", Int.random(in: 1...99))
-                self.deviceID = "\(snack)-\(number)"
-                userDefaults.set(deviceID, forKey: deviceIDKey)
-                userDefaults.set(Date().timeIntervalSince1970, forKey: lastUpdateKey)
-            }
-        }
-    }
-    
-    func forceUpdate() {
-        let snack = taiwanSnacks.randomElement()!
-        let number = String(format: "%02d", Int.random(in: 1...99))
-        deviceID = "\(snack)-\(number)"
-        userDefaults.set(deviceID, forKey: deviceIDKey)
-        userDefaults.set(Date().timeIntervalSince1970, forKey: lastUpdateKey)
-    }
-}
-
 // MARK: - 共享的基本類型定義
 
 // 信號類型

@@ -5,7 +5,7 @@ import MultipeerConnectivity
 class NetworkService: NSObject, ObservableObject {
     // MARK: - Configuration
     private let serviceType = "signalair"
-    var temporaryIDManager: TemporaryIDManager?
+    // 移除對TemporaryIDManager的直接依賴
     
     // MARK: - Properties
     var myPeerID: MCPeerID!
@@ -29,10 +29,8 @@ class NetworkService: NSObject, ObservableObject {
     
     // MARK: - Initialization
     override init() {
-        // 初始化 myPeerID
-        let idManager = TemporaryIDManager()
-        self.temporaryIDManager = idManager
-        self.myPeerID = MCPeerID(displayName: idManager.deviceID)
+        // 使用固定的ID避免循環依賴
+        self.myPeerID = MCPeerID(displayName: "SignalAir-\(Int.random(in: 1000...9999))")
         
         // 初始化空的connectedPeers數組
         self.connectedPeers = []
