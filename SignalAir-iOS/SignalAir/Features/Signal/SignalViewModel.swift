@@ -1252,12 +1252,18 @@ class SignalViewModel: ObservableObject {
             }
             
             if hasValidEncryption {
+                // 將 Data 轉換為 Base64 字串以供 JSON 序列化
+                var encryptedForPeersBase64: [String: String] = [:]
+                for (peerID, data) in encryptedForPeers {
+                    encryptedForPeersBase64[peerID] = data.base64EncodedString()
+                }
+                
                 // 返回加密後的廣播數據結構
                 return [
                     "messageType": "encrypted_signal",
                     "senderID": deviceID,
                     "timestamp": Date().timeIntervalSince1970,
-                    "encryptedForPeers": encryptedForPeers,
+                    "encryptedForPeers": encryptedForPeersBase64,
                     "hasEncryption": true
                 ] as [String : Any]
             } else {
@@ -1428,7 +1434,7 @@ class SignalViewModel: ObservableObject {
         do {
             // 解析加密載荷
             guard let encryptedPayload = try JSONSerialization.jsonObject(with: encryptedPayloadData) as? [String: Any],
-                  let encryptedForPeers = encryptedPayload["encryptedForPeers"] as? [String: Data] else {
+                  let encryptedForPeersBase64 = encryptedPayload["encryptedForPeers"] as? [String: String] else {
                 
                 // 記錄安全事件：載荷解析失敗
                 securityLogger.logEvent(
@@ -1444,7 +1450,8 @@ class SignalViewModel: ObservableObject {
             // 嘗試用自己的 ID 解密
             let myPeerID = networkService.myPeerID.displayName
             
-            if let encryptedData = encryptedForPeers[myPeerID] {
+            if let encryptedBase64 = encryptedForPeersBase64[myPeerID],
+               let encryptedData = Data(base64Encoded: encryptedBase64) {
                 // 找到針對我的加密數據
                 do {
                     let decryptedData = try securityService.decrypt(encryptedData, from: senderID)
