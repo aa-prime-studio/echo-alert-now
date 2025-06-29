@@ -199,6 +199,8 @@ class BingoGameViewModel: ObservableObject {
             handleGameStart(message)
         case .gameEnd:
             handleGameEnd(message)
+        case .heartbeat:
+            handleHeartbeat(message)
         }
     }
     
@@ -257,6 +259,33 @@ class BingoGameViewModel: ObservableObject {
         }
         
         broadcastGameMessage(.roomSync, data: encodeGameRoomState())
+    }
+    
+    private func handleHeartbeat(_ message: GameMessage) {
+        // 處理心跳訊息，更新玩家在線狀態
+        let components = String(data: message.data, encoding: .utf8)?.components(separatedBy: "|") ?? []
+        guard components.count >= 2 else { return }
+        
+        let playerID = components[0]
+        let playerName = components[1]
+        
+        // 更新或添加玩家到房間列表
+        if let index = roomPlayers.firstIndex(where: { $0.id == playerID }) {
+            let existingPlayer = roomPlayers[index]
+            let updatedPlayer = PlayerState(
+                id: existingPlayer.id,
+                name: existingPlayer.name,
+                completedLines: existingPlayer.completedLines,
+                hasWon: existingPlayer.hasWon,
+                isConnected: true
+            )
+            roomPlayers[index] = updatedPlayer
+        } else {
+            let newPlayer = PlayerState(id: playerID, name: playerName)
+            roomPlayers.append(newPlayer)
+        }
+        
+        print("💓 收到心跳: \(playerName) (\(playerID))")
     }
     
     private func handleGameStateUpdate(_ message: GameMessage) {
@@ -512,8 +541,8 @@ class BingoGameViewModel: ObservableObject {
         
         do {
             let messageData = try JSONEncoder().encode(gameMessage)
-            let meshMessage = MeshMessage(type: .game, data: messageData)
-            meshManager.onMessageReceived?(meshMessage)
+            // 使用正確的廣播方法
+            meshManager.broadcastMessage(messageData, messageType: .game)
         } catch {
             print("❌ 廣播遊戲訊息失敗: \(error)")
         }
@@ -572,7 +601,7 @@ class BingoGameViewModel: ObservableObject {
         guard isNetworkActive else { return }
         
         let heartbeatData = "\(playerID)|\(deviceName)".data(using: .utf8) ?? Data()
-        broadcastGameMessage(.roomSync, data: heartbeatData)
+        broadcastGameMessage(.heartbeat, data: heartbeatData)
     }
     
     private func startSyncTimer() {

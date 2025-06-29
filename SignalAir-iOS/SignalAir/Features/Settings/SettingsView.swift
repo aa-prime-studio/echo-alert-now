@@ -218,6 +218,15 @@ struct SettingsView: View {
                 action: nil
             )
             
+            HStack {
+                Spacer()
+                Text("00:00 ——— 午夜自動更新")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 8)
+            
             Divider()
             
             SettingsRowView(

@@ -396,7 +396,12 @@ struct SuspiciousActivityStats {
 
 // MARK: - Flood Protection Main Class
 @Observable
-class FloodProtection {
+// MARK: - FloodProtectionProtocol
+protocol FloodProtectionProtocol {
+    func shouldBlock(_ message: MeshMessage, from peerID: String) -> Bool
+}
+
+class FloodProtection: FloodProtectionProtocol {
     // MARK: - Properties
     private let config: FloodProtectionConfig
     private var peerRateTrackers: [String: MessageRateTracker] = [:]

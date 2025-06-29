@@ -282,9 +282,50 @@ class ChatViewModel: ObservableObject {
     
     /// 設定清理定時器
     private func setupCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: 300, repeats: true) { [weak self] _ in
-            self?.cleanupOldMessages()
+        // 計算到下一個午夜的時間
+        scheduleNextMidnightCleanup()
+    }
+    
+    /// 安排下一次午夜清理
+    private func scheduleNextMidnightCleanup() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 獲取明天00:00的時間
+        var components = calendar.dateComponents([.year, .month, .day], from: now)
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        guard let todayMidnight = calendar.date(from: components) else { return }
+        let nextMidnight = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
+        
+        let timeInterval = nextMidnight.timeIntervalSince(now)
+        
+        // 設定Timer在午夜觸發
+        cleanupTimer?.invalidate()
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.performMidnightCleanup()
+            }
         }
+        
+        print("💬 ChatViewModel: 下次訊息清理時間 - \(nextMidnight)")
+    }
+    
+    /// 執行午夜清理
+    private func performMidnightCleanup() {
+        // 清除所有訊息
+        let messageCount = messages.count
+        clearMessages()
+        
+        if messageCount > 0 {
+            addSystemMessage("🕐 系統已於00:00自動清除聊天記錄")
+            print("💬 ChatViewModel: 午夜清理完成，已清除 \(messageCount) 則訊息")
+        }
+        
+        // 安排下一次午夜清理
+        scheduleNextMidnightCleanup()
     }
     
     /// 設定狀態更新定時器
@@ -294,26 +335,10 @@ class ChatViewModel: ObservableObject {
         }
     }
     
-    /// 清理舊訊息（與自毀管理器協作）
+    /// 清理舊訊息（保留供手動調用）
     private func cleanupOldMessages() {
-        let twentyFourHoursAgo = Date().timeIntervalSince1970 - (24 * 60 * 60)
-        
-        DispatchQueue.main.async {
-            let expiredMessages = self.messages.filter { $0.timestamp < twentyFourHoursAgo }
-            
-            // 從自毀管理器中移除
-            for message in expiredMessages {
-                self.selfDestructManager.removeMessage(message.id)
-                self.messageHashes.remove(message.messageHash)
-            }
-            
-            // 從列表中移除
-            self.messages = self.messages.filter { $0.timestamp >= twentyFourHoursAgo }
-            
-            if !expiredMessages.isEmpty {
-                print("💬 ChatViewModel: 清理了 \(expiredMessages.count) 個過期訊息")
-            }
-        }
+        // 此方法現在主要由午夜清理使用
+        // 保留此方法以供未來可能的手動清理需求
     }
 }
 

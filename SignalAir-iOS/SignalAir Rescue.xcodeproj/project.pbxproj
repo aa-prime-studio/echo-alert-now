@@ -37,9 +37,7 @@
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
-		5D284D6CBFDA43798074F3BA /* LegalContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BA202372BE5435383B9DB69 /* LegalContent.swift */; };
-			F663CC3F61814F22B0D62147 /* LegalTextView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2EB85C285D81413699714934 /* LegalTextView.swift */; };
-	/* End PBXBuildFile section */
+/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
@@ -92,9 +90,7 @@
 		F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAirApp.swift; sourceTree = "<group>"; };
 		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
-		3BA202372BE5435383B9DB69 /* LegalContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalContent.swift; sourceTree = "<group>"; };
-			2EB85C285D81413699714934 /* LegalTextView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LegalTextView.swift; sourceTree = "<group>"; };
-	/* End PBXFileReference section */
+/* End PBXFileReference section */
 
 /* Begin PBXGroup section */
 		0F2C5F106562648042E25C83 /* App */ = {
@@ -501,6 +497,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = JD64Y6G733;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SignalAir/Info.plist;
@@ -509,7 +506,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.signalair.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.signalairrescue.app;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;
@@ -523,6 +520,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = JD64Y6G733;
 				ENABLE_BITCODE = NO;
 				GENERATE_INFOPLIST_FILE = NO;
 				INFOPLIST_FILE = SignalAir/Info.plist;
@@ -531,7 +529,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.signalair.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.signalairrescue.app;
 				SDKROOT = iphoneos;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.9;

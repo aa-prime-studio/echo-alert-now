@@ -97,7 +97,7 @@ class LanguageService: ObservableObject {
                 "no_messages": "目前沒有訊息",
                 "send_first_message": "發送第一條訊息開始對話",
                 "enter_message": "輸入訊息...",
-                "auto_delete_info": "訊息會在24小時後自動刪除 • 最多顯示50條訊息",
+                "auto_delete_info": "訊息於每日00:00自動清除 • 最多顯示100條訊息",
                 "me": "我",
                 
                 // 遊戲頁面
@@ -161,8 +161,8 @@ class LanguageService: ObservableObject {
                 "nickname_updated": "暱稱更新成功！",
                 "nickname_no_change": "暱稱沒有變更",
                 "nickname_max_reached": "已用完修改次數",
-                "remaining_changes": "剩餘修改次數",
-                "no_changes_left": "已無修改次數",
+                "remaining_changes": "剩餘修改次數 ———",
+                "no_changes_left": "已無修改次數 ———",
                 
                 // 賓果遊戲解鎖
                 "bingo_locked_title": "賓果遊戲室已鎖定",
@@ -233,7 +233,7 @@ class LanguageService: ObservableObject {
                 "no_messages": "No messages yet",
                 "send_first_message": "Send first message to start conversation",
                 "enter_message": "Enter message...",
-                "auto_delete_info": "Messages auto-delete after 24 hours • Max 50 messages",
+                "auto_delete_info": "Messages auto-clear at 00:00 daily • Max 100 messages",
                 "me": "Me",
                 
                 // Game page
@@ -282,8 +282,8 @@ class LanguageService: ObservableObject {
                 "nickname_updated": "Nickname updated successfully!",
                 "nickname_no_change": "Nickname not changed",
                 "nickname_max_reached": "Maximum changes reached",
-                "remaining_changes": "Remaining changes",
-                "no_changes_left": "No changes left",
+                "remaining_changes": "Remaining changes ———",
+                "no_changes_left": "No changes left ———",
                 
                 // Game status and connection
                 "offline": "Offline",

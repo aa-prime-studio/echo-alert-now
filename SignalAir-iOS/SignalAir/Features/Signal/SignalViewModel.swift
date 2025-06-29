@@ -1214,8 +1214,7 @@ class SignalViewModel: ObservableObject {
                 // 檢查是否有該 peer 的會話密鑰
                 if securityService.hasSessionKey(for: peerID) {
                     do {
-                        let encryptedMessage = try securityService.encrypt(plainTextData, for: peerID)
-                        let encryptedData = encryptedMessage.encode()
+                        let encryptedData = try securityService.encrypt(plainTextData, for: peerID)
                         encryptedForPeers[peerID] = encryptedData
                         hasValidEncryption = true
                         

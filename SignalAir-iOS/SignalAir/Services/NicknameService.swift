@@ -95,7 +95,7 @@ class NicknameService: ObservableObject {
             if let languageService = languageService {
                 return "\(languageService.t("remaining_changes")) \(remainingChanges)"
             } else {
-                return "剩餘 \(remainingChanges) 次修改機會"
+                return "剩餘 \(remainingChanges) 次 ——— 僅3次"
             }
         } else {
             if let languageService = languageService {

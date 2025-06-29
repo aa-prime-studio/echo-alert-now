@@ -287,7 +287,7 @@ struct EncryptedMessage {
     let timestamp: Date
     
     /// 編碼為 Data
-    func encode() -> Data {
+    func encodedData() -> Data {
         var data = Data()
         
         // 添加版本號 (1 byte)
@@ -368,8 +368,17 @@ struct EncryptedMessage {
     }
 }
 
+// MARK: - Security Service Protocol
+protocol SecurityServiceProtocol {
+    func hasSessionKey(for peerID: String) -> Bool
+    func encrypt(_ data: Data, for peerID: String) throws -> Data
+    func decrypt(_ data: Data, from peerID: String) throws -> Data
+    func getPublicKey() throws -> Data
+    func removeSessionKey(for peerID: String)
+}
+
 // MARK: - Security Service
-class SecurityService: ObservableObject {
+class SecurityService: ObservableObject, SecurityServiceProtocol {
     // MARK: - Properties
     private var privateKey: Curve25519.KeyAgreement.PrivateKey?
     private var sessionKeys: [String: SessionKey] = [:]
@@ -453,8 +462,14 @@ class SecurityService: ObservableObject {
         }
     }
     
-    /// 加密訊息
-    func encrypt(_ data: Data, for peerID: String) throws -> EncryptedMessage {
+    /// 加密訊息 - Protocol 版本 (返回 Data)
+    func encrypt(_ data: Data, for peerID: String) throws -> Data {
+        let encryptedMessage = try encryptToMessage(data, for: peerID)
+        return encryptedMessage.encodedData()
+    }
+    
+    /// 加密訊息 - 詳細版本 (返回 EncryptedMessage)
+    func encryptToMessage(_ data: Data, for peerID: String) throws -> EncryptedMessage {
         guard var sessionKey = sessionKeys[peerID] else {
             throw CryptoError.noSessionKey
         }

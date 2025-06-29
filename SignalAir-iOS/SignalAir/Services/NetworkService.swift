@@ -1,14 +1,28 @@
 import Foundation
 import MultipeerConnectivity
 
+// MARK: - NetworkService Protocol (forward declaration)
+protocol NetworkServiceProtocol: AnyObject {
+    var myPeerID: MCPeerID { get }
+    var connectedPeers: [MCPeerID] { get }
+    var onDataReceived: ((Data, String) -> Void)? { get set }
+    var onPeerConnected: ((String) -> Void)? { get set }
+    var onPeerDisconnected: ((String) -> Void)? { get set }
+    
+    func send(_ data: Data, to peers: [MCPeerID]) async throws
+}
+
 // MARK: - NetworkService
-class NetworkService: NSObject, ObservableObject {
+class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
     // MARK: - Configuration
     private let serviceType = "signalair"
     // 移除對TemporaryIDManager的直接依賴
     
     // MARK: - Properties
-    var myPeerID: MCPeerID!
+    private var _myPeerID: MCPeerID!
+    var myPeerID: MCPeerID { 
+        return _myPeerID ?? MCPeerID(displayName: "Unknown")
+    }
     var connectedPeers: [MCPeerID] = []
     var onDataReceived: ((Data, String) -> Void)?
     var onPeerConnected: ((String) -> Void)?
@@ -30,25 +44,25 @@ class NetworkService: NSObject, ObservableObject {
     // MARK: - Initialization
     override init() {
         // 使用固定的ID避免循環依賴
-        self.myPeerID = MCPeerID(displayName: "SignalAir-\(Int.random(in: 1000...9999))")
+        self._myPeerID = MCPeerID(displayName: "SignalAir-\(Int.random(in: 1000...9999))")
         
         // 初始化空的connectedPeers數組
         self.connectedPeers = []
         
         self.session = MCSession(
-            peer: myPeerID, 
+            peer: _myPeerID!, 
             securityIdentity: nil, 
             encryptionPreference: .required
         )
         
         self.advertiser = MCNearbyServiceAdvertiser(
-            peer: myPeerID, 
+            peer: _myPeerID!, 
             discoveryInfo: ["version": "1.0"], 
             serviceType: serviceType
         )
         
         self.browser = MCNearbyServiceBrowser(
-            peer: myPeerID, 
+            peer: _myPeerID!, 
             serviceType: serviceType
         )
         
@@ -59,7 +73,7 @@ class NetworkService: NSObject, ObservableObject {
         advertiser.delegate = self
         browser.delegate = self
         
-        print("NetworkService initialized with peer: \(myPeerID.displayName)")
+        print("NetworkService initialized with peer: \(_myPeerID!.displayName)")
     }
     
     deinit {
@@ -115,6 +129,11 @@ class NetworkService: NSObject, ObservableObject {
     /// 發送資料到所有連接的 peers
     func broadcast(_ data: Data) async throws {
         try await send(data, to: nil)
+    }
+    
+    /// NetworkServiceProtocol 兼容的 send 方法
+    func send(_ data: Data, to peers: [MCPeerID]) async throws {
+        try await send(data, to: peers as [MCPeerID]?)
     }
     
     /// 手動連接到特定 peer

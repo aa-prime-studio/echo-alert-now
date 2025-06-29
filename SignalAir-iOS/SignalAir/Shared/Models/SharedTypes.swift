@@ -313,6 +313,7 @@ enum GameMessageType: String, Codable, CaseIterable {
     case gameEnd = "game_end"
     case roomSync = "room_sync"
     case reconnectRequest = "reconnect_request"
+    case heartbeat = "heartbeat"
 }
 
 // 遊戲訊息
@@ -381,20 +382,32 @@ enum MessagePriority: String {
 
 // MARK: - 基本服務類型（避免重複定義）
 
+// MARK: - Protocols for Services
+protocol MeshManagerProtocol {
+    func broadcastMessage(_ data: Data, messageType: MeshMessageType)
+    func getConnectedPeers() -> [String]
+}
+
+protocol FloodProtectionProtocol {
+    func shouldAcceptMessage(from deviceID: String, content: Data, size: Int, priority: MessagePriority) -> Bool
+}
+
 class SelfDestructManager {
     init() {}
     func trackMessage(_ messageID: String, type: MessageType, priority: MessagePriority) {}
     func removeMessage(_ messageID: String) {}
 }
 
-class FloodProtection {
+// MARK: - Simple FloodProtection Implementation
+class FloodProtection: FloodProtectionProtocol {
     init() {}
     func shouldAcceptMessage(from deviceID: String, content: Data, size: Int, priority: MessagePriority) -> Bool {
         return true
     }
 }
 
-class MeshManager {
+// MARK: - Simple MeshManager Implementation  
+class MeshManager: MeshManagerProtocol {
     var onMessageReceived: ((MeshMessage) -> Void)?
     var onPeerConnected: ((String) -> Void)?
     var onPeerDisconnected: ((String) -> Void)?
@@ -402,6 +415,12 @@ class MeshManager {
     private var messageHandler: ((Data) -> Void)?
     
     init() {}
+    
+    init(networkService: NetworkServiceProtocol, 
+         securityService: SecurityServiceProtocol,
+         floodProtection: FloodProtectionProtocol) {
+        // Basic initialization
+    }
     
     func startMeshNetwork() {}
     func stopMeshNetwork() {}

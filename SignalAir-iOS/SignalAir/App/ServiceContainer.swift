@@ -52,20 +52,57 @@ class TemporaryIDManager: ObservableObject {
     func forceUpdate() {
         deviceID = generateDeviceID()
         createdAt = Date()
-        nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
+        
+        // 設定下次更新時間為明天00:00
+        let calendar = Calendar.current
+        var components = calendar.dateComponents([.year, .month, .day], from: Date())
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        if let todayMidnight = calendar.date(from: components) {
+            nextUpdateTime = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
+        } else {
+            nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
+        }
+        
         saveToUserDefaults()
         
         print("📱 TemporaryIDManager: 強制更新裝置ID = \(deviceID)")
+        print("📱 TemporaryIDManager: 下次更新時間 = \(nextUpdateTime)")
     }
     
     /// 載入或生成裝置ID
     private func loadOrGenerateDeviceID() {
-        // 清理所有可能的舊數據鍵
-        print("📱 TemporaryIDManager: 清理所有舊數據並生成新格式ID")
+        // 嘗試從UserDefaults載入現有的裝置ID
+        if let existingID = UserDefaults.standard.string(forKey: deviceIDKey),
+           let createdDate = UserDefaults.standard.object(forKey: createdAtKey) as? Date {
+            
+            // 檢查是否為新格式（包含台灣小吃名稱和#字符）
+            if existingID.contains("#") && taiwanSnacks.contains(where: { existingID.hasPrefix($0) }) {
+                deviceID = existingID
+                createdAt = createdDate
+                
+                // 重新計算下次更新時間為下一個午夜
+                let calendar = Calendar.current
+                var components = calendar.dateComponents([.year, .month, .day], from: Date())
+                components.hour = 0
+                components.minute = 0
+                components.second = 0
+                
+                if let todayMidnight = calendar.date(from: components) {
+                    nextUpdateTime = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
+                } else {
+                    nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
+                }
+                
+                print("📱 TemporaryIDManager: 載入現有裝置ID = \(deviceID)")
+                return
+            }
+        }
+        
+        // 清理舊格式的鍵（僅在需要時）
         let oldKeys = [
-            deviceIDKey,
-            createdAtKey,
-            updateCountKey,
             "temporary_device_id",      // 舊的鍵
             "device_id_last_update"     // 舊的鍵
         ]
@@ -73,18 +110,19 @@ class TemporaryIDManager: ObservableObject {
         for key in oldKeys {
             UserDefaults.standard.removeObject(forKey: key)
         }
-        UserDefaults.standard.synchronize()
         
         // 生成新的裝置ID
+        print("📱 TemporaryIDManager: 生成新格式裝置ID")
         forceUpdate()
     }
     
-    /// 生成裝置ID（格式：小吃名-Base32字符）
+    /// 生成裝置ID（格式：小吃名#Base32字符）
     private func generateDeviceID() -> String {
-        let snack = taiwanSnacks.randomElement()!
+        let randomIndex = Int.random(in: 0..<taiwanSnacks.count)
+        let snack = taiwanSnacks[randomIndex]
         let base32Chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
         let suffix = String((0..<4).map { _ in base32Chars.randomElement()! })
-        return "\(snack)-\(suffix)"
+        return "\(snack)#\(suffix)"
     }
     
     /// 儲存到 UserDefaults
@@ -101,8 +139,43 @@ class TemporaryIDManager: ObservableObject {
     
     /// 啟動自動更新 Timer
     private func startAutoUpdate() {
-        // 簡化版本，不設置複雜的Timer
-        print("📱 TemporaryIDManager: 自動更新功能已啟動")
+        scheduleNextMidnightUpdate()
+    }
+    
+    /// 安排下一次午夜更新
+    private func scheduleNextMidnightUpdate() {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 獲取今天00:00的時間
+        var components = calendar.dateComponents([.year, .month, .day], from: now)
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        guard let todayMidnight = calendar.date(from: components) else { return }
+        let nextMidnight = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
+        
+        let timeInterval = nextMidnight.timeIntervalSince(now)
+        
+        // 設定Timer在午夜觸發
+        autoUpdateTimer?.invalidate()
+        autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.performMidnightUpdate()
+            }
+        }
+        
+        print("📱 TemporaryIDManager: 下次裝置名稱更新時間 - \(nextMidnight)")
+    }
+    
+    /// 執行午夜更新
+    private func performMidnightUpdate() {
+        forceUpdate()
+        print("🕐 TemporaryIDManager: 午夜00:00自動更新裝置ID完成")
+        
+        // 安排下一次午夜更新
+        scheduleNextMidnightUpdate()
     }
     
     /// 停止自動更新 Timer
@@ -113,8 +186,25 @@ class TemporaryIDManager: ObservableObject {
     
     /// 設定背景通知
     private func setupBackgroundNotifications() {
-        // 簡化版本
+        // 監聽應用回到前景
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(applicationWillEnterForeground),
+            name: UIApplication.willEnterForegroundNotification,
+            object: nil
+        )
+        
         print("📱 TemporaryIDManager: 背景通知設置完成")
+    }
+    
+    @objc private func applicationWillEnterForeground() {
+        // 檢查是否錯過了午夜更新
+        if needsUpdate {
+            performMidnightUpdate()
+        } else {
+            // 重新計算Timer
+            scheduleNextMidnightUpdate()
+        }
     }
     
     /// 移除背景通知
@@ -205,7 +295,7 @@ class ServiceContainer: ObservableObject {
     // MARK: - Network & Security Services
     @Published var networkService: NetworkService
     @Published var securityService: SecurityService
-    @Published var meshManager: MeshManager
+    @Published var meshManager: MeshManager!
     
     // MARK: - Business Logic Services
     @Published var languageService: LanguageService
@@ -264,9 +354,6 @@ class ServiceContainer: ObservableObject {
         print("🔧 ServiceContainer: 初始化FloodProtection...")
         self.floodProtection = FloodProtection()
         
-        // Initialize MeshManager without dependency injection (backward compatibility)
-        self.meshManager = MeshManager()
-        
         // Initialize business logic services
         self.languageService = LanguageService()
         self.nicknameService = NicknameService()
@@ -280,13 +367,26 @@ class ServiceContainer: ObservableObject {
             trustScoreManager: trustScoreManager
         )
         
-        // Configure service relationships
-        configureServiceDependencies()
-        
-        // Mark as initialized
+        // Mark as initialized first
         self.isInitialized = true
         
+        // Initialize MeshManager after all properties are initialized
+        initializeMeshManager()
+        
+        // Configure service relationships after everything is set up
+        configureServiceDependencies()
+        
         print("✅ ServiceContainer: 服務容器初始化完成（包含自治系統）")
+    }
+    
+    // MARK: - MeshManager Initialization
+    private func initializeMeshManager() {
+        self.meshManager = MeshManager(
+            networkService: self.networkService,
+            securityService: self.securityService,
+            floodProtection: self.floodProtection
+        )
+        print("🕸️ ServiceContainer: MeshManager 初始化完成")
     }
     
     // MARK: - Service Configuration
@@ -381,7 +481,13 @@ class ServiceContainer: ObservableObject {
     
     /// 創建 SignalViewModel 實例
     func createSignalViewModel() -> SignalViewModel {
-        let viewModel = SignalViewModel()
+        let viewModel = SignalViewModel(
+            networkService: self.networkService,
+            securityService: self.securityService,
+            meshManager: self.meshManager,
+            selfDestructManager: self.selfDestructManager,
+            floodProtection: self.floodProtection
+        )
         // 配置依賴
         return viewModel
     }
