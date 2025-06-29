@@ -386,7 +386,101 @@ class ServiceContainer: ObservableObject {
             securityService: self.securityService,
             floodProtection: self.floodProtection
         )
+        
+        // 設置網路回調來觸發密鑰交換
+        setupNetworkCallbacks()
+        
         print("🕸️ ServiceContainer: MeshManager 初始化完成")
+    }
+    
+    // MARK: - Network Callbacks Setup
+    private func setupNetworkCallbacks() {
+        // 當新設備連接時自動進行密鑰交換
+        networkService.onPeerConnected = { [weak self] peerDisplayName in
+            guard let self = self else { return }
+            
+            print("🔑 開始與 \(peerDisplayName) 進行密鑰交換...")
+            
+            Task {
+                do {
+                    // 獲取我們的公鑰
+                    let publicKey = try self.securityService.getPublicKey()
+                    
+                    // 創建密鑰交換訊息
+                    let keyExchangeMessage = [
+                        "type": "key_exchange",
+                        "public_key": publicKey.base64EncodedString(),
+                        "sender_id": self.temporaryIDManager.deviceID
+                    ]
+                    
+                    let messageData = try JSONSerialization.data(withJSONObject: keyExchangeMessage)
+                    
+                    // 發送密鑰交換請求
+                    if let peer = self.networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                        try await self.networkService.send(messageData, to: [peer])
+                        print("🔑 密鑰交換請求已發送給 \(peerDisplayName)")
+                    }
+                } catch {
+                    print("❌ 密鑰交換失敗: \(error)")
+                }
+            }
+        }
+        
+        // 處理收到的數據（包含密鑰交換）
+        networkService.onDataReceived = { [weak self] data, peerDisplayName in
+            guard let self = self else { return }
+            
+            Task {
+                do {
+                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                       let type = json["type"] as? String,
+                       type == "key_exchange" {
+                        
+                        // 處理密鑰交換
+                        if let publicKeyBase64 = json["public_key"] as? String,
+                           let senderID = json["sender_id"] as? String,
+                           let publicKeyData = Data(base64Encoded: publicKeyBase64) {
+                            
+                            print("🔑 收到來自 \(peerDisplayName) 的密鑰交換請求")
+                            
+                            // 執行 ECDH 密鑰交換
+                            try self.securityService.performKeyExchange(with: publicKeyData, peerID: peerDisplayName)
+                            
+                            print("✅ 與 \(peerDisplayName) 的密鑰交換完成")
+                            
+                            // 發送回應（如果我們還沒有發送過）
+                            if !self.securityService.hasSessionKey(for: peerDisplayName) {
+                                let responseData = try JSONSerialization.data(withJSONObject: [
+                                    "type": "key_exchange_response",
+                                    "public_key": try self.securityService.getPublicKey().base64EncodedString(),
+                                    "sender_id": self.temporaryIDManager.deviceID
+                                ])
+                                
+                                if let peer = self.networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                                    try await self.networkService.send(responseData, to: [peer])
+                                }
+                            }
+                        }
+                    } else if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+                              let type = json["type"] as? String,
+                              type == "key_exchange_response" {
+                        
+                        // 處理密鑰交換回應
+                        if let publicKeyBase64 = json["public_key"] as? String,
+                           let publicKeyData = Data(base64Encoded: publicKeyBase64) {
+                            
+                            try self.securityService.performKeyExchange(with: publicKeyData, peerID: peerDisplayName)
+                            print("✅ 密鑰交換回應處理完成，與 \(peerDisplayName) 建立安全連接")
+                        }
+                    } else {
+                        // 其他類型的訊息傳遞給 MeshManager
+                        // 這裡可以添加其他訊息處理邏輯
+                    }
+                } catch {
+                    print("❌ 處理收到的數據時發生錯誤: \(error)")
+                }
+            }
+        }
     }
     
     // MARK: - Service Configuration
