@@ -438,7 +438,7 @@ class ServiceContainer: ObservableObject {
                         
                         // 處理密鑰交換
                         if let publicKeyBase64 = json["public_key"] as? String,
-                           let senderID = json["sender_id"] as? String,
+                           let _ = json["sender_id"] as? String,
                            let publicKeyData = Data(base64Encoded: publicKeyBase64) {
                             
                             print("🔑 收到來自 \(peerDisplayName) 的密鑰交換請求")
