@@ -895,7 +895,9 @@ class SignalViewModel: ObservableObject {
                 )
                 
                 // 追蹤自毀管理
-                selfDestructManager.trackMessage(signalData["id"] as! String, type: .signal, priority: .emergency)
+                if let messageId = signalData["id"] as? String {
+                    selfDestructManager.trackMessage(messageId, type: .signal, priority: .emergency)
+                }
                 
                 // 更新本地 UI（顯示真實暱稱）
                 let displayMessage = SignalMessage(
@@ -1260,6 +1262,7 @@ class SignalViewModel: ObservableObject {
                 
                 // 返回加密後的廣播數據結構
                 return [
+                    "id": UUID().uuidString,
                     "messageType": "encrypted_signal",
                     "senderID": deviceID,
                     "timestamp": Date().timeIntervalSince1970,
