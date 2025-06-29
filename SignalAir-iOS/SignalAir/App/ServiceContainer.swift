@@ -473,14 +473,62 @@ class ServiceContainer: ObservableObject {
                             print("✅ 密鑰交換回應處理完成，與 \(peerDisplayName) 建立安全連接")
                         }
                     } else {
-                        // 其他類型的訊息傳遞給 MeshManager
-                        // 這裡可以添加其他訊息處理邏輯
+                        // 其他類型的訊息傳遞給相應的處理器
+                        await self.routeReceivedMessage(data, from: peerDisplayName)
                     }
                 } catch {
                     print("❌ 處理收到的數據時發生錯誤: \(error)")
                 }
             }
         }
+    }
+    
+    // MARK: - Message Routing
+    private func routeReceivedMessage(_ data: Data, from peerDisplayName: String) async {
+        do {
+            // 嘗試解析訊息類型
+            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let messageType = json["messageType"] as? String {
+                
+                print("📥 收到訊息類型: \(messageType) 來自: \(peerDisplayName)")
+                
+                switch messageType {
+                case "encrypted_signal":
+                    // 將信號訊息路由到所有 SignalViewModel 實例
+                    await routeSignalMessage(data)
+                    
+                case "chat_message":
+                    // 將聊天訊息路由到 ChatViewModel
+                    // TODO: 實現聊天訊息路由
+                    print("📝 收到聊天訊息，但聊天路由尚未實現")
+                    
+                case "game_message":
+                    // 將遊戲訊息路由到 BingoGameViewModel  
+                    // TODO: 實現遊戲訊息路由
+                    print("🎮 收到遊戲訊息，但遊戲路由尚未實現")
+                    
+                default:
+                    print("❓ 未知的訊息類型: \(messageType)")
+                }
+            } else {
+                print("❌ 無法解析訊息格式")
+            }
+        } catch {
+            print("❌ 路由訊息時發生錯誤: \(error)")
+        }
+    }
+    
+    // MARK: - Signal Message Routing
+    private func routeSignalMessage(_ data: Data) async {
+        // 由於 SignalViewModel 可能有多個實例，我們需要通知所有相關的實例
+        // 這裡我們使用 NotificationCenter 來廣播信號訊息
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("SignalReceived"),
+                object: data
+            )
+        }
+        print("📡 信號訊息已路由到 SignalViewModel")
     }
     
     // MARK: - Service Configuration

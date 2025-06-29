@@ -1155,7 +1155,22 @@ class SignalViewModel: ObservableObject {
     
     /// 設定通知觀察者
     private func setupNotificationObservers() {
-        // 預留給未來的通知處理
+        // 監聽從 ServiceContainer 路由過來的信號
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("SignalReceived"),
+            object: nil,
+            queue: OperationQueue.main
+        ) { [weak self] notification in
+            guard let self = self,
+                  let data = notification.object as? Data else { return }
+            
+            print("📡 SignalViewModel: 收到路由的信號數據")
+            
+            // 在主線程上處理接收到的信號
+            Task {
+                await self.handleReceivedSignal(data)
+            }
+        }
     }
     
     /// 創建信號數據（只傳送網格代碼）
