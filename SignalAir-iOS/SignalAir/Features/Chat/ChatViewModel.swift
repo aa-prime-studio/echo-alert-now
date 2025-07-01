@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import Combine
 
 class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
@@ -14,7 +15,7 @@ class ChatViewModel: ObservableObject {
     @Published var messagesReceived: Int = 0
     
     // MARK: - Mesh 網路服務依賴
-    private let meshManager: MeshManager
+    private var meshManager: MeshManagerProtocol
     private let securityService: SecurityService
     private let selfDestructManager: SelfDestructManager
     private let settingsViewModel: SettingsViewModel
@@ -28,21 +29,26 @@ class ChatViewModel: ObservableObject {
     private var typingTimer: Timer?
     private var statusUpdateTimer: Timer?
     
+    // NotificationCenter 觀察者
+    private var cancellables = Set<AnyCancellable>()
+    
     // MARK: - 初始化
     init(
-        meshManager: MeshManager = MeshManager(),
-        securityService: SecurityService = SecurityService(),
-        selfDestructManager: SelfDestructManager = SelfDestructManager(),
-        settingsViewModel: SettingsViewModel = SettingsViewModel()
+        meshManager: MeshManagerProtocol? = nil,
+        securityService: SecurityService? = nil,
+        selfDestructManager: SelfDestructManager? = nil,
+        settingsViewModel: SettingsViewModel? = nil
     ) {
-        self.meshManager = meshManager
-        self.securityService = securityService
-        self.selfDestructManager = selfDestructManager
-        self.settingsViewModel = settingsViewModel
+        // 使用 ServiceContainer 中的正確初始化服務
+        self.meshManager = meshManager ?? ServiceContainer.shared.meshManager!
+        self.securityService = securityService ?? ServiceContainer.shared.securityService
+        self.selfDestructManager = selfDestructManager ?? ServiceContainer.shared.selfDestructManager
+        self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel
         
         setupMeshNetworking()
         setupCleanupTimer()
         setupStatusUpdates()
+        setupNotificationObservers()
         
         print("💬 ChatViewModel: Mesh 網路版本初始化完成")
     }
@@ -97,60 +103,176 @@ class ChatViewModel: ObservableObject {
         
         let messageText = newMessage.trimmingCharacters(in: .whitespacesAndNewlines)
         let currentDeviceName = settingsViewModel.userNickname
+        let networkID = ServiceContainer.shared.networkService.myPeerID.displayName
         
         let chatMessage = ChatMessage(
             id: UUID().uuidString,
             message: messageText,
-            deviceName: currentDeviceName,
+            deviceName: "\(currentDeviceName) (\(networkID))", // 使用 "暱稱 (網路ID)" 格式
             timestamp: Date().timeIntervalSince1970,
             isOwn: true,
             isEncrypted: true
         )
         
+        // 檢查是否有連接的設備
+        let connectedPeers = meshManager.getConnectedPeers()
+        guard !connectedPeers.isEmpty else {
+            addSystemMessage("⚠️ 沒有連接的設備，無法發送訊息")
+            newMessage = ""
+            return
+        }
+        
         // 本地添加訊息
         addMessageToList(chatMessage)
         
-        // 透過 Mesh 網路廣播加密訊息
-        do {
-            let messageData = try JSONEncoder().encode(chatMessage)
-            meshManager.broadcastMessage(messageData, messageType: .chat)
-            
-            // 追蹤訊息以便自毀
-            selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
-            
-            messagesSent += 1
-            newMessage = ""
-            
-            print("💬 ChatViewModel: 已發送加密訊息: \(messageText)")
-            
-        } catch {
-            print("❌ ChatViewModel: 發送訊息失敗: \(error)")
-            addSystemMessage("❌ 訊息發送失敗")
+        // 使用純二進制協議發送聊天訊息
+        Task {
+            do {
+                // 創建聊天訊息的二進制數據
+                let chatData = encodeChatMessage(chatMessage)
+                
+                // 添加協議頭部
+                var binaryPacket = Data()
+                binaryPacket.append(1) // 協議版本
+                binaryPacket.append(MeshMessageType.chat.rawValue) // 聊天訊息類型 (0x03)
+                binaryPacket.append(chatData)
+                
+                // 透過 meshManager 廣播
+                try await meshManager.broadcastMessage(binaryPacket, messageType: .chat)
+                
+                DispatchQueue.main.async {
+                    // 追蹤訊息以便自毀
+                    self.selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
+                    self.messagesSent += 1
+                    print("💬 ChatViewModel: 已發送二進制聊天訊息: \(messageText) (\(binaryPacket.count) bytes)")
+                    self.newMessage = ""
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    self.addSystemMessage("❌ 發送失敗: \(error.localizedDescription)")
+                    print("❌ ChatViewModel: 發送失敗: \(error)")
+                }
+            }
         }
+    }
+    
+    /// 編碼聊天訊息為二進制格式
+    private func encodeChatMessage(_ message: ChatMessage) -> Data {
+        var data = Data()
+        
+        // 1 byte: 標誌位（聊天訊息）
+        data.append(0x01)
+        
+        // 4 bytes: 時間戳
+        let ts = UInt32(message.timestamp)
+        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        
+        // 訊息ID（16 bytes UUID）
+        if let uuid = UUID(uuidString: message.id) {
+            data.append(contentsOf: withUnsafeBytes(of: uuid.uuid) { Array($0) })
+        } else {
+            data.append(Data(repeating: 0, count: 16))
+        }
+        
+        // 設備名稱
+        if let nameData = message.deviceName.data(using: .utf8) {
+            data.append(UInt8(min(nameData.count, 255)))
+            data.append(nameData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 訊息內容
+        if let messageData = message.message.data(using: .utf8) {
+            let length = UInt16(min(messageData.count, 65535))
+            data.append(contentsOf: withUnsafeBytes(of: length.littleEndian) { Array($0) })
+            data.append(messageData.prefix(65535))
+        } else {
+            data.append(contentsOf: [0, 0]) // 空訊息
+        }
+        
+        return data
+    }
+    
+    /// 解碼聊天訊息從二進制格式
+    private func decodeChatMessage(_ data: Data) -> ChatMessage? {
+        guard data.count >= 25 else { return nil } // 最小大小檢查
+        
+        var offset = 0
+        
+        // 跳過標誌位
+        offset += 1
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            $0.load(as: UInt32.self).littleEndian
+        }
+        let timestamp = TimeInterval(ts)
+        offset += 4
+        
+        // UUID
+        let uuidBytes = data.subdata(in: offset..<offset+16)
+        let uuid = uuidBytes.withUnsafeBytes { bytes in
+            UUID(uuid: bytes.load(as: uuid_t.self))
+        }
+        offset += 16
+        
+        // 設備名稱
+        guard offset < data.count else { return nil }
+        let nameLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + nameLength <= data.count else { return nil }
+        let deviceName = String(data: data.subdata(in: offset..<offset+nameLength), encoding: .utf8) ?? ""
+        offset += nameLength
+        
+        // 訊息內容
+        guard offset + 2 <= data.count else { return nil }
+        let messageLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+            $0.load(as: UInt16.self).littleEndian
+        }
+        offset += 2
+        
+        guard offset + Int(messageLength) <= data.count else { return nil }
+        let message = String(data: data.subdata(in: offset..<offset+Int(messageLength)), encoding: .utf8) ?? ""
+        
+        // 如果解碼出的設備名稱不包含設備ID，則添加發送者信息以便區分
+        let finalDeviceName: String
+        if deviceName.contains("(") && deviceName.contains(")") {
+            // 已經是新格式 "暱稱 (設備ID)"
+            finalDeviceName = deviceName
+        } else {
+            // 舊格式，添加來源標識
+            finalDeviceName = "\(deviceName) (來源未知)"
+        }
+        
+        return ChatMessage(
+            id: uuid.uuidString,
+            message: message,
+            deviceName: finalDeviceName,
+            timestamp: timestamp,
+            isOwn: false,
+            isEncrypted: true
+        )
     }
     
     /// 處理接收到的 Mesh 訊息
     private func handleIncomingMeshMessage(_ meshMessage: MeshMessage) {
         guard meshMessage.type == .chat else { return }
         
-        do {
-            let chatMessage = try JSONDecoder().decode(ChatMessage.self, from: meshMessage.data)
-            
-            DispatchQueue.main.async {
-                // 檢查訊息去重
-                if !self.messageHashes.contains(chatMessage.messageHash) {
-                    self.addMessageToList(chatMessage)
-                    self.messagesReceived += 1
-                    
-                    // 追蹤接收的訊息以便自毀
-                    self.selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
-                    
-                    print("💬 ChatViewModel: 接收到加密訊息: \(chatMessage.message)")
-                }
-            }
-            
-        } catch {
-            print("❌ ChatViewModel: 解析訊息失敗: \(error)")
+        // 解碼二進制聊天數據
+        guard let chatMessage = decodeChatMessage(meshMessage.data) else {
+            print("❌ ChatViewModel: 無法解碼聊天訊息")
+            return
+        }
+        
+        // 檢查是否是自己的訊息（避免重複）
+        guard !chatMessage.isOwn else { return }
+        
+        DispatchQueue.main.async {
+            self.addMessageToList(chatMessage)
+            self.messagesReceived += 1
+            print("💬 ChatViewModel: 收到聊天訊息: \(chatMessage.message) 來自: \(chatMessage.deviceName)")
         }
     }
     
@@ -279,6 +401,93 @@ class ChatViewModel: ObservableObject {
     }
     
     // MARK: - 私有方法
+    
+    /// 設置 NotificationCenter 觀察者
+    private func setupNotificationObservers() {
+        // 監聽來自 ServiceContainer 的二進制聊天訊息
+        NotificationCenter.default.publisher(for: NSNotification.Name("ChatMessageReceived"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let binaryData = notification.object as? Data {
+                    self?.handleReceivedBinaryChatData(binaryData)
+                } else if let chatMessage = notification.object as? ChatMessage {
+                    // 向後兼容 ChatMessage 格式
+                    self?.handleReceivedChatMessage(chatMessage)
+                }
+            }
+            .store(in: &cancellables)
+        
+        // 監聽暱稱變更通知
+        NotificationCenter.default.publisher(for: NSNotification.Name("NicknameDidChange"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                if let userInfo = notification.userInfo,
+                   let newNickname = userInfo["newNickname"] as? String {
+                    self?.deviceName = newNickname
+                    self?.addSystemMessage("👤 暱稱已更新為：\(newNickname)")
+                    print("💬 ChatViewModel: 暱稱已更新為 \(newNickname)")
+                }
+            }
+            .store(in: &cancellables)
+        
+        print("📡 ChatViewModel: NotificationCenter 觀察者已設置")
+    }
+    
+    /// 處理接收到的二進制聊天數據
+    private func handleReceivedBinaryChatData(_ data: Data) {
+        guard let chatMessage = decodeChatMessage(data) else {
+            print("❌ ChatViewModel: 無法解碼二進制聊天數據")
+            return
+        }
+        
+        // 接收到的訊息一律標記為非本人發送
+        // 使用網路層的 PeerID 來區分，而不是可能被污染的設備ID
+        let myNetworkID = ServiceContainer.shared.networkService.myPeerID.displayName
+        let myNickname = settingsViewModel.userNickname
+        let myFullName = "\(myNickname) (\(myNetworkID))"
+        
+        // 檢查是否包含我的網路ID（更可靠的判斷）
+        if chatMessage.deviceName.contains(myNetworkID) {
+            print("⚠️ ChatViewModel: 跳過來自同設備的訊息: \(chatMessage.deviceName) (我的網路ID: \(myNetworkID))")
+            return
+        }
+        
+        // 檢查消息去重（使用修改後的hash，不依賴設備名稱）
+        let messageHash = "\(chatMessage.message)_\(chatMessage.id)_\(Int(chatMessage.timestamp))"
+        if messageHashes.contains(messageHash) {
+            print("⚠️ ChatViewModel: 跳過重複訊息: \(chatMessage.message)")
+            return
+        }
+        
+        // 創建新的聊天訊息（確保標記為非本人）
+        let receivedMessage = ChatMessage(
+            id: chatMessage.id,
+            message: chatMessage.message,
+            deviceName: chatMessage.deviceName,
+            timestamp: chatMessage.timestamp,
+            isOwn: false,  // 強制標記為非本人
+            isEncrypted: chatMessage.isEncrypted
+        )
+        
+        // 添加自定義 hash 到去重集合
+        messageHashes.insert(messageHash)
+        
+        handleReceivedChatMessage(receivedMessage)
+    }
+    
+    /// 處理接收到的聊天訊息
+    private func handleReceivedChatMessage(_ chatMessage: ChatMessage) {
+        // 檢查訊息去重
+        if !messageHashes.contains(chatMessage.messageHash) {
+            addMessageToList(chatMessage)
+            messagesReceived += 1
+            
+            // 追蹤接收的訊息以便自毀
+            selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
+            
+            print("💬 ChatViewModel: 接收到加密訊息: \(chatMessage.message) 來自: \(chatMessage.deviceName)")
+        }
+    }
     
     /// 設定清理定時器
     private func setupCleanupTimer() {

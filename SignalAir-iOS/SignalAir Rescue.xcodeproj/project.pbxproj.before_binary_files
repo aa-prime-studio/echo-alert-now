@@ -15,7 +15,6 @@
 		13502A4C13EAD04A326A48FF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */; };
 		146C3918755515AE8D89926B /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */; };
 		2697875E9CB3723D8822198D /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79A8B99132792ECBB45F81E /* LeaderboardView.swift */; };
-		3C43304BF9A142428557E675 /* BinaryMessageEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B4234B699044BFAB39EDF5 /* BinaryMessageEncoder.swift */; };
 		4836117A73E2E3AD6073F544 /* TermsOfServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D633E8DF7577872B38031B72 /* TermsOfServiceView.swift */; };
 		4C1E9F6A67400ABFAE2054DB /* LanguageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A405827F77F43F163DF5806F /* LanguageService.swift */; };
 		5F9A8B7C12E43D5F6A8E9014 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D4E8F91A7B6C3E54B02758 /* NetworkService.swift */; };
@@ -35,27 +34,15 @@
 		E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */; };
 		EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61DCAC113E68FF9FF70983D /* ChatView.swift */; };
 		EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */; };
-		ED13BAC253664B8C9731BEFD /* BinaryMessageDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */; };
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
 /* End PBXBuildFile section */
 
-/* Begin PBXContainerItemProxy section */
-		7F6A1CB42E1276680057CDED /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 223E893957D601D746B7081B /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 2554C829535DBABF04EF8CCF;
-			remoteInfo = SignalAir;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXFileReference section */
 		043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedTypes.swift; sourceTree = "<group>"; };
 		0BF2290F315B0BF1025CBE9B /* NicknameService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NicknameService.swift; sourceTree = "<group>"; };
 		14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawnNumbersView.swift; sourceTree = "<group>"; };
-		17B4234B699044BFAB39EDF5 /* BinaryMessageEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageEncoder.swift; sourceTree = "<group>"; };
 		1E117FB89370E8E7E8C05434 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
 		3A918DE39A56052433134489 /* BingoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoCardView.swift; sourceTree = "<group>"; };
 		41887481BE4A89489FF6D968 /* SignalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalViewModel.swift; sourceTree = "<group>"; };
@@ -66,7 +53,6 @@
 		6E5B9C7F83A4D1E2B5F8C960 /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		71231F5D38B178E38EFDBDB4 /* SignalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalViews.swift; sourceTree = "<group>"; };
 		7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSelectorView.swift; sourceTree = "<group>"; };
-		7F56997A2E1278F9008B3E1C /* SignalAirTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SignalAirTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FFD325B2E09750F00CCD5B8 /* logo_20x20.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_20x20.png; sourceTree = "<group>"; };
 		7FFD325C2E09750F00CCD5B8 /* logo_29x29.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_29x29.png; sourceTree = "<group>"; };
 		7FFD325D2E09750F00CCD5B8 /* logo_40x40.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_40x40.png; sourceTree = "<group>"; };
@@ -102,20 +88,9 @@
 		E3072289CDECAC4232A444F1 /* PlayerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerListView.swift; sourceTree = "<group>"; };
 		F79A8B99132792ECBB45F81E /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAirApp.swift; sourceTree = "<group>"; };
-		F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageDecoder.swift; sourceTree = "<group>"; };
 		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
-
-/* Begin PBXFrameworksBuildPhase section */
-		7F6A1CAD2E1276680057CDED /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		0F2C5F106562648042E25C83 /* App */ = {
@@ -191,8 +166,6 @@
 			isa = PBXGroup;
 			children = (
 				043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */,
-				17B4234B699044BFAB39EDF5 /* BinaryMessageEncoder.swift */,
-				F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -274,7 +247,6 @@
 			isa = PBXGroup;
 			children = (
 				8646010A59FE784B8B8EDC17 /* SignalAir.app */,
-				7F56997A2E1278F9008B3E1C /* SignalAirTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -318,26 +290,6 @@
 			productReference = 8646010A59FE784B8B8EDC17 /* SignalAir.app */;
 			productType = "com.apple.product-type.application";
 		};
-		7F6A1CAF2E1276680057CDED /* SignalAirTests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 7F6A1CB82E1276680057CDED /* Build configuration list for PBXNativeTarget "SignalAirTests" */;
-			buildPhases = (
-				7F6A1CAC2E1276680057CDED /* Sources */,
-				7F6A1CAD2E1276680057CDED /* Frameworks */,
-				7F6A1CAE2E1276680057CDED /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				7F6A1CB52E1276680057CDED /* PBXTargetDependency */,
-			);
-			name = SignalAirTests;
-			packageProductDependencies = (
-			);
-			productName = SignalAirTests;
-			productReference = 7F56997A2E1278F9008B3E1C /* SignalAirTests.xctest */;
-			productType = "com.apple.product-type.bundle.unit-test";
-		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -345,14 +297,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1640;
-				TargetAttributes = {
-					7F6A1CAF2E1276680057CDED = {
-						CreatedOnToolsVersion = 16.4;
-						TestTargetID = 2554C829535DBABF04EF8CCF;
-					};
-				};
 			};
 			buildConfigurationList = 84C3E3B820FE940F2469E05B /* Build configuration list for PBXProject "SignalAir Rescue" */;
 			compatibilityVersion = "Xcode 14.0";
@@ -368,19 +313,11 @@
 			projectRoot = "";
 			targets = (
 				2554C829535DBABF04EF8CCF /* SignalAir */,
-				7F6A1CAF2E1276680057CDED /* SignalAirTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		7F6A1CAE2E1276680057CDED /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		D91205CDCCA54BF886306318 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -392,13 +329,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		7F6A1CAC2E1276680057CDED /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		C5D5AF3111D5540DBAC48728 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -410,8 +340,6 @@
 				DB564D502696770581700AF8 /* ContentView.swift in Sources */,
 				F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */,
 				146C3918755515AE8D89926B /* SharedTypes.swift in Sources */,
-				3C43304BF9A142428557E675 /* BinaryMessageEncoder.swift in Sources */,
-				ED13BAC253664B8C9731BEFD /* BinaryMessageDecoder.swift in Sources */,
 				08B44250552D022165BFC1A3 /* GameRulesView.swift in Sources */,
 				02EB7726777C6830C30A87D2 /* GameView.swift in Sources */,
 				DB85D0AA91F19320D952EB8A /* HelpView.swift in Sources */,
@@ -438,14 +366,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		7F6A1CB52E1276680057CDED /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 2554C829535DBABF04EF8CCF /* SignalAir */;
-			targetProxy = 7F6A1CB42E1276680057CDED /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		58B813376EBFAD52FCC8621D /* Release */ = {
@@ -571,56 +491,6 @@
 			};
 			name = Debug;
 		};
-		7F6A1CB62E1276680057CDED /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = JD64Y6G733;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"$(inherited)",
-				);
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = gmail.signalair.SignalAirTests.SignalAirTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SignalAir.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SignalAir";
-			};
-			name = Debug;
-		};
-		7F6A1CB72E1276680057CDED /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				BUNDLE_LOADER = "$(TEST_HOST)";
-				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = JD64Y6G733;
-				GCC_C_LANGUAGE_STANDARD = gnu17;
-				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 18.5;
-				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = gmail.signalair.SignalAirTests.SignalAirTests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SignalAir.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SignalAir";
-				VALIDATE_PRODUCT = YES;
-			};
-			name = Release;
-		};
 		A90134144151DD7238CB602D /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -670,15 +540,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		7F6A1CB82E1276680057CDED /* Build configuration list for PBXNativeTarget "SignalAirTests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				7F6A1CB62E1276680057CDED /* Debug */,
-				7F6A1CB72E1276680057CDED /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Debug;
-		};
 		84C3E3B820FE940F2469E05B /* Build configuration list for PBXProject "SignalAir Rescue" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

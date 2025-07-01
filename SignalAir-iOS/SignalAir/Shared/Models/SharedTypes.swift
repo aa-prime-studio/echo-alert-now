@@ -285,18 +285,46 @@ struct ConnectedPeer {
     let displayName: String
 }
 
-// Mesh 訊息類型
-enum MeshMessageType: String, Codable {
-    case chat = "chat"
-    case game = "game"
-    case signal = "signal"
-    case system = "system"
+// Mesh 訊息類型（支援二進制協議）
+enum MeshMessageType: UInt8, Codable {
+    case signal = 0x01      // 信號訊息
+    case emergency = 0x02   // 緊急訊息  
+    case chat = 0x03        // 聊天訊息
+    case system = 0x04      // 系統訊息
+    case keyExchange = 0x05 // 密鑰交換
+    case game = 0x06        // 遊戲訊息
+    
+    var stringValue: String {
+        switch self {
+        case .signal: return "signal"
+        case .emergency: return "emergency"
+        case .chat: return "chat"
+        case .system: return "system"
+        case .keyExchange: return "keyExchange"
+        case .game: return "game"
+        }
+    }
 }
 
 // Mesh 訊息
 struct MeshMessage {
+    let id: String
     let type: MeshMessageType
     let data: Data
+    
+    // 為二進制協議添加便利初始化器
+    init(type: MeshMessageType, data: Data) {
+        self.id = UUID().uuidString
+        self.type = type
+        self.data = data
+    }
+    
+    // 為解碼器添加完整初始化器
+    init(id: String, type: MeshMessageType, data: Data) {
+        self.id = id
+        self.type = type
+        self.data = data
+    }
 }
 
 // MARK: - 遊戲相關類型
@@ -384,8 +412,18 @@ enum MessagePriority: String {
 
 // MARK: - Protocols for Services
 protocol MeshManagerProtocol {
+    // 基本方法
     func broadcastMessage(_ data: Data, messageType: MeshMessageType)
     func getConnectedPeers() -> [String]
+    
+    // 網路管理
+    func startMeshNetwork()
+    func stopMeshNetwork()
+    
+    // 回調屬性
+    var onMessageReceived: ((MeshMessage) -> Void)? { get set }
+    var onPeerConnected: ((String) -> Void)? { get set }
+    var onPeerDisconnected: ((String) -> Void)? { get set }
 }
 
 protocol FloodProtectionProtocol {
@@ -406,33 +444,75 @@ class FloodProtection: FloodProtectionProtocol {
     }
 }
 
-// MARK: - Simple MeshManager Implementation  
+// MARK: - Fallback MeshManager Implementation
+// 注意：這是備用版本，優先使用 SignalAir/Core/Network/MeshManager.swift
 class MeshManager: MeshManagerProtocol {
     var onMessageReceived: ((MeshMessage) -> Void)?
     var onPeerConnected: ((String) -> Void)?
     var onPeerDisconnected: ((String) -> Void)?
     
-    private var messageHandler: ((Data) -> Void)?
+    // 基本版本使用簡化的屬性（協議不能使用 weak）
+    var networkService: NetworkServiceProtocol?
+    var securityService: SecurityServiceProtocol?
+    var floodProtection: FloodProtectionProtocol?
     
-    init() {}
+    // 無參數初始化（兼容性）
+    init() {
+        // 空初始化，用於預設情報下
+    }
     
+    // 完整初始化
     init(networkService: NetworkServiceProtocol, 
          securityService: SecurityServiceProtocol,
          floodProtection: FloodProtectionProtocol) {
-        // Basic initialization
+        self.networkService = networkService
+        self.securityService = securityService
+        self.floodProtection = floodProtection
+        print("🕸️ MeshManager: 已初始化並連接到實際的網路服務")
     }
     
-    func startMeshNetwork() {}
-    func stopMeshNetwork() {}
-    func broadcastMessage(_ data: Data, messageType: MeshMessageType) {}
-    func getConnectedPeers() -> [String] { return [] }
+    func startMeshNetwork() {
+        // 基本版本空實現
+    }
     
-    func setMessageHandler(_ handler: @escaping (Data) -> Void) {
-        self.messageHandler = handler
+    func stopMeshNetwork() {
+        // 基本版本空實現
+    }
+    
+    func broadcastMessage(_ data: Data, messageType: MeshMessageType) {
+        Task {
+            do {
+                try await broadcast(data, priority: .normal, userNickname: "System")
+            } catch {
+                print("❌ MeshManager: broadcastMessage 失敗: \(error)")
+            }
+        }
+    }
+    
+    func getConnectedPeers() -> [String] { 
+        return networkService?.connectedPeers.map { $0.displayName } ?? []
     }
     
     func broadcast(_ data: Data, priority: MessagePriority, userNickname: String) async throws {
-        // 模擬廣播
+        guard let networkService = networkService else {
+            print("❌ MeshManager: NetworkService 未初始化")
+            throw NetworkError.notConnected
+        }
+        
+        guard !networkService.connectedPeers.isEmpty else {
+            print("❌ MeshManager: 沒有連接的設備")
+            throw NetworkError.notConnected
+        }
+        
+        print("📡 MeshManager: 開始廣播 \(data.count) 字節的數據到 \(networkService.connectedPeers.count) 個設備")
+        
+        do {
+            try await networkService.send(data, to: networkService.connectedPeers)
+            print("✅ MeshManager: 廣播成功完成")
+        } catch {
+            print("❌ MeshManager: 廣播失敗: \(error)")
+            throw error
+        }
     }
 }
 

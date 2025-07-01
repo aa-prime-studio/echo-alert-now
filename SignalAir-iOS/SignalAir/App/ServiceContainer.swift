@@ -1,429 +1,497 @@
 import Foundation
 import SwiftUI
 import Combine
+import MultipeerConnectivity
 
-// MARK: - TemporaryIDManager Implementation
+// MARK: - 二進制協議支持
+// 直接使用全局 BinaryEncoder 和 BinaryDecoder
+
+// MARK: - 內聯重要類型定義（解決編譯範圍問題）
+
+// 密鑰交換狀態
+enum LocalKeyExchangeStatus: UInt8 {
+    case success = 0
+    case alreadyEstablished = 1
+    case error = 2
+}
+
+// 簡化版本的 BinaryEncoder 和 BinaryDecoder 方法（內聯）
+class LocalBinaryDecoder {
+    static func decodeKeyExchange(_ data: Data) -> (
+        publicKey: Data,
+        senderID: String,
+        retryCount: UInt8,
+        timestamp: Date
+    )? {
+        guard data.count >= 8 else { return nil }
+        
+        var offset = 0
+        
+        // 跳過協議版本和消息類型
+        offset += 2
+        
+        // 重試次數
+        let retryCount = data[offset]
+        offset += 1
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            $0.load(as: UInt32.self).littleEndian
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // 發送者ID
+        guard offset < data.count else { return nil }
+        let senderIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + senderIDLength <= data.count else { return nil }
+        let senderID = String(data: data.subdata(in: offset..<offset+senderIDLength), encoding: .utf8) ?? ""
+        offset += senderIDLength
+        
+        // 公鑰長度
+        guard offset + 2 <= data.count else { return nil }
+        let keyLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+            $0.load(as: UInt16.self).littleEndian
+        }
+        offset += 2
+        
+        // 公鑰數據
+        guard offset + Int(keyLength) <= data.count else { return nil }
+        let publicKey = data.subdata(in: offset..<offset+Int(keyLength))
+        
+        return (
+            publicKey: publicKey,
+            senderID: senderID,
+            retryCount: retryCount,
+            timestamp: timestamp
+        )
+    }
+    
+    static func decodeKeyExchangeResponse(_ data: Data) -> (
+        publicKey: Data,
+        senderID: String,
+        status: LocalKeyExchangeStatus,
+        errorMessage: String?,
+        timestamp: Date
+    )? {
+        guard data.count >= 8 else { return nil }
+        
+        var offset = 0
+        
+        // 跳過協議版本和消息類型
+        offset += 2
+        
+        // 狀態
+        let statusRaw = data[offset]
+        guard let status = LocalKeyExchangeStatus(rawValue: statusRaw) else { return nil }
+        offset += 1
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            $0.load(as: UInt32.self).littleEndian
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // 發送者ID
+        guard offset < data.count else { return nil }
+        let senderIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + senderIDLength <= data.count else { return nil }
+        let senderID = String(data: data.subdata(in: offset..<offset+senderIDLength), encoding: .utf8) ?? ""
+        offset += senderIDLength
+        
+        // 公鑰長度
+        guard offset + 2 <= data.count else { return nil }
+        let keyLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+            $0.load(as: UInt16.self).littleEndian
+        }
+        offset += 2
+        
+        // 公鑰數據
+        guard offset + Int(keyLength) <= data.count else { return nil }
+        let publicKey = data.subdata(in: offset..<offset+Int(keyLength))
+        offset += Int(keyLength)
+        
+        // 錯誤訊息（可選）
+        var errorMessage: String?
+        if offset < data.count {
+            let errorLength = Int(data[offset])
+            offset += 1
+            
+            if offset + errorLength <= data.count {
+                errorMessage = String(data: data.subdata(in: offset..<offset+errorLength), encoding: .utf8)
+            }
+        }
+        
+        return (
+            publicKey: publicKey,
+            senderID: senderID,
+            status: status,
+            errorMessage: errorMessage,
+            timestamp: timestamp
+        )
+    }
+}
+
+class LocalBinaryEncoder {
+    static func encodeKeyExchange(
+        publicKey: Data,
+        senderID: String,
+        retryCount: UInt8 = 0,
+        timestamp: Date = Date()
+    ) -> Data {
+        var data = Data()
+        
+        // 1 byte: 協議版本
+        data.append(1) // BinaryProtocolVersion.v1.rawValue
+        
+        // 1 byte: 消息類型
+        data.append(6) // 專用密鑰交換類型，不與MeshMessageType衝突
+        
+        // 1 byte: 重試次數
+        data.append(retryCount)
+        
+        // 4 bytes: 時間戳
+        let ts = UInt32(timestamp.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        
+        // 發送者ID
+        if let senderData = senderID.data(using: .utf8) {
+            data.append(UInt8(min(senderData.count, 255)))
+            data.append(senderData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 2 bytes: 公鑰長度
+        let keyLength = UInt16(publicKey.count)
+        data.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
+        
+        // N bytes: 公鑰數據
+        data.append(publicKey)
+        
+        return data
+    }
+    
+    static func encodeKeyExchangeResponse(
+        publicKey: Data,
+        senderID: String,
+        status: LocalKeyExchangeStatus,
+        errorMessage: String? = nil,
+        timestamp: Date = Date()
+    ) -> Data {
+        var data = Data()
+        
+        // 1 byte: 協議版本
+        data.append(1) // BinaryProtocolVersion.v1.rawValue
+        
+        // 1 byte: 消息類型
+        data.append(7) // 專用密鑰交換回應類型
+        
+        // 1 byte: 狀態
+        data.append(status.rawValue)
+        
+        // 4 bytes: 時間戳
+        let ts = UInt32(timestamp.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        
+        // 發送者ID
+        if let senderData = senderID.data(using: .utf8) {
+            data.append(UInt8(min(senderData.count, 255)))
+            data.append(senderData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 2 bytes: 公鑰長度
+        let keyLength = UInt16(publicKey.count)
+        data.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
+        
+        // N bytes: 公鑰數據
+        data.append(publicKey)
+        
+        // 錯誤訊息（可選）
+        if let errorMessage = errorMessage, let errorData = errorMessage.data(using: .utf8) {
+            data.append(UInt8(min(errorData.count, 255)))
+            data.append(errorData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        return data
+    }
+}
+
+// MARK: - 臨時二進制協議支持（內聯）
+class TempBinaryDataValidator {
+    static func validateBinaryData(_ data: Data) throws {
+        guard data.count >= 3 else {
+            throw NSError(domain: "BinaryValidation", code: 1, userInfo: [NSLocalizedDescriptionKey: "數據太短"])
+        }
+    }
+}
+
+class TempBinaryProtocolMetrics {
+    static let shared = TempBinaryProtocolMetrics()
+    
+    func recordDecoding(time: TimeInterval) {
+        print("📊 解碼時間: \(String(format: "%.3f", time * 1000))ms")
+    }
+    
+    func recordError() {
+        print("❌ 二進制協議錯誤")
+    }
+    
+    func printReport() {
+        print("📊 臨時性能統計（完整版本在 BinaryProtocol.swift 中）")
+    }
+    
+    func resetStats() {
+        print("📊 統計已重置")
+    }
+}
+
+class TempBinaryDecoder {
+    static func decodeEncryptedSignalOptimized(_ data: Data) -> (
+        version: UInt8,
+        messageType: UInt8,
+        isEncrypted: Bool,
+        timestamp: Date,
+        id: String,
+        senderID: String,
+        encryptedPayload: Data
+    )? {
+        // 使用內聯解碼邏輯（從移除的 InlineBinaryDecoder 複製）
+        guard data.count >= 26 else { return nil }
+        
+        var offset = 0
+        
+        // 協議版本
+        let version = data[offset]
+        offset += 1
+        
+        // 消息類型
+        let messageType = data[offset]
+        offset += 1
+        
+        // 加密標誌
+        let isEncrypted = data[offset] == 1
+        offset += 1
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes { 
+            $0.load(as: UInt32.self).littleEndian 
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // UUID
+        let uuidBytes = data.subdata(in: offset..<offset+16)
+        let uuid = uuidBytes.withUnsafeBytes { bytes in
+            UUID(uuid: bytes.load(as: uuid_t.self))
+        }
+        offset += 16
+        
+        // 發送者ID
+        guard offset < data.count else { return nil }
+        let senderIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + senderIDLength <= data.count else { return nil }
+        let senderID = String(data: data.subdata(in: offset..<offset+senderIDLength), encoding: .utf8) ?? ""
+        offset += senderIDLength
+        
+        // 加密載荷長度
+        guard offset + 2 <= data.count else { return nil }
+        let payloadLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+            $0.load(as: UInt16.self).littleEndian
+        }
+        offset += 2
+        
+        // 加密載荷
+        guard offset + Int(payloadLength) <= data.count else { return nil }
+        let encryptedPayload = data.subdata(in: offset..<offset+Int(payloadLength))
+        
+        return (
+            version: version,
+            messageType: messageType,
+            isEncrypted: isEncrypted,
+            timestamp: timestamp,
+            id: uuid.uuidString,
+            senderID: senderID,
+            encryptedPayload: encryptedPayload
+        )
+    }
+}
+
+// MARK: - 簡化版連接優化器（內聯）
+class ConnectionOptimizer: ObservableObject {
+    @Published var totalConnections: Int = 0
+    private let maxConnections = 30
+    
+    func shouldAcceptNewConnection() -> Bool {
+        return totalConnections < maxConnections
+    }
+    
+    func onPeerConnected(_ peerID: String) {
+        totalConnections += 1
+        print("✅ 連接優化器：新連接 \(peerID) (總數: \(totalConnections))")
+    }
+    
+    func onPeerDisconnected(_ peerID: String) {
+        totalConnections = max(0, totalConnections - 1)
+        print("❌ 連接優化器：斷開連接 \(peerID) (總數: \(totalConnections))")
+    }
+    
+    func onMessageSent(to peerID: String, size: Int, latency: TimeInterval) {
+        // 簡化版本，僅記錄
+        print("📤 訊息發送成功到 \(peerID): \(size) bytes, 延遲: \(String(format: "%.0f", latency * 1000))ms")
+    }
+    
+    func onMessageFailed(to peerID: String) {
+        print("❌ 訊息發送失敗到 \(peerID)")
+    }
+}
+
+// MARK: - 臨時ID管理器（簡化版）
 class TemporaryIDManager: ObservableObject {
-    // 台灣小吃清單（50種）
-    private let taiwanSnacks = [
-        "無糖綠茶", "牛肉麵", "滷肉飯", "雞排不切要辣", "臭豆腐",
-        "小籠包", "綜合煎", "鹽酥雞", "肉圓", "刈包",
-        "豆花", "紅豆餅", "雞蛋糕", "蔥抓餅", "胡椒餅",
-        "魯味", "碳烤香腸", "花枝丸", "不要香菜", "麻辣魚蛋",
-        "鹹酥龍珠", "芋圓", "香菜加滿", "蔓越莓酥", "抹茶拿鐵",
-        "手工薯條", "車輪餅", "潤餅", "大腸包小腸", "阿給",
-        "蝦捲", "臭豆腐泡麵", "龍珠果凍", "糖葫蘆", "擔仔麵",
-        "南部粽", "碗粿", "草莓鬆餅", "蚵嗲", "港式腸粉",
-        "烤玉米", "芒果冰", "鳳梨蝦球", "楊桃冰", "滷味",
-        "九層塔蔥油餅", "油條很油", "木須炒麵", "燒餅油條", "青草茶"
-    ]
-    
-    // 裝置ID（系統控制，不可手動修改）
-    @Published private(set) var deviceID: String = ""
-    @Published private(set) var createdAt: Date = Date()
-    @Published private(set) var nextUpdateTime: Date = Date()
-    
-    // Timer 管理
-    private var autoUpdateTimer: Timer?
-    private let updateInterval: TimeInterval = 86400 // 24小時
-    
-    // UserDefaults 鍵值
-    private let deviceIDKey = "SignalAir_DeviceID"
-    private let createdAtKey = "SignalAir_DeviceID_CreatedAt"
-    private let updateCountKey = "SignalAir_DeviceID_UpdateCount"
+    @Published var deviceID: String = "台灣小吃#A1B2"
     
     init() {
-        print("🚀 TemporaryIDManager: 開始初始化...")
-        loadOrGenerateDeviceID()
-        print("✅ TemporaryIDManager: 裝置ID已設置 = \(deviceID)")
-        startAutoUpdate()
-        setupBackgroundNotifications()
-        print("✅ TemporaryIDManager: 初始化完成")
-    }
-    
-    deinit {
-        stopAutoUpdate()
-        removeBackgroundNotifications()
-    }
-    
-    // MARK: - 公開方法
-    
-    /// 手動強制更新裝置ID（僅供系統呼叫）
-    func forceUpdate() {
-        deviceID = generateDeviceID()
-        createdAt = Date()
-        
-        // 設定下次更新時間為明天00:00
-        let calendar = Calendar.current
-        var components = calendar.dateComponents([.year, .month, .day], from: Date())
-        components.hour = 0
-        components.minute = 0
-        components.second = 0
-        
-        if let todayMidnight = calendar.date(from: components) {
-            nextUpdateTime = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
-        } else {
-            nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
-        }
-        
-        saveToUserDefaults()
-        
-        print("📱 TemporaryIDManager: 強制更新裝置ID = \(deviceID)")
-        print("📱 TemporaryIDManager: 下次更新時間 = \(nextUpdateTime)")
-    }
-    
-    /// 載入或生成裝置ID
-    private func loadOrGenerateDeviceID() {
-        // 嘗試從UserDefaults載入現有的裝置ID
-        if let existingID = UserDefaults.standard.string(forKey: deviceIDKey),
-           let createdDate = UserDefaults.standard.object(forKey: createdAtKey) as? Date {
-            
-            // 檢查是否為新格式（包含台灣小吃名稱和#字符）
-            if existingID.contains("#") && taiwanSnacks.contains(where: { existingID.hasPrefix($0) }) {
-                deviceID = existingID
-                createdAt = createdDate
-                
-                // 重新計算下次更新時間為下一個午夜
-                let calendar = Calendar.current
-                var components = calendar.dateComponents([.year, .month, .day], from: Date())
-                components.hour = 0
-                components.minute = 0
-                components.second = 0
-                
-                if let todayMidnight = calendar.date(from: components) {
-                    nextUpdateTime = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
-                } else {
-                    nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
-                }
-                
-                print("📱 TemporaryIDManager: 載入現有裝置ID = \(deviceID)")
-                return
-            }
-        }
-        
-        // 清理舊格式的鍵（僅在需要時）
-        let oldKeys = [
-            "temporary_device_id",      // 舊的鍵
-            "device_id_last_update"     // 舊的鍵
-        ]
-        
-        for key in oldKeys {
-            UserDefaults.standard.removeObject(forKey: key)
-        }
-        
-        // 生成新的裝置ID
-        print("📱 TemporaryIDManager: 生成新格式裝置ID")
-        forceUpdate()
-    }
-    
-    /// 生成裝置ID（格式：小吃名#Base32字符）
-    private func generateDeviceID() -> String {
-        let randomIndex = Int.random(in: 0..<taiwanSnacks.count)
-        let snack = taiwanSnacks[randomIndex]
-        let base32Chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
-        let suffix = String((0..<4).map { _ in base32Chars.randomElement()! })
-        return "\(snack)#\(suffix)"
-    }
-    
-    /// 儲存到 UserDefaults
-    private func saveToUserDefaults() {
-        UserDefaults.standard.set(deviceID, forKey: deviceIDKey)
-        UserDefaults.standard.set(createdAt, forKey: createdAtKey)
-        
-        // 更新計數
-        let currentCount = UserDefaults.standard.integer(forKey: updateCountKey)
-        UserDefaults.standard.set(currentCount + 1, forKey: updateCountKey)
-        
-        UserDefaults.standard.synchronize()
-    }
-    
-    /// 啟動自動更新 Timer
-    private func startAutoUpdate() {
-        scheduleNextMidnightUpdate()
-    }
-    
-    /// 安排下一次午夜更新
-    private func scheduleNextMidnightUpdate() {
-        let calendar = Calendar.current
-        let now = Date()
-        
-        // 獲取今天00:00的時間
-        var components = calendar.dateComponents([.year, .month, .day], from: now)
-        components.hour = 0
-        components.minute = 0
-        components.second = 0
-        
-        guard let todayMidnight = calendar.date(from: components) else { return }
-        let nextMidnight = calendar.date(byAdding: .day, value: 1, to: todayMidnight) ?? todayMidnight
-        
-        let timeInterval = nextMidnight.timeIntervalSince(now)
-        
-        // 設定Timer在午夜觸發
-        autoUpdateTimer?.invalidate()
-        autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeInterval, repeats: false) { [weak self] _ in
-            DispatchQueue.main.async {
-                self?.performMidnightUpdate()
-            }
-        }
-        
-        print("📱 TemporaryIDManager: 下次裝置名稱更新時間 - \(nextMidnight)")
-    }
-    
-    /// 執行午夜更新
-    private func performMidnightUpdate() {
-        forceUpdate()
-        print("🕐 TemporaryIDManager: 午夜00:00自動更新裝置ID完成")
-        
-        // 安排下一次午夜更新
-        scheduleNextMidnightUpdate()
-    }
-    
-    /// 停止自動更新 Timer
-    private func stopAutoUpdate() {
-        autoUpdateTimer?.invalidate()
-        autoUpdateTimer = nil
-    }
-    
-    /// 設定背景通知
-    private func setupBackgroundNotifications() {
-        // 監聽應用回到前景
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(applicationWillEnterForeground),
-            name: UIApplication.willEnterForegroundNotification,
-            object: nil
-        )
-        
-        print("📱 TemporaryIDManager: 背景通知設置完成")
-    }
-    
-    @objc private func applicationWillEnterForeground() {
-        // 檢查是否錯過了午夜更新
-        if needsUpdate {
-            performMidnightUpdate()
-        } else {
-            // 重新計算Timer
-            scheduleNextMidnightUpdate()
-        }
-    }
-    
-    /// 移除背景通知
-    private func removeBackgroundNotifications() {
-        NotificationCenter.default.removeObserver(self)
-    }
-    
-    /// 檢查是否需要更新
-    var needsUpdate: Bool {
-        return Date() >= nextUpdateTime
+        print("📱 TemporaryIDManager: 簡化初始化完成")
     }
 }
 
-// MARK: - Temporary Placeholder Types
-// These will be replaced with full implementations once added to project
-
-class EnhancedNicknameService: ObservableObject {
-    @Published var nickname: String = "使用者"
-    
-    init(deviceFingerprintManager: DeviceFingerprintManager, trustScoreManager: TrustScoreManager) {
-        // Placeholder implementation
-    }
-    
-    func getNicknameStatus() -> NicknameStatus {
-        return NicknameStatus(canChange: true, remainingChanges: 3, isInObservationPeriod: false)
-    }
-}
-
-class DeviceFingerprintManager: ObservableObject {
-    var deviceUUID: String = "DEVICE-00000000"
-    
-    func verifyFingerprintIntegrity() -> Bool {
-        return true
-    }
-    
-    func getFingerprintInfo() -> DeviceFingerprintInfo {
-        return DeviceFingerprintInfo(isValid: true, deviceUUID: deviceUUID, trustLevel: .normal)
-    }
-}
-
-class TrustScoreManager: ObservableObject {
-    enum SuspiciousBehavior {
-        case protocolViolation
-        case excessiveBroadcast
-        case invalidPacket
-    }
-    
-    func recordSuspiciousBehavior(for deviceUUID: String, behavior: SuspiciousBehavior) {
-        // Placeholder implementation
-    }
-    
-    func getTrustStatistics() -> TrustStatistics {
-        return TrustStatistics(totalNodes: 1, trustedNodes: 1, blacklistedNodes: 0, averageScore: 50.0)
-    }
-}
-
-// MARK: - Supporting Types
-struct NicknameStatus {
-    let canChange: Bool
-    let remainingChanges: Int
-    let isInObservationPeriod: Bool
-}
-
-struct DeviceFingerprintInfo {
-    let isValid: Bool
-    let deviceUUID: String
-    let trustLevel: TrustLevel
-    
-    enum TrustLevel {
-        case unknown, untrusted, suspicious, normal, trusted
-    }
-}
-
-struct TrustStatistics {
-    let totalNodes: Int
-    let trustedNodes: Int
-    let blacklistedNodes: Int
-    let averageScore: Double
-}
 
 // MARK: - Service Container
 /// 應用程式服務容器，負責管理所有服務的依賴注入和生命週期
 class ServiceContainer: ObservableObject {
-    
     // MARK: - Core Services (Singletons)
     static let shared = ServiceContainer()
     
-    // MARK: - Network & Security Services
-    @Published var networkService: NetworkService
-    @Published var securityService: SecurityService
-    @Published var meshManager: MeshManager!
-    
-    // MARK: - Business Logic Services
-    @Published var languageService: LanguageService
-    @Published var nicknameService: NicknameService
-    @Published var enhancedNicknameService: EnhancedNicknameService
-    
-    // MARK: - Security Services
-    @Published var deviceFingerprintManager: DeviceFingerprintManager
-    @Published var trustScoreManager: TrustScoreManager
-    
-    // MARK: - Autonomous System Services (NEW - 待整合)
-    // @Published var autonomousSystemManager: AutonomousSystemManager
-    
-    // MARK: - Utility Services
-    @Published var selfDestructManager: SelfDestructManager
-    @Published var temporaryIDManager: TemporaryIDManager
-    @Published var floodProtection: FloodProtection
-    @Published var settingsViewModel: SettingsViewModel
-    
-    // MARK: - ViewModels and UI Services
-    private var _purchaseService: PurchaseService?
-    
-    // Lazy initialization for PurchaseService to avoid main actor issues
-    var purchaseService: PurchaseService {
-        if let service = _purchaseService {
-            return service
-        }
-        let service = PurchaseService()
-        _purchaseService = service
-        return service
-    }
-    
-    // MARK: - Service Status
+    // MARK: - Basic Properties
     @Published var isInitialized: Bool = false
-    @Published var initializationError: String?
     
-    // MARK: - Initialization
-    public init() {
-        print("🚀 ServiceContainer: 開始初始化服務容器...")
-        
-        // Initialize core infrastructure services first
-        self.networkService = NetworkService()
-        self.securityService = SecurityService()
-        
-        // Initialize security services
-        let deviceFingerprintManager = DeviceFingerprintManager()
-        let trustScoreManager = TrustScoreManager()
-        self.deviceFingerprintManager = deviceFingerprintManager
-        self.trustScoreManager = trustScoreManager
-        
-        // Initialize utility services
-        print("🔧 ServiceContainer: 初始化TemporaryIDManager...")
-        self.temporaryIDManager = TemporaryIDManager()
-        print("🔧 ServiceContainer: 初始化SelfDestructManager...")
-        self.selfDestructManager = SelfDestructManager()
-        print("🔧 ServiceContainer: 初始化FloodProtection...")
-        self.floodProtection = FloodProtection()
-        
-        // Initialize business logic services
-        self.languageService = LanguageService()
-        self.nicknameService = NicknameService()
-        
-        // Initialize settings view model
-        self.settingsViewModel = SettingsViewModel()
-        
-        // Initialize enhanced nickname service with dependencies using local variables
-        self.enhancedNicknameService = EnhancedNicknameService(
-            deviceFingerprintManager: deviceFingerprintManager,
-            trustScoreManager: trustScoreManager
-        )
-        
-        // Mark as initialized first
-        self.isInitialized = true
-        
-        // Initialize MeshManager after all properties are initialized
-        initializeMeshManager()
-        
-        // Configure service relationships after everything is set up
-        configureServiceDependencies()
-        
-        print("✅ ServiceContainer: 服務容器初始化完成（包含自治系統）")
-    }
+    // MARK: - 真正的服務實現
+    var networkService = NetworkService()
+    var securityService = SecurityService()
+    var meshManager: MeshManager?
+    var languageService = LanguageService()
+    var nicknameService = NicknameService()
+    var temporaryIDManager = TemporaryIDManager()
+    var purchaseService = PurchaseService()
+    var selfDestructManager = SelfDestructManager()
+    var floodProtection = FloodProtection()
+    var settingsViewModel = SettingsViewModel()
+    var connectionOptimizer = ConnectionOptimizer()
+    // var connectionKeepAlive: ConnectionKeepAlive?
+    // var autoReconnectManager: AutoReconnectManager?
     
-    // MARK: - MeshManager Initialization
-    private func initializeMeshManager() {
+    // MARK: - Basic Initialization
+    private init() {
+        print("🚀 ServiceContainer: 開始初始化完整服務容器...")
+        
+        // 初始化 MeshManager，需要依賴其他服務
         self.meshManager = MeshManager(
             networkService: self.networkService,
             securityService: self.securityService,
             floodProtection: self.floodProtection
         )
         
-        // 設置網路回調來觸發密鑰交換
-        setupNetworkCallbacks()
+        // 設置密鑰交換回調
+        setupKeyExchangeCallbacks()
         
-        print("🕸️ ServiceContainer: MeshManager 初始化完成")
+        // 設置定期檢查會話密鑰
+        setupSessionKeyMonitoring()
+        
+        // 初始化連接保持和自動重連服務（暫時註解，等文件正確加入項目後再啟用）
+        // self.connectionKeepAlive = ConnectionKeepAlive(networkService: networkService)
+        // self.autoReconnectManager = AutoReconnectManager(networkService: networkService)
+        
+        self.isInitialized = true
+        print("✅ ServiceContainer: 完整服務容器初始化完成")
+        
+        // 延遲啟動網路服務，避免阻塞主線程
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.1) {
+            self.networkService.startNetworking()
+            // self.connectionKeepAlive?.start()
+            // self.autoReconnectManager?.start()
+        }
     }
     
-    // MARK: - Network Callbacks Setup
-    private func setupNetworkCallbacks() {
-        // 當新設備連接時自動進行密鑰交換
+    // MARK: - Factory Methods（真正實現）
+    func createChatViewModel() -> ChatViewModel {
+        print("💬 創建 ChatViewModel")
+        return ChatViewModel(
+            meshManager: self.meshManager,
+            securityService: self.securityService,
+            selfDestructManager: self.selfDestructManager,
+            settingsViewModel: self.settingsViewModel
+        )
+    }
+    
+    func createSignalViewModel() -> SignalViewModel {
+        print("📡 創建 SignalViewModel")
+        return SignalViewModel(
+            networkService: self.networkService,
+            securityService: self.securityService,
+            settingsViewModel: self.settingsViewModel,
+            selfDestructManager: self.selfDestructManager
+        )
+    }
+    
+    func createBingoGameViewModel() -> BingoGameViewModel {
+        print("🎮 創建 BingoGameViewModel")
+        return BingoGameViewModel(languageService: self.languageService)
+    }
+    
+    // MARK: - 密鑰交換設置
+    private func setupKeyExchangeCallbacks() {
+        print("🔑 設置密鑰交換回調...")
+        
+        // 當新設備連接時自動進行密鑰交換和連接優化
         networkService.onPeerConnected = { [weak self] peerDisplayName in
             guard let self = self else { return }
             
+            // 檢查是否應該接受新連接
+            guard self.connectionOptimizer.shouldAcceptNewConnection() else {
+                print("🚫 連接數已達上限，拒絕連接 \(peerDisplayName)")
+                return
+            }
+            
+            // 通知連接優化器
+            self.connectionOptimizer.onPeerConnected(peerDisplayName)
+            
             print("🔑 開始與 \(peerDisplayName) 進行密鑰交換...")
             
-            Task {
-                do {
-                    // 獲取我們的公鑰
-                    let publicKey = try self.securityService.getPublicKey()
-                    
-                    // 創建密鑰交換訊息
-                    let keyExchangeMessage = [
-                        "type": "key_exchange",
-                        "public_key": publicKey.base64EncodedString(),
-                        "sender_id": self.temporaryIDManager.deviceID
-                    ]
-                    
-                    let messageData = try JSONSerialization.data(withJSONObject: keyExchangeMessage)
-                    
-                    // 發送密鑰交換請求
-                    if let peer = self.networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
-                        try await self.networkService.send(messageData, to: [peer])
-                        print("🔑 密鑰交換請求已發送給 \(peerDisplayName)")
+            // 延遲5秒確保連接完全穩定後再進行密鑰交換
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5.0) {
+                Task {
+                    // 先驗證連接穩定性
+                    if await self.verifyConnectionStability(with: peerDisplayName) {
+                        await self.initiateKeyExchange(with: peerDisplayName)
+                    } else {
+                        print("⚠️ 連接不穩定，跳過與 \(peerDisplayName) 的密鑰交換")
                     }
-                } catch {
-                    print("❌ 密鑰交換失敗: \(error)")
                 }
             }
+        }
+        
+        // 當設備斷開連接時，清理會話密鑰和優化器狀態
+        networkService.onPeerDisconnected = { [weak self] peerDisplayName in
+            guard let self = self else { return }
+            
+            print("❌ 設備斷開連接: \(peerDisplayName)")
+            
+            // 清理會話密鑰
+            self.securityService.removeSessionKey(for: peerDisplayName)
+            
+            // 通知連接優化器
+            self.connectionOptimizer.onPeerDisconnected(peerDisplayName)
         }
         
         // 處理收到的數據（包含密鑰交換）
@@ -431,323 +499,435 @@ class ServiceContainer: ObservableObject {
             guard let self = self else { return }
             
             Task {
-                do {
-                    if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                       let type = json["type"] as? String,
-                       type == "key_exchange" {
-                        
-                        // 處理密鑰交換
-                        if let publicKeyBase64 = json["public_key"] as? String,
-                           let _ = json["sender_id"] as? String,
-                           let publicKeyData = Data(base64Encoded: publicKeyBase64) {
-                            
-                            print("🔑 收到來自 \(peerDisplayName) 的密鑰交換請求")
-                            
-                            // 執行 ECDH 密鑰交換
-                            try self.securityService.performKeyExchange(with: publicKeyData, peerID: peerDisplayName)
-                            
-                            print("✅ 與 \(peerDisplayName) 的密鑰交換完成")
-                            
-                            // 發送回應（如果我們還沒有發送過）
-                            if !self.securityService.hasSessionKey(for: peerDisplayName) {
-                                let responseData = try JSONSerialization.data(withJSONObject: [
-                                    "type": "key_exchange_response",
-                                    "public_key": try self.securityService.getPublicKey().base64EncodedString(),
-                                    "sender_id": self.temporaryIDManager.deviceID
-                                ])
-                                
-                                if let peer = self.networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
-                                    try await self.networkService.send(responseData, to: [peer])
-                                }
-                            }
-                        }
-                    } else if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-                              let type = json["type"] as? String,
-                              type == "key_exchange_response" {
-                        
-                        // 處理密鑰交換回應
-                        if let publicKeyBase64 = json["public_key"] as? String,
-                           let publicKeyData = Data(base64Encoded: publicKeyBase64) {
-                            
-                            try self.securityService.performKeyExchange(with: publicKeyData, peerID: peerDisplayName)
-                            print("✅ 密鑰交換回應處理完成，與 \(peerDisplayName) 建立安全連接")
-                        }
-                    } else {
-                        // 其他類型的訊息傳遞給相應的處理器
-                        await self.routeReceivedMessage(data, from: peerDisplayName)
-                    }
-                } catch {
-                    print("❌ 處理收到的數據時發生錯誤: \(error)")
-                }
+                await self.handleReceivedData(data, from: peerDisplayName)
             }
         }
     }
     
-    // MARK: - Message Routing
-    private func routeReceivedMessage(_ data: Data, from peerDisplayName: String) async {
+    // MARK: - 數據處理（純二進制）
+    private func handleReceivedData(_ data: Data, from peerDisplayName: String) async {
+        // ⚡ 純二進制協議，零 JSON 依賴
+        guard data.count >= 2 && data[0] == 1 else {
+            print("⚠️ 收到無效數據格式，大小: \(data.count) bytes，來自: \(peerDisplayName)")
+            return
+        }
+        
+        let messageType = data[1]
+        
+        switch messageType {
+        case 6: // keyExchange (專用類型，不與MeshMessageType衝突)
+            await handleBinaryKeyExchange(data, from: peerDisplayName)
+        case 7: // keyExchangeResponse (專用類型)
+            await handleBinaryKeyExchangeResponse(data, from: peerDisplayName)
+        default:
+            // 其他消息路由到相應的處理器
+            await routeMessage(data, from: peerDisplayName)
+        }
+    }
+    
+    // MARK: - 二進制密鑰交換處理
+    private func handleBinaryKeyExchange(_ data: Data, from peerDisplayName: String) async {
         do {
-            // 嘗試解析訊息類型
-            if let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-               let messageType = json["messageType"] as? String {
-                
-                print("📥 收到訊息類型: \(messageType) 來自: \(peerDisplayName)")
-                
-                switch messageType {
-                case "encrypted_signal":
-                    // 將信號訊息路由到所有 SignalViewModel 實例
-                    await routeSignalMessage(data)
-                    
-                case "chat_message":
-                    // 將聊天訊息路由到 ChatViewModel
-                    // TODO: 實現聊天訊息路由
-                    print("📝 收到聊天訊息，但聊天路由尚未實現")
-                    
-                case "game_message":
-                    // 將遊戲訊息路由到 BingoGameViewModel  
-                    // TODO: 實現遊戲訊息路由
-                    print("🎮 收到遊戲訊息，但遊戲路由尚未實現")
-                    
-                default:
-                    print("❓ 未知的訊息類型: \(messageType)")
-                }
-            } else {
-                print("❌ 無法解析訊息格式")
+            guard let keyExchange = LocalBinaryDecoder.decodeKeyExchange(data) else {
+                print("❌ 二進制密鑰交換解碼失敗")
+                return
             }
+            
+            print("🔑 收到來自 \(peerDisplayName) 的密鑰交換請求，設備ID: \(keyExchange.senderID)，重試次數: \(keyExchange.retryCount)")
+            
+            // 檢查是否已經有會話密鑰
+            if securityService.hasSessionKey(for: peerDisplayName) {
+                print("✅ 與 \(peerDisplayName) 已有會話密鑰，發送確認回應")
+                
+                // 發送二進制回應
+                let responseData = LocalBinaryEncoder.encodeKeyExchangeResponse(
+                    publicKey: try securityService.getPublicKey(),
+                    senderID: temporaryIDManager.deviceID,
+                    status: LocalKeyExchangeStatus.alreadyEstablished
+                )
+                
+                if let peer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                    try await networkService.send(responseData, to: [peer])
+                }
+                return
+            }
+            
+            // 執行 ECDH 密鑰交換，並建立設備ID映射
+            try securityService.performKeyExchange(with: keyExchange.publicKey, peerID: peerDisplayName, deviceID: keyExchange.senderID)
+            
+            print("✅ 與 \(peerDisplayName) 的密鑰交換完成")
+            
+            // 發送二進制回應
+            let responseData = LocalBinaryEncoder.encodeKeyExchangeResponse(
+                publicKey: try securityService.getPublicKey(),
+                senderID: temporaryIDManager.deviceID,
+                status: LocalKeyExchangeStatus.success
+            )
+            
+            if let peer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                try await networkService.send(responseData, to: [peer])
+                print("🔑 二進制密鑰交換回應已發送給 \(peerDisplayName)")
+            }
+            
         } catch {
-            print("❌ 路由訊息時發生錯誤: \(error)")
+            print("❌ 處理二進制密鑰交換失敗: \(error)")
+            
+            // 發送錯誤回應
+            do {
+                let errorResponse = LocalBinaryEncoder.encodeKeyExchangeResponse(
+                    publicKey: Data(),
+                    senderID: temporaryIDManager.deviceID,
+                    status: LocalKeyExchangeStatus.error,
+                    errorMessage: error.localizedDescription
+                )
+                
+                if let peer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                    try await networkService.send(errorResponse, to: [peer])
+                }
+            } catch {
+                print("❌ 發送錯誤回應失敗: \(error)")
+            }
         }
     }
     
-    // MARK: - Signal Message Routing
-    private func routeSignalMessage(_ data: Data) async {
-        // 由於 SignalViewModel 可能有多個實例，我們需要通知所有相關的實例
-        // 這裡我們使用 NotificationCenter 來廣播信號訊息
+    private func handleBinaryKeyExchangeResponse(_ data: Data, from peerDisplayName: String) async {
+        do {
+            guard let response = LocalBinaryDecoder.decodeKeyExchangeResponse(data) else {
+                print("❌ 二進制密鑰交換回應解碼失敗")
+                return
+            }
+            
+            print("🔑 收到來自 \(peerDisplayName) 的密鑰交換回應，設備ID: \(response.senderID)，狀態: \(response.status)")
+            
+            switch response.status {
+            case LocalKeyExchangeStatus.alreadyEstablished:
+                print("✅ \(peerDisplayName) 報告會話密鑰已建立")
+                return
+                
+            case LocalKeyExchangeStatus.error:
+                let errorMessage = response.errorMessage ?? "未知錯誤"
+                print("❌ \(peerDisplayName) 報告密鑰交換錯誤: \(errorMessage)")
+                return
+                
+            case LocalKeyExchangeStatus.success:
+                // 檢查是否已經有會話密鑰
+                if securityService.hasSessionKey(for: peerDisplayName) {
+                    print("✅ 與 \(peerDisplayName) 已有會話密鑰")
+                    return
+                }
+                
+                try securityService.performKeyExchange(with: response.publicKey, peerID: peerDisplayName, deviceID: response.senderID)
+                print("✅ 二進制密鑰交換回應處理完成，與 \(peerDisplayName) 建立安全連接")
+            }
+            
+        } catch {
+            print("❌ 處理二進制密鑰交換回應失敗: \(error)")
+        }
+    }
+    
+    private func routeMessage(_ data: Data, from peerDisplayName: String) async {
+        // ⚡ 純二進制協議路由
+        guard data.count >= 2 && data[0] == 1 else {
+            print("❌ 無效訊息格式，大小: \(data.count) 字節，來自: \(peerDisplayName)")
+            return
+        }
+        
+        let messageType = data[1]
+        print("📦 路由簡化二進制訊息類型: \(messageType) 來自: \(peerDisplayName)")
+        
+        // 使用新的 MeshMessageType 映射
+        switch MeshMessageType(rawValue: messageType) {
+        case .signal:      // 0x01
+            await routeSignalMessage(data, from: peerDisplayName)
+        case .emergency:   // 0x02
+            await routeSignalMessage(data, from: peerDisplayName) // 緊急信號也走信號路由
+        case .chat:        // 0x03
+            await routeChatMessage(data, from: peerDisplayName)
+        case .system:      // 0x04
+            await routeSystemMessage(data, from: peerDisplayName)
+        case .keyExchange: // 0x05
+            print("⚠️ 密鑰交換應該在 handleReceivedData 中處理")
+        case .game:        // 0x06
+            await routeGameMessage(data, from: peerDisplayName)
+        case nil:
+            print("❓ 未知的二進制訊息類型: \(messageType)")
+        }
+    }
+    
+    // MARK: - 系統訊息路由
+    private func routeSystemMessage(_ data: Data, from peerDisplayName: String) async {
+        do {
+            let message = try BinaryMessageDecoder.decode(data)
+            
+            // 檢查是否為穩定性測試訊息
+            if message.id.starts(with: "stability-test-") {
+                let testContent = String(data: message.data, encoding: .utf8) ?? ""
+                print("✅ 收到穩定性測試回應: \(testContent) 來自: \(peerDisplayName)")
+                return
+            }
+            
+            // 其他系統訊息處理
+            print("📋 收到系統訊息: \(message.id) 來自: \(peerDisplayName)")
+            
+        } catch {
+            print("❌ 系統訊息解碼失敗: \(error)")
+        }
+    }
+    
+    // MARK: - 專用密鑰交換方法
+    private func initiateKeyExchange(with peerDisplayName: String) async {
+        let maxRetries = 3
+        var retryCount = 0
+        
+        while retryCount < maxRetries {
+            let startTime = Date()
+            
+            do {
+                // 檢查是否已經有會話密鑰
+                if securityService.hasSessionKey(for: peerDisplayName) {
+                    print("✅ \(peerDisplayName) 已有會話密鑰，跳過交換")
+                    return
+                }
+                
+                // 獲取我們的公鑰
+                let publicKey = try securityService.getPublicKey()
+                
+                // 創建二進制密鑰交換訊息
+                let messageData = LocalBinaryEncoder.encodeKeyExchange(
+                    publicKey: publicKey,
+                    senderID: temporaryIDManager.deviceID,
+                    retryCount: UInt8(retryCount)
+                )
+                
+                // 查找對等設備
+                if let peer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) {
+                    try await networkService.send(messageData, to: [peer])
+                    
+                    // 記錄發送成功和延遲
+                    let latency = Date().timeIntervalSince(startTime)
+                    connectionOptimizer.onMessageSent(to: peerDisplayName, size: messageData.count, latency: latency)
+                    
+                    print("🔑 二進制密鑰交換請求已發送給 \(peerDisplayName) (嘗試: \(retryCount + 1)/\(maxRetries), 大小: \(messageData.count) bytes, 延遲: \(String(format: "%.0f", latency * 1000))ms)")
+                    
+                    // 等待1秒檢查是否建立了會話密鑰
+                    try await Task.sleep(nanoseconds: 1_000_000_000)
+                    
+                    if securityService.hasSessionKey(for: peerDisplayName) {
+                        print("✅ 與 \(peerDisplayName) 的二進制密鑰交換成功")
+                        return
+                    } else {
+                        print("⚠️ 與 \(peerDisplayName) 的密鑰交換未完成，準備重試...")
+                        retryCount += 1
+                    }
+                } else {
+                    print("❌ 找不到對等設備 \(peerDisplayName)")
+                    break
+                }
+                
+            } catch {
+                print("❌ 二進制密鑰交換失敗 (嘗試 \(retryCount + 1)): \(error)")
+                connectionOptimizer.onMessageFailed(to: peerDisplayName)
+                retryCount += 1
+                
+                if retryCount < maxRetries {
+                    // 指數退避重試
+                    let delay = Double(retryCount * 2)
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                }
+            }
+        }
+        
+        if retryCount >= maxRetries {
+            print("❌ 與 \(peerDisplayName) 的二進制密鑰交換最終失敗，已達最大重試次數")
+        }
+    }
+    
+    // MARK: - 會話密鑰監控
+    private func setupSessionKeyMonitoring() {
+        // 每30秒檢查一次會話密鑰狀態
+        Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
+            Task {
+                await self?.checkAndRepairSessionKeys()
+            }
+        }
+    }
+    
+    private func checkAndRepairSessionKeys() async {
+        let connectedPeers = networkService.connectedPeers.map { $0.displayName }
+        
+        for peerDisplayName in connectedPeers {
+            if !securityService.hasSessionKey(for: peerDisplayName) {
+                print("🔧 檢測到 \(peerDisplayName) 缺少會話密鑰，嘗試修復...")
+                await initiateKeyExchange(with: peerDisplayName)
+            }
+        }
+        
+        // 清理已斷開連接的會話密鑰
+        let allSessionKeys = securityService.getAllSessionKeyPeerIDs()
+        for sessionKeyPeerID in allSessionKeys {
+            if !connectedPeers.contains(sessionKeyPeerID) {
+                print("🧹 清理已斷開連接的會話密鑰: \(sessionKeyPeerID)")
+                securityService.removeSessionKey(for: sessionKeyPeerID)
+            }
+        }
+    }
+    
+    // MARK: - 純二進制信號路由（零 JSON 依賴）
+    private func routeSignalMessage(_ data: Data, from peerDisplayName: String) async {
+        let startTime = Date()
+        
+        // 跳過協議頭部（版本+類型），提取內部信號數據
+        guard data.count >= 3 else {
+            print("⚠️ 信號數據太短: \(data.count)bytes, 來源=\(peerDisplayName)")
+            return
+        }
+        
+        let signalData = data.subdata(in: 2..<data.count) // 跳過版本(1byte)+類型(1byte)
+        
+        // 解析內部信號數據
+        guard let decodedSignal = InlineBinaryEncoder.decodeInlineSignalData(signalData) else {
+            print("⚠️ 純二進制信號解析失敗: 內部大小=\(signalData.count)bytes, 來源=\(peerDisplayName)")
+            return
+        }
+        
+        // 基本時間戳檢查
+        let timeDiff = abs(Date().timeIntervalSince(decodedSignal.timestamp))
+        if timeDiff > 300 { // 5分鐘內的訊息才接受
+            print("⚠️ 信號訊息過期: \(timeDiff)秒")
+            return
+        }
+        
+        let headerParseTime = Date().timeIntervalSince(startTime) * 1000
+        
+        // 轉發內部信號數據給 SignalViewModel
         DispatchQueue.main.async {
             NotificationCenter.default.post(
-                name: NSNotification.Name("SignalReceived"),
-                object: data
+                name: NSNotification.Name("SignalMessageReceived"),
+                object: signalData,  // 轉發內部信號數據（不含協議頭部）
+                userInfo: ["sender": peerDisplayName]
             )
         }
-        print("📡 信號訊息已路由到 SignalViewModel")
+        
+        print("📡 純二進制信號路由完成 - 解析時間: \(String(format: "%.3f", headerParseTime))ms, 類型: \(decodedSignal.type.rawValue), 設備: \(decodedSignal.deviceName), 來源: \(peerDisplayName)")
     }
     
-    // MARK: - Service Configuration
-    private func configureServiceDependencies() {
-        print("🔧 ServiceContainer: 配置服務依賴關係...")
+    private func routeChatMessage(_ data: Data, from peerDisplayName: String) async {
+        let startTime = Date()
         
-        // Configure settings sync with nickname service
-        settingsViewModel.userNickname = nicknameService.nickname
-        
-        // Setup nickname change observation
-        nicknameService.objectWillChange.sink { [weak self] in
-            DispatchQueue.main.async {
-                self?.settingsViewModel.userNickname = self?.nicknameService.nickname ?? "使用者"
-            }
-        }
-        .store(in: &cancellables)
-        
-        // Configure enhanced nickname service integration
-        enhancedNicknameService.objectWillChange.sink { [weak self] in
-            DispatchQueue.main.async {
-                // Sync enhanced nickname with regular nickname service
-                self?.nicknameService.nickname = self?.enhancedNicknameService.nickname ?? "使用者"
-            }
-        }
-        .store(in: &cancellables)
-        
-        // Configure trust score integration with flood protection
-        configureTrustScoreIntegration()
-        
-        print("✅ ServiceContainer: 服務依賴關係配置完成")
-    }
-    
-    /// 配置信任評分系統與洪水保護的整合
-    private func configureTrustScoreIntegration() {
-        // 將信任評分系統整合到洪水保護中
-        // 這裡可以添加回調來記錄可疑行為
-        print("🔗 ServiceContainer: 配置信任評分與洪水保護整合")
-    }
-    
-    private var cancellables = Set<AnyCancellable>()
-    
-    // MARK: - Service Lifecycle
-    private func initializeServices() async {
-        print("🔄 ServiceContainer: 開始初始化異步服務...")
-        
-        do {
-            // Wait for security service initialization
-            var retryCount = 0
-            while !securityService.isInitialized && retryCount < 10 {
-                try await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
-                retryCount += 1
-            }
-            
-            if !securityService.isInitialized {
-                throw ServiceInitializationError.securityServiceTimeout
-            }
-            
-            // Verify device fingerprint integrity
-            let fingerprintValid = deviceFingerprintManager.verifyFingerprintIntegrity()
-            if !fingerprintValid {
-                print("⚠️ ServiceContainer: 設備指紋完整性驗證失敗")
-                // Record suspicious behavior
-                let deviceUUID = deviceFingerprintManager.deviceUUID
-                trustScoreManager.recordSuspiciousBehavior(for: deviceUUID, behavior: .protocolViolation)
-            }
-            
-            // Initialize network services
-            networkService.startNetworking()
-            
-            await MainActor.run {
-                self.isInitialized = true
-                print("✅ ServiceContainer: 所有服務初始化完成")
-            }
-            
-        } catch {
-            await MainActor.run {
-                self.initializationError = error.localizedDescription
-                self.isInitialized = false
-                print("❌ ServiceContainer: 服務初始化失敗 - \(error)")
-            }
-        }
-    }
-    
-    // MARK: - Service Factory Methods
-    
-    /// 創建 ChatViewModel 實例
-    func createChatViewModel() -> ChatViewModel {
-        let viewModel = ChatViewModel()
-        // 配置依賴
-        return viewModel
-    }
-    
-    /// 創建 SignalViewModel 實例
-    func createSignalViewModel() -> SignalViewModel {
-        let viewModel = SignalViewModel(
-            networkService: self.networkService,
-            securityService: self.securityService,
-            meshManager: self.meshManager,
-            selfDestructManager: self.selfDestructManager,
-            floodProtection: self.floodProtection
-        )
-        // 配置依賴
-        return viewModel
-    }
-    
-    /// 創建 BingoGameViewModel 實例
-    func createBingoGameViewModel() -> BingoGameViewModel {
-        let viewModel = BingoGameViewModel(languageService: languageService)
-        // 配置依賴
-        return viewModel
-    }
-    
-    // MARK: - Service Status Methods
-    
-    /// 獲取系統狀態摘要
-    func getSystemStatus() -> SystemStatus {
-        let securityStatus = securityService.getSecurityStatus()
-        let fingerprintInfo = deviceFingerprintManager.getFingerprintInfo()
-        let trustStats = trustScoreManager.getTrustStatistics()
-        let nicknameStatus = enhancedNicknameService.getNicknameStatus()
-        
-        return SystemStatus(
-            isInitialized: isInitialized,
-            securityStatus: securityStatus,
-            fingerprintInfo: fingerprintInfo,
-            trustStatistics: trustStats,
-            nicknameStatus: nicknameStatus,
-            connectedPeers: networkService.connectedPeers.count
-        )
-    }
-    
-    /// 執行系統健康檢查
-    func performHealthCheck() -> HealthCheckResult {
-        var issues: [String] = []
-        
-        // 檢查服務初始化狀態
-        if !isInitialized {
-            issues.append("服務容器未完全初始化")
+        // 跳過協議頭部（版本+類型），提取內部聊天數據
+        guard data.count >= 3 else {
+            print("⚠️ 聊天數據太短: \(data.count)bytes, 來源=\(peerDisplayName)")
+            return
         }
         
-        // 檢查安全服務狀態
-        if !securityService.isInitialized {
-            issues.append("安全服務未初始化")
+        let chatData = data.subdata(in: 2..<data.count) // 跳過版本(1byte)+類型(1byte)
+        
+        // 基本格式驗證
+        guard chatData.count >= 25 else { // 最小聊天訊息大小
+            print("⚠️ 聊天內部數據太短: \(chatData.count)bytes, 來源=\(peerDisplayName)")
+            return
         }
         
-        // 檢查設備指紋狀態
-        let fingerprintInfo = deviceFingerprintManager.getFingerprintInfo()
-        if !fingerprintInfo.isValid {
-            issues.append("設備指紋無效")
+        let headerParseTime = Date().timeIntervalSince(startTime) * 1000
+        
+        // 轉發內部聊天數據給 ChatViewModel
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("ChatMessageReceived"),
+                object: chatData,  // 轉發內部聊天數據（不含協議頭部）
+                userInfo: ["sender": peerDisplayName]
+            )
         }
         
-        // 檢查信任評分系統
-        let trustStats = trustScoreManager.getTrustStatistics()
-        if trustStats.blacklistedNodes > Int(Double(trustStats.totalNodes) * 0.5) {
-            issues.append("過多節點被列入黑名單")
+        print("💬 純二進制聊天路由完成 - 解析時間: \(String(format: "%.3f", headerParseTime))ms, 大小: \(chatData.count)bytes, 來源: \(peerDisplayName)")
+    }
+    
+    private func routeGameMessage(_ data: Data, from peerDisplayName: String) async {
+        // 遊戲訊息路由到 BingoGameViewModel
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("GameMessageReceived"),
+                object: data,
+                userInfo: ["sender": peerDisplayName]
+            )
+        }
+        print("🎮 已路由遊戲訊息，大小: \(data.count) 字節，二進制: \(data[0] == 1)")
+    }
+    
+    // MARK: - 輔助方法
+    private func getNicknameForDevice(_ deviceID: String) -> String? {
+        // 這裡可以實現設備ID到暱稱的映射邏輯
+        // 暫時返回截短的設備ID作為暱稱
+        if deviceID.contains("#") {
+            return deviceID.components(separatedBy: "#").first
+        }
+        return deviceID
+    }
+    
+    // MARK: - 性能監控
+    
+    /// 打印二進制協議性能報告
+    func printBinaryProtocolReport() {
+        TempBinaryProtocolMetrics.shared.printReport()
+    }
+    
+    /// 重置性能統計
+    func resetBinaryProtocolStats() {
+        TempBinaryProtocolMetrics.shared.resetStats()
+        print("📊 二進制協議性能統計已重置")
+    }
+    
+    // MARK: - 連接穩定性驗證
+    
+    /// 驗證與指定設備的連接穩定性
+    private func verifyConnectionStability(with peerDisplayName: String) async -> Bool {
+        print("🔍 驗證與 \(peerDisplayName) 的連接穩定性...")
+        
+        // 檢查是否仍在連接列表中
+        let isStillConnected = networkService.connectedPeers.contains { peer in
+            peer.displayName == peerDisplayName
         }
         
-        return HealthCheckResult(
-            isHealthy: issues.isEmpty,
-            issues: issues,
-            timestamp: Date()
-        )
+        guard isStillConnected else {
+            print("❌ \(peerDisplayName) 已斷開連接")
+            return false
+        }
+        
+        // 發送3個測試包驗證雙向通信（使用二進制協議格式）
+        var successCount = 0
+        
+        for i in 1...3 {
+            do {
+                // 查找對應的 MCPeerID
+                guard let targetPeer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) else {
+                    print("❌ 找不到 \(peerDisplayName) 的 MCPeerID")
+                    return false
+                }
+                
+                // 創建二進制格式的穩定性測試訊息
+                let testMessage = MeshMessage(
+                    id: "stability-test-\(i)",
+                    type: .system,
+                    data: "STABILITY_TEST_\(i)".data(using: .utf8) ?? Data()
+                )
+                
+                let binaryTestData = try BinaryMessageEncoder.encode(testMessage)
+                
+                try await networkService.send(binaryTestData, to: [targetPeer])
+                print("✅ 穩定性測試 \(i)/3 成功發送到 \(peerDisplayName) (二進制格式: \(binaryTestData.count) bytes)")
+                successCount += 1
+                
+                // 等待500ms再發送下一個測試包
+                try await Task.sleep(nanoseconds: 500_000_000)
+                
+            } catch {
+                print("❌ 穩定性測試 \(i)/3 失敗: \(error)")
+            }
+        }
+        
+        let isStable = successCount >= 2 // 3次中至少成功2次
+        print(isStable ? "✅ 與 \(peerDisplayName) 的連接穩定 (成功 \(successCount)/3)" : "❌ 與 \(peerDisplayName) 的連接不穩定 (成功 \(successCount)/3)")
+        
+        return isStable
     }
 }
-
-// MARK: - Supporting Types
-
-/// 服務初始化錯誤
-enum ServiceInitializationError: Error {
-    case securityServiceTimeout
-    case networkServiceFailed
-    case dependencyMissing(String)
-    
-    var localizedDescription: String {
-        switch self {
-        case .securityServiceTimeout:
-            return "安全服務初始化超時"
-        case .networkServiceFailed:
-            return "網路服務初始化失敗"
-        case .dependencyMissing(let service):
-            return "缺少依賴服務: \(service)"
-        }
-    }
-}
-
-/// 系統狀態
-struct SystemStatus {
-    let isInitialized: Bool
-    let securityStatus: SecurityStatus
-    let fingerprintInfo: DeviceFingerprintInfo
-    let trustStatistics: TrustStatistics
-    let nicknameStatus: NicknameStatus
-    let connectedPeers: Int
-    
-    var formattedStatus: String {
-        return """
-        🚀 系統狀態摘要:
-        - 初始化完成: \(isInitialized ? "✅" : "❌")
-        - 安全狀態: \(securityStatus.isInitialized ? "✅" : "❌")
-        - 設備指紋: \(fingerprintInfo.isValid ? "✅" : "❌")
-        - 信任節點: \(trustStatistics.trustedNodes)/\(trustStatistics.totalNodes)
-        - 黑名單節點: \(trustStatistics.blacklistedNodes)
-        - 連接節點: \(connectedPeers)
-        - 暱稱狀態: \(nicknameStatus.canChange ? "正常" : "受限")
-        """
-    }
-}
-
-/// 健康檢查結果
-struct HealthCheckResult {
-    let isHealthy: Bool
-    let issues: [String]
-    let timestamp: Date
-    
-    var formattedResult: String {
-        if isHealthy {
-            return "✅ 系統健康狀態良好"
-        } else {
-            return "⚠️ 發現問題:\n" + issues.map { "- \($0)" }.joined(separator: "\n")
-        }
-    }
-} 

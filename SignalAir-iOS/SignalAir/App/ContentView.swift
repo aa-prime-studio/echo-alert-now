@@ -57,9 +57,7 @@ struct SignalTabView: View {
     @EnvironmentObject var languageService: LanguageService
     
     private func sendSignalSync(_ type: SignalType) {
-        Task {
-            await signalViewModel.sendSignal(type)
-        }
+        signalViewModel.sendEmergencySignal(type: type)
     }
     
     var body: some View {
@@ -107,10 +105,7 @@ struct SignalTabView: View {
             .background(Color.gray.opacity(0.05))
             .navigationBarHidden(true)
             .onAppear {
-                signalViewModel.deviceName = nicknameService.userNickname
-            }
-            .onChange(of: nicknameService.nickname) { newNickname in
-                signalViewModel.deviceName = newNickname
+                // 設備名稱由 settingsViewModel 管理，不需要在這裡設定
             }
         }
     }
@@ -143,7 +138,7 @@ struct SignalTabView: View {
         .padding()
         .background(Color(red: 0.898, green: 0.847, blue: 0.016)) // #e5d804
         .onAppear {
-            signalViewModel.updateConnectionStatus()
+            // 連線狀態會自動更新，不需要手動呼叫
         }
     }
     
@@ -177,18 +172,9 @@ struct SignalTabView: View {
     
     // 切換連線狀態
     private func toggleConnection() {
-        switch signalViewModel.connectionStatus {
-        case "已連線", "連線中":
-            // 斷開連線
-            Task {
-                await signalViewModel.disconnect()
-            }
-        case "未連線":
-            // 重新連線
-            signalViewModel.reconnect()
-        default:
-            signalViewModel.reconnect()
-        }
+        // 連線管理應該透過 NetworkService 處理
+        // SignalViewModel 只負責信號相關功能
+        print("⚠️ 連線管理功能已移至 NetworkService")
     }
 }
 

@@ -73,12 +73,27 @@ class NicknameService: ObservableObject {
         
         // 只有在暱稱真的改變時才扣除次數
         if trimmedNickname != self.nickname {
+            let oldNickname = self.nickname
             self.nickname = trimmedNickname
             self.remainingChanges -= 1
             
             // 儲存到 UserDefaults
             userDefaults.set(trimmedNickname, forKey: nicknameKey)
             userDefaults.set(remainingChanges, forKey: remainingChangesKey)
+            
+            // 發送暱稱變更通知給所有界面
+            NotificationCenter.default.post(
+                name: Notification.Name("NicknameDidChange"),
+                object: nil,
+                userInfo: [
+                    "oldNickname": oldNickname,
+                    "newNickname": trimmedNickname,
+                    "discriminator": discriminator,
+                    "remainingChanges": remainingChanges
+                ]
+            )
+            
+            print("📢 NicknameService: 暱稱已更新為「\(trimmedNickname)」並發送通知")
             
             return true
         }

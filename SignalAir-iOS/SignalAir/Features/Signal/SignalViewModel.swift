@@ -5,1180 +5,893 @@ import CoreLocation
 import Combine
 import CryptoKit // Added for SHA256
 
-// MARK: - Security Event Logger
-enum SecurityEventType: String, CaseIterable {
-    case hmacVerificationFailed = "HMAC_VERIFICATION_FAILED"
-    case decryptionFailed = "DECRYPTION_FAILED"
-    case messageNumberMismatch = "MESSAGE_NUMBER_MISMATCH"
-    case invalidMessageFormat = "INVALID_MESSAGE_FORMAT"
-    case sessionKeyMissing = "SESSION_KEY_MISSING"
-    case signatureInvalid = "SIGNATURE_INVALID"
-    case replayAttackDetected = "REPLAY_ATTACK_DETECTED"
-    case encryptionSuccess = "ENCRYPTION_SUCCESS"
-    case decryptionSuccess = "DECRYPTION_SUCCESS"
-    case dataAccess = "DATA_ACCESS"
-    case securityWarning = "SECURITY_WARNING"
-}
-
-struct SecurityEvent {
-    let type: SecurityEventType
-    let peerID: String
-    let timestamp: Date
-    let details: String
-    let severity: SecuritySeverity
-    
-    enum SecuritySeverity: String {
-        case low = "LOW"
-        case medium = "MEDIUM"
-        case high = "HIGH"
-        case critical = "CRITICAL"
-    }
-}
-
-class SecurityLogger {
-    private var events: [SecurityEvent] = []
-    private let maxEvents = 1000
-    private let queue = DispatchQueue(label: "SecurityLogger", qos: .utility)
-    
-    func logEvent(_ type: SecurityEventType, peerID: String, details: String = "", severity: SecurityEvent.SecuritySeverity = .medium) {
-        queue.async {
-            let event = SecurityEvent(
-                type: type,
-                peerID: peerID,
-                timestamp: Date(),
-                details: details,
-                severity: severity
-            )
-            
-            self.events.insert(event, at: 0)
-            
-            // 限制事件數量
-            if self.events.count > self.maxEvents {
-                self.events = Array(self.events.prefix(self.maxEvents))
-            }
-            
-            // 根據嚴重性打印日誌
-            let logPrefix = self.getLogPrefix(for: severity)
-            print("\(logPrefix) SecurityLogger: [\(type.rawValue)] \(peerID) - \(details)")
-        }
-    }
-    
-    private func getLogPrefix(for severity: SecurityEvent.SecuritySeverity) -> String {
-        switch severity {
-        case .low: return "ℹ️"
-        case .medium: return "⚠️"
-        case .high: return "🚨"
-        case .critical: return "🔴"
-        }
-    }
-    
-    func getRecentEvents(limit: Int = 50) -> [SecurityEvent] {
-        return queue.sync {
-            return Array(events.prefix(limit))
-        }
-    }
-    
-    func getEventsForPeer(_ peerID: String, limit: Int = 20) -> [SecurityEvent] {
-        return queue.sync {
-            return Array(events.filter { $0.peerID == peerID }.prefix(limit))
-        }
-    }
-}
-
-// MARK: - Admin System Removed
-// 管理員系統已完全移除
-
-// MARK: - Replay Attack Protection
-
-/// 安全的訊息指紋結構 - 用於安全地暴露訊息元資料
-struct SafeMessageFingerprint {
-    let timestamp: Date
-    let messageType: String // 訊息類型而非具體內容
-    let processingStatus: String // 處理狀態
-    let securityLevel: String // 安全等級
-    
-    /// 從完整的 MessageFingerprint 創建安全版本
-    static func createSafe(from fingerprint: MessageFingerprint, includeFullContent: Bool = false, hasAdminPermission: Bool = false) -> SafeMessageFingerprint {
-        // 管理員系統已移除，始終使用一般用戶權限
-        let messageType = "Signal_Message"
-        let securityLevel = "User_Limited"
+// MARK: - 內聯二進制編碼器（已啟用）
+struct InlineBinaryEncoder {
+    static func encodeSignalData(
+        id: String,
+        type: SignalType,
+        deviceName: String,
+        deviceID: String,
+        gridCode: String?,
+        timestamp: Date = Date()
+    ) -> Data {
+        var data = Data()
         
-        return SafeMessageFingerprint(
-            timestamp: fingerprint.timestamp,
+        // 1 byte: 標誌位
+        var flags: UInt8 = 0
+        switch type {
+        case .safe: flags |= 0x01
+        case .medical: flags |= 0x02
+        case .supplies: flags |= 0x04
+        case .danger: flags |= 0x08
+        }
+        if gridCode != nil { flags |= 0x10 }
+        data.append(flags)
+        
+        // 4 bytes: 時間戳
+        let ts = UInt32(timestamp.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        
+        // 16 bytes: UUID
+        if let uuid = UUID(uuidString: id) {
+            data.append(contentsOf: withUnsafeBytes(of: uuid.uuid) { Array($0) })
+        } else {
+            data.append(Data(repeating: 0, count: 16))
+        }
+        
+        // 設備名稱
+        if let nameData = deviceName.data(using: .utf8) {
+            data.append(UInt8(min(nameData.count, 255)))
+            data.append(nameData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 設備ID
+        if let idData = deviceID.data(using: .utf8) {
+            data.append(UInt8(min(idData.count, 255)))
+            data.append(idData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 網格碼（如果有）
+        if let gridCode = gridCode, let gridData = gridCode.data(using: .utf8) {
+            data.append(UInt8(min(gridData.count, 255)))
+            data.append(gridData.prefix(255))
+        }
+        
+        return data
+    }
+    
+    // MARK: - 解碼方法
+    static func decodeInlineSignalData(_ data: Data) -> (
+        type: SignalType,
+        deviceName: String,
+        deviceID: String,
+        gridCode: String?,
+        timestamp: Date
+    )? {
+        guard data.count >= 25 else { return nil } // 最小大小檢查
+        
+        var offset = 0
+        
+        // 1 byte: 標誌位
+        let flags = data[offset]
+        offset += 1
+        
+        // 解析信號類型
+        let type: SignalType
+        switch flags & 0x0F {
+        case 0x01: type = .safe
+        case 0x02: type = .medical
+        case 0x04: type = .supplies
+        case 0x08: type = .danger
+        default: return nil
+        }
+        
+        let hasGridCode = (flags & 0x10) != 0
+        
+        // 4 bytes: 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            $0.load(as: UInt32.self).littleEndian
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // 跳過 16 bytes UUID
+        offset += 16
+        
+        // 設備名稱
+        guard offset < data.count else { return nil }
+        let nameLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + nameLength <= data.count else { return nil }
+        let deviceName = String(data: data.subdata(in: offset..<offset+nameLength), encoding: .utf8) ?? ""
+        offset += nameLength
+        
+        // 設備ID
+        guard offset < data.count else { return nil }
+        let idLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + idLength <= data.count else { return nil }
+        let deviceID = String(data: data.subdata(in: offset..<offset+idLength), encoding: .utf8) ?? ""
+        offset += idLength
+        
+        // 網格碼（如果有）
+        var gridCode: String? = nil
+        if hasGridCode && offset < data.count {
+            let gridLength = Int(data[offset])
+            offset += 1
+            
+            if offset + gridLength <= data.count {
+                gridCode = String(data: data.subdata(in: offset..<offset+gridLength), encoding: .utf8)
+            }
+        }
+        
+        return (
+            type: type,
+            deviceName: deviceName,
+            deviceID: deviceID,
+            gridCode: gridCode,
+            timestamp: timestamp
+        )
+    }
+    
+    static func encodeEncryptedSignal(
+        id: String,
+        senderID: String,
+        encryptedPayload: Data,
+        timestamp: Date = Date()
+    ) -> Data {
+        var data = Data()
+        
+        // 1 byte: 協議版本
+        data.append(1)
+        
+        // 1 byte: 消息類型（信號）
+        data.append(3) // Signal = 3 (統一映射)
+        
+        // 1 byte: 加密標誌
+        data.append(1)
+        
+        // 4 bytes: 時間戳
+        let ts = UInt32(timestamp.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        
+        // 16 bytes: UUID
+        if let uuid = UUID(uuidString: id) {
+            data.append(contentsOf: withUnsafeBytes(of: uuid.uuid) { Array($0) })
+        } else {
+            data.append(Data(repeating: 0, count: 16))
+        }
+        
+        // 發送者ID
+        if let senderData = senderID.data(using: .utf8) {
+            data.append(UInt8(min(senderData.count, 255)))
+            data.append(senderData.prefix(255))
+        } else {
+            data.append(0)
+        }
+        
+        // 加密載荷長度
+        let payloadLength = UInt16(encryptedPayload.count)
+        data.append(contentsOf: withUnsafeBytes(of: payloadLength.littleEndian) { Array($0) })
+        
+        // 加密載荷
+        data.append(encryptedPayload)
+        
+        return data
+    }
+    
+    // MARK: - 解碼方法
+    static func decodeEncryptedSignal(_ data: Data) -> (
+        version: UInt8,
+        messageType: UInt8,
+        isEncrypted: Bool,
+        timestamp: Date,
+        id: String,
+        senderID: String,
+        encryptedPayload: Data
+    )? {
+        guard data.count >= 26 else { return nil }
+        
+        var offset = 0
+        
+        // 協議版本
+        let version = data[offset]
+        offset += 1
+        
+        // 消息類型
+        let messageType = data[offset]
+        offset += 1
+        
+        // 加密標誌
+        let isEncrypted = data[offset] == 1
+        offset += 1
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes { 
+            $0.load(as: UInt32.self).littleEndian 
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // UUID
+        let uuidBytes = data.subdata(in: offset..<offset+16)
+        let uuid = uuidBytes.withUnsafeBytes { bytes in
+            UUID(uuid: bytes.load(as: uuid_t.self))
+        }
+        offset += 16
+        
+        // 發送者ID
+        let senderIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + senderIDLength <= data.count else { return nil }
+        let senderID = String(data: data.subdata(in: offset..<offset+senderIDLength), encoding: .utf8) ?? ""
+        offset += senderIDLength
+        
+        // 載荷長度
+        guard offset + 2 <= data.count else { return nil }
+        let payloadLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+            $0.load(as: UInt16.self).littleEndian
+        }
+        offset += 2
+        
+        // 加密載荷
+        guard offset + Int(payloadLength) <= data.count else { return nil }
+        let encryptedPayload = data.subdata(in: offset..<offset+Int(payloadLength))
+        
+        return (
+            version: version,
             messageType: messageType,
-            processingStatus: "Processed",
-            securityLevel: securityLevel
-        )
-    }
-}
-
-struct MessageFingerprint {
-    let messageID: String
-    let senderID: String
-    let timestamp: Date
-    let contentHash: String
-    
-    /// 生成訊息指紋
-    static func create(messageID: String, senderID: String, timestamp: Date, content: Data) -> MessageFingerprint {
-        let contentHash = SHA256.hash(data: content).compactMap { String(format: "%02x", $0) }.joined()
-        return MessageFingerprint(
-            messageID: messageID,
-            senderID: senderID,
+            isEncrypted: isEncrypted,
             timestamp: timestamp,
-            contentHash: contentHash
+            id: uuid.uuidString,
+            senderID: senderID,
+            encryptedPayload: encryptedPayload
         )
     }
     
-    /// 生成唯一標識符
-    var uniqueID: String {
-        return "\(senderID):\(messageID):\(contentHash)"
+    static func decodeSignalData(_ data: Data) -> (
+        type: SignalType,
+        deviceName: String,
+        deviceID: String,
+        gridCode: String,
+        timestamp: Date
+    )? {
+        guard data.count >= 21 else { return nil }
+        
+        var offset = 0
+        
+        // 標誌位
+        let flags = data[offset]
+        offset += 1
+        
+        // 解析信號類型
+        let type: SignalType
+        if flags & 0x01 != 0 {
+            type = .safe
+        } else if flags & 0x02 != 0 {
+            type = .medical
+        } else if flags & 0x04 != 0 {
+            type = .supplies
+        } else if flags & 0x08 != 0 {
+            type = .danger
+        } else {
+            type = .safe // 默認
+        }
+        
+        // 時間戳
+        let ts = data.subdata(in: offset..<offset+4).withUnsafeBytes { 
+            $0.load(as: UInt32.self).littleEndian 
+        }
+        let timestamp = Date(timeIntervalSince1970: Double(ts))
+        offset += 4
+        
+        // 跳過UUID
+        offset += 16
+        
+        // 設備名稱
+        let deviceNameLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + deviceNameLength <= data.count else { return nil }
+        let deviceName = String(data: data.subdata(in: offset..<offset+deviceNameLength), encoding: .utf8) ?? ""
+        offset += deviceNameLength
+        
+        // 設備ID
+        let deviceIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + deviceIDLength <= data.count else { return nil }
+        let deviceID = String(data: data.subdata(in: offset..<offset+deviceIDLength), encoding: .utf8) ?? ""
+        offset += deviceIDLength
+        
+        // 網格碼（如果有）
+        var gridCode = ""
+        if offset < data.count {
+            let gridCodeLength = Int(data[offset])
+            offset += 1
+            
+            if offset + gridCodeLength <= data.count {
+                gridCode = String(data: data.subdata(in: offset..<offset+gridCodeLength), encoding: .utf8) ?? ""
+            }
+        }
+        
+        return (
+            type: type,
+            deviceName: deviceName,
+            deviceID: deviceID,
+            gridCode: gridCode,
+            timestamp: timestamp
+        )
     }
 }
 
-class ReplayAttackProtection {
-    private var receivedMessages: [String: MessageFingerprint] = [:]
-    private let timeWindow: TimeInterval = 300 // 5分鐘時間窗口
-    private let maxCacheSize = 10000 // 最大快取數量
-    private let cleanupInterval: TimeInterval = 60 // 每分鐘清理一次
-    private let queue = DispatchQueue(label: "ReplayProtection", qos: .utility)
-    private var cleanupTimer: Timer?
+// MARK: - 緊急信號流控制系統（防止網路風暴）
+class EmergencyFloodControl {
+    private var messageHashes: Set<String> = []
+    private var messageTimestamps: [String: Date] = [:]
+    private let maxMessagesPerMinute = 5
+    private let deduplicationWindow: TimeInterval = 300 // 5分鐘去重
     
-    init() {
-        startCleanupTimer()
-    }
-    
-    deinit {
-        cleanupTimer?.invalidate()
-    }
-    
-    /// 檢查訊息是否為重放攻擊
-    func isReplayAttack(messageID: String, senderID: String, timestamp: Date, content: Data) -> Bool {
-        return queue.sync {
-            let fingerprint = MessageFingerprint.create(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: content
-            )
-            
-            // 1. 檢查時間窗口（防止過期訊息）
-            let now = Date()
-            let messageAge = now.timeIntervalSince(timestamp)
-            
-            if messageAge > timeWindow {
-                print("🚨 ReplayProtection: 訊息過期 - 年齡: \(Int(messageAge))秒")
-                return true // 過期訊息視為重放攻擊
-            }
-            
-            if messageAge < -30 { // 允許30秒的時鐘偏差
-                print("🚨 ReplayProtection: 訊息來自未來 - 偏差: \(Int(-messageAge))秒")
-                return true // 來自未來的訊息可能是攻擊
-            }
-            
-            // 2. 檢查是否已經接收過相同訊息
-            if receivedMessages[fingerprint.uniqueID] != nil {
-                print("🚨 ReplayProtection: 檢測到重複訊息 - \(fingerprint.uniqueID)")
-                return true // 重複訊息
-            }
-            
-            // 3. 記錄新訊息
-            receivedMessages[fingerprint.uniqueID] = fingerprint
-            
-            // 4. 檢查快取大小限制
-            if receivedMessages.count > maxCacheSize {
-                cleanupOldMessages()
-            }
-            
-            print("✅ ReplayProtection: 訊息驗證通過 - \(messageID)")
-            return false // 非重放攻擊
-        }
-    }
-    
-    /// 清理過期訊息
-    private func cleanupOldMessages() {
+    func shouldAcceptMessage(_ messageHash: String) -> Bool {
         let now = Date()
-        let cutoffTime = now.addingTimeInterval(-timeWindow)
         
-        var removedCount = 0
-        let keysToRemove = receivedMessages.compactMap { (key, fingerprint) in
-            return fingerprint.timestamp < cutoffTime ? key : nil
+        // 清理過期時間戳
+        messageTimestamps = messageTimestamps.filter { now.timeIntervalSince($0.value) < 60 }
+        
+        // 檢查最近一分鐘的消息數
+        if messageTimestamps.count >= maxMessagesPerMinute {
+            return false
         }
         
-        for key in keysToRemove {
-            receivedMessages.removeValue(forKey: key)
-            removedCount += 1
+        // 檢查去重
+        if messageHashes.contains(messageHash) {
+            return false
         }
         
-        print("🧹 ReplayProtection: 清理了 \(removedCount) 個過期訊息記錄")
-    }
-    
-    /// 啟動定期清理計時器
-    private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: cleanupInterval, repeats: true) { _ in
-            self.queue.async {
-                self.cleanupOldMessages()
+        // 記錄新消息
+        messageHashes.insert(messageHash)
+        messageTimestamps[messageHash] = now
+        
+        // 清理過期的哈希值
+        if messageHashes.count > 1000 {
+            let expiredHashes = messageTimestamps.filter { now.timeIntervalSince($0.value) > deduplicationWindow }.keys
+            messageHashes.subtract(expiredHashes)
+            for hash in expiredHashes {
+                messageTimestamps.removeValue(forKey: hash)
             }
         }
-    }
-    
-    /// 獲取快取統計資訊
-    func getCacheStats() -> (count: Int, oldestMessage: Date?) {
-        return queue.sync {
-            let count = receivedMessages.count
-            let oldestMessage = receivedMessages.values.min(by: { $0.timestamp < $1.timestamp })?.timestamp
-            return (count, oldestMessage)
-        }
-    }
-    
-    /// 清除所有快取（用於測試或重置）
-    func clearCache() {
-        queue.async {
-            self.receivedMessages.removeAll()
-            print("🧹 ReplayProtection: 清除所有訊息快取")
-        }
+        
+        return true
     }
 }
 
-// MARK: - LRU Cache Implementation
-class LRUCache<Key: Hashable, Value> {
-    
-    private class Node {
-        var key: Key?
-        var value: Value?
-        var prev: Node?
-        var next: Node?
-        
-        init(key: Key? = nil, value: Value? = nil) {
-            self.key = key
-            self.value = value
-        }
-        
-        // 用於 dummy 節點
-        init() {
-            self.key = nil
-            self.value = nil
-        }
-    }
-    
-    private let capacity: Int
-    private var cache: [Key: Node] = [:]
-    private let head = Node() // Dummy head
-    private let tail = Node() // Dummy tail
-    private let queue = DispatchQueue(label: "LRUCache", qos: .utility)
-    
-    init(capacity: Int) {
-        self.capacity = capacity
-        head.next = tail
-        tail.prev = head
-    }
-    
-    /// 獲取值（線程安全）
-    func get(_ key: Key) -> Value? {
-        return queue.sync {
-            guard let node = cache[key] else { return nil }
-            
-            // 移動到頭部（最近使用）
-            moveToHead(node)
-            return node.value
-        }
-    }
-    
-    /// 設置值（線程安全）
-    func set(_ key: Key, _ value: Value) {
-        queue.async {
-            if let existingNode = self.cache[key] {
-                // 更新現有節點
-                existingNode.value = value
-                self.moveToHead(existingNode)
-            } else {
-                // 添加新節點
-                let newNode = Node(key: key, value: value)
-                
-                if self.cache.count >= self.capacity {
-                    // 移除最少使用的節點
-                    self.removeLeastUsed()
-                }
-                
-                self.cache[key] = newNode
-                self.addToHead(newNode)
-            }
-        }
-    }
-    
-    /// 檢查是否包含鍵（線程安全）
-    func contains(_ key: Key) -> Bool {
-        return queue.sync {
-            return cache[key] != nil
-        }
-    }
-    
-    /// 移除指定鍵（線程安全）
-    func remove(_ key: Key) {
-        queue.async {
-            if let node = self.cache[key] {
-                self.cache.removeValue(forKey: key)
-                self.removeNode(node)
-            }
-        }
-    }
-    
-    /// 清空快取（線程安全）
-    func removeAll() {
-        queue.async {
-            self.cache.removeAll()
-            self.head.next = self.tail
-            self.tail.prev = self.head
-        }
-    }
-    
-    /// 獲取當前大小
-    func count() -> Int {
-        return queue.sync {
-            return cache.count
-        }
-    }
-    
-    /// 獲取所有鍵（按使用順序）
-    func getAllKeys() -> [Key] {
-        return queue.sync {
-            var keys: [Key] = []
-            var current = head.next
-            while current !== tail, let currentNode = current, let key = currentNode.key {
-                keys.append(key)
-                current = currentNode.next
-            }
-            return keys
-        }
-    }
-    
-    // MARK: - 私有方法
-    
-    private func addToHead(_ node: Node) {
-        node.prev = head
-        node.next = head.next
-        head.next?.prev = node
-        head.next = node
-    }
-    
-    private func removeNode(_ node: Node) {
-        node.prev?.next = node.next
-        node.next?.prev = node.prev
-    }
-    
-    private func moveToHead(_ node: Node) {
-        removeNode(node)
-        addToHead(node)
-    }
-    
-    private func removeLeastUsed() {
-        if let lru = tail.prev, lru !== head, let key = lru.key {
-            cache.removeValue(forKey: key)
-            removeNode(lru)
-        }
-    }
-}
-
-// MARK: - Message Deduplicator
+// MARK: - 訊息去重系統（災害通信優化）
 class MessageDeduplicator {
-    private let lruCache: LRUCache<String, MessageFingerprint>
-    private let maxCacheSize: Int
-    private let timeWindow: TimeInterval
-    private var cleanupTimer: Timer?
-    private let cleanupInterval: TimeInterval = 300 // 5分鐘清理一次
+    private var seenMessages: Set<String> = []
+    private var messageTimestamps: [String: Date] = [:]
+    private let maxCacheSize = 10000
+    private let cacheValidityDuration: TimeInterval = 3600 // 1小時
+    private let lock = NSLock()
     
-    // 速率限制器
-    private let rateLimiter: RateLimiter
-    
-    // 系統健康監控
-    private var consecutiveErrors = 0
-    private let maxConsecutiveErrors = 10
-    private var lastHealthCheck = Date()
-    
-    init(maxCacheSize: Int = 1000, timeWindow: TimeInterval = 1800, rateLimiter: RateLimiter? = nil) {
-        self.maxCacheSize = maxCacheSize
-        self.timeWindow = timeWindow
-        self.lruCache = LRUCache<String, MessageFingerprint>(capacity: maxCacheSize)
-        
-        // 使用提供的速率限制器或創建預設的
-        self.rateLimiter = rateLimiter ?? RateLimiter(
-            maxQueriesPerMinute: 1000,  // 每分鐘最多1000次查詢
-            maxQueriesPerSecond: 50     // 每秒最多50次查詢
-        )
-        
-        startCleanupTimer()
-        print("🔄 MessageDeduplicator: 初始化完成")
-        print("   最大快取: \(maxCacheSize)")
-        print("   時間窗口: \(Int(timeWindow/60)) 分鐘")
-        print("   清理間隔: \(Int(cleanupInterval/60)) 分鐘")
-        print("   速率限制: 每分鐘\(self.rateLimiter.getStatistics().maxQueriesPerMinute)次，每秒\(self.rateLimiter.getStatistics().maxQueriesPerSecond)次")
+    struct DeduplicationResult {
+        let isDuplicate: Bool
+        let error: Error?
     }
-
-    deinit {
-        cleanupTimer?.invalidate()
-    }
-
-    /// 檢查訊息是否重複（帶速率限制）
-    func isDuplicate(messageID: String, senderID: String, timestamp: Date, content: Data) throws -> Bool {
-        // 首先檢查速率限制
-        do {
-            try rateLimiter.checkRateLimit()
-        } catch {
-            print("🚨 MessageDeduplicator: 速率限制觸發 - \(error.localizedDescription)")
-            throw error
-        }
+    
+    func isDuplicate(messageID: String, senderID: String, timestamp: TimeInterval, content: String) -> Bool {
+        let hashKey = createMessageHash(messageID: messageID, senderID: senderID, content: content)
         
-        // 檢查系統健康狀態
-        try checkSystemHealth()
+        lock.lock()
+        defer { lock.unlock() }
         
-        let fingerprint = MessageFingerprint.create(
-            messageID: messageID,
-            senderID: senderID,
-            timestamp: timestamp,
-            content: content
-        )
+        let now = Date()
         
-        let uniqueKey = fingerprint.uniqueID
+        // 清理過期記錄
+        cleanupExpiredMessages(currentTime: now)
         
         // 檢查是否已存在
-        if lruCache.contains(uniqueKey) {
-            consecutiveErrors = 0 // 重置錯誤計數
-            print("🔁 MessageDeduplicator: 檢測到重複訊息 - \(uniqueKey)")
+        if seenMessages.contains(hashKey) {
             return true
         }
         
-        // 檢查時間窗口
-        let messageAge = Date().timeIntervalSince(timestamp)
-        if messageAge > timeWindow {
-            consecutiveErrors = 0 // 重置錯誤計數
-            print("⏰ MessageDeduplicator: 訊息過期 - 年齡: \(Int(messageAge))秒，窗口: \(Int(timeWindow))秒")
-            return true // 過期訊息也視為重複
-        }
+        // 添加新記錄
+        seenMessages.insert(hashKey)
+        messageTimestamps[hashKey] = now
         
-        // 添加到快取
-        lruCache.set(uniqueKey, fingerprint)
-        consecutiveErrors = 0 // 重置錯誤計數
-        print("✅ MessageDeduplicator: 新訊息已記錄 - \(messageID)")
         return false
     }
-
-    /// 安全版本的重複檢查（不拋出異常）
-    func isDuplicateSafe(messageID: String, senderID: String, timestamp: Date, content: Data) -> (isDuplicate: Bool, error: Error?) {
-        do {
-            let result = try isDuplicate(messageID: messageID, senderID: senderID, timestamp: timestamp, content: content)
-            return (result, nil)
-        } catch {
-            return (true, error) // 發生錯誤時保守地視為重複
-        }
-    }
-
-    /// 手動添加訊息到快取（帶速率限制）
-    func addMessage(messageID: String, senderID: String, timestamp: Date, content: Data) throws {
-        try rateLimiter.checkRateLimit()
-        
-        let fingerprint = MessageFingerprint.create(
-            messageID: messageID,
-            senderID: senderID,
-            timestamp: timestamp,
-            content: content
-        )
-        
-        lruCache.set(fingerprint.uniqueID, fingerprint)
-        print("📝 MessageDeduplicator: 手動添加訊息 - \(messageID)")
-    }
-
-    /// 獲取快取統計
-    func getCacheStats() -> (count: Int, capacity: Int, utilizationRate: Double) {
-        let currentCount = lruCache.count()
-        let utilizationRate = Double(currentCount) / Double(maxCacheSize)
-        return (currentCount, maxCacheSize, utilizationRate)
+    
+    func isDuplicateSafe(messageID: String, senderID: String, timestamp: TimeInterval, content: String) -> DeduplicationResult {
+        let isDup = isDuplicate(messageID: messageID, senderID: senderID, timestamp: timestamp, content: content)
+        return DeduplicationResult(isDuplicate: isDup, error: nil)
     }
     
-    /// 獲取速率限制統計
-    func getRateLimitStats() -> RateLimitStatistics {
-        return rateLimiter.getStatistics()
+    private func createMessageHash(messageID: String, senderID: String, content: String) -> String {
+        let combined = "\(messageID):\(senderID):\(content)"
+        let data = combined.data(using: .utf8) ?? Data()
+        let hash = SHA256.hash(data: data)
+        return hash.compactMap { String(format: "%02x", $0) }.joined()
     }
     
-    /// 獲取完整系統統計
-    func getSystemStats() -> DeduplicationSystemStats {
-        let cacheStats = getCacheStats()
-        let rateLimitStats = getRateLimitStats()
-        
-        return DeduplicationSystemStats(
-            cacheCount: cacheStats.count,
-            cacheCapacity: cacheStats.capacity,
-            cacheUtilization: cacheStats.utilizationRate,
-            rateLimitUtilization: rateLimitStats.utilizationRate,
-            totalQueries: rateLimitStats.totalQueries,
-            rejectedQueries: rateLimitStats.rejectedQueries,
-            consecutiveErrors: consecutiveErrors,
-            systemHealth: getSystemHealthStatus()
-        )
-    }
-
-    /// 清空快取
-    func clearCache() {
-        lruCache.removeAll()
-        consecutiveErrors = 0
-        print("🧹 MessageDeduplicator: 快取已清空，錯誤計數已重置")
-    }
-
-    /// 獲取最近的訊息（調試用）
-    func getRecentMessages(limit: Int = 10) -> [MessageFingerprint] {
-        let allKeys = lruCache.getAllKeys()
-        let recentKeys = Array(allKeys.prefix(limit))
-        
-        var results: [MessageFingerprint] = []
-        for key in recentKeys {
-            if let fingerprint = lruCache.get(key) {
-                results.append(fingerprint)
-            }
+    private func cleanupExpiredMessages(currentTime: Date) {
+        let expiredKeys = messageTimestamps.compactMap { key, timestamp in
+            currentTime.timeIntervalSince(timestamp) > cacheValidityDuration ? key : nil
         }
         
-        return results
-    }
-
-    // MARK: - 私有方法
-    
-    private func checkSystemHealth() throws {
-        let now = Date()
-        
-        // 每30秒檢查一次系統健康狀態
-        if now.timeIntervalSince(lastHealthCheck) > 30 {
-            lastHealthCheck = now
-            
-            let cacheStats = getCacheStats()
-            let rateLimitStats = getRateLimitStats()
-            
-            // 檢查快取使用率
-            if cacheStats.utilizationRate > 0.95 {
-                print("⚠️ MessageDeduplicator: 快取使用率過高 (\(String(format: "%.1f", cacheStats.utilizationRate * 100))%)")
-            }
-            
-            // 檢查速率限制使用率
-            if rateLimitStats.utilizationRate > 0.8 {
-                print("⚠️ MessageDeduplicator: 速率限制使用率過高 (\(String(format: "%.1f", rateLimitStats.utilizationRate * 100))%)")
-            }
-            
-            // 檢查連續錯誤
-            if consecutiveErrors > maxConsecutiveErrors / 2 {
-                print("⚠️ MessageDeduplicator: 連續錯誤偏高 (\(consecutiveErrors)/\(maxConsecutiveErrors))")
-            }
+        for key in expiredKeys {
+            seenMessages.remove(key)
+            messageTimestamps.removeValue(forKey: key)
         }
         
-        // 檢查是否需要觸發系統保護
-        if consecutiveErrors >= maxConsecutiveErrors {
-            throw DeduplicationError.systemOverload
+        // 如果快取仍然太大，移除最舊的記錄
+        if seenMessages.count > maxCacheSize {
+            let sortedByTime = messageTimestamps.sorted { $0.value < $1.value }
+            let itemsToRemove = sortedByTime.prefix(seenMessages.count - maxCacheSize)
+            
+            for (key, _) in itemsToRemove {
+                seenMessages.remove(key)
+                messageTimestamps.removeValue(forKey: key)
+            }
         }
     }
     
-    private func getSystemHealthStatus() -> String {
-        if consecutiveErrors >= maxConsecutiveErrors {
-            return "系統過載"
-        } else if consecutiveErrors > maxConsecutiveErrors / 2 {
-            return "警告"
-        } else {
-            return "正常"
-        }
+    func getCacheSize() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return seenMessages.count
     }
-
-    private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: cleanupInterval, repeats: true) { _ in
-            self.performCleanup()
-        }
-    }
-
-    private func performCleanup() {
-        let now = Date()
-        let cutoffTime = now.addingTimeInterval(-timeWindow)
-        var removedCount = 0
-        
-        // 獲取所有鍵並檢查過期
-        let allKeys = lruCache.getAllKeys()
-        
-        for key in allKeys {
-            if let fingerprint = lruCache.get(key) {
-                if fingerprint.timestamp < cutoffTime {
-                    lruCache.remove(key)
-                    removedCount += 1
-                }
-            }
-        }
-        
-        if removedCount > 0 {
-            print("🧹 MessageDeduplicator: 清理了 \(removedCount) 個過期訊息記錄")
-        }
-        
-        let systemStats = getSystemStats()
-        print("📊 MessageDeduplicator: 系統狀態")
-        print("   快取: \(systemStats.cacheCount)/\(systemStats.cacheCapacity) (\(String(format: "%.1f", systemStats.cacheUtilization * 100))%)")
-        print("   速率: \(String(format: "%.1f", systemStats.rateLimitUtilization * 100))% 使用率")
-        print("   健康: \(systemStats.systemHealth)")
+    
+    func getCacheUtilization() -> Double {
+        lock.lock()
+        defer { lock.unlock() }
+        return Double(seenMessages.count) / Double(maxCacheSize)
     }
 }
 
-// MARK: - System Statistics
-
-struct DeduplicationSystemStats {
-    let cacheCount: Int
-    let cacheCapacity: Int
-    let cacheUtilization: Double
-    let rateLimitUtilization: Double
-    let totalQueries: Int
-    let rejectedQueries: Int
-    let consecutiveErrors: Int
-    let systemHealth: String
+// MARK: - 日誌記錄優化（大規模災害通信）
+class SecurityLogger {
+    enum SecurityEventType: String {
+        case messageDecryptionFailed = "decryption_failed"
+        case invalidMessageFormat = "invalid_format"
+        case replayAttackDetected = "replay_attack"
+        case excessiveMessageRate = "excessive_rate"
+        case keyExchangeFailure = "key_exchange_failure"
+    }
     
-    var summary: String {
-        return """
-        去重系統統計:
-        快取狀態: \(cacheCount)/\(cacheCapacity) (\(String(format: "%.1f", cacheUtilization * 100))%)
-        速率限制: \(String(format: "%.1f", rateLimitUtilization * 100))% 使用率
-        總查詢: \(totalQueries)
-        被拒絕: \(rejectedQueries)
-        連續錯誤: \(consecutiveErrors)
-        系統健康: \(systemHealth)
-        """
+    enum SecuritySeverity: String {
+        case low = "low"
+        case medium = "medium"
+        case high = "high"
+        case critical = "critical"
+    }
+    
+    private var eventLog: [(Date, SecurityEventType, String, SecuritySeverity)] = []
+    private var replayProtectionCache: Set<String> = []
+    private let maxLogSize = 1000
+    private let maxReplayCacheSize = 5000
+    private let lock = NSLock()
+    
+    func logEvent(_ type: SecurityEventType, peerID: String, details: String, severity: SecuritySeverity) {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        let entry = (Date(), type, "\(peerID): \(details)", severity)
+        eventLog.append(entry)
+        
+        // 保持日誌大小限制
+        if eventLog.count > maxLogSize {
+            eventLog.removeFirst(eventLog.count - maxLogSize)
+        }
+        
+        // 針對關鍵事件，立即輸出到控制台
+        if severity == .critical || severity == .high {
+            print("🚨 SecurityLogger: [\(severity.rawValue.uppercased())] \(type.rawValue) - \(peerID): \(details)")
+        }
+    }
+    
+    func isReplayAttack(messageHash: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        if replayProtectionCache.contains(messageHash) {
+            return true
+        }
+        
+        replayProtectionCache.insert(messageHash)
+        
+        // 保持快取大小限制
+        if replayProtectionCache.count > maxReplayCacheSize {
+            // 移除隨機元素（簡化的LRU）
+            let elementsToRemove = replayProtectionCache.prefix(replayProtectionCache.count - maxReplayCacheSize)
+            replayProtectionCache.subtract(elementsToRemove)
+        }
+        
+        return false
+    }
+    
+    func getRecentEventCount(within seconds: TimeInterval) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        let cutoff = Date().addingTimeInterval(-seconds)
+        return eventLog.filter { $0.0 > cutoff }.count
+    }
+    
+    func getCriticalEventCount(within seconds: TimeInterval) -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        
+        let cutoff = Date().addingTimeInterval(-seconds)
+        return eventLog.filter { $0.0 > cutoff && $0.3 == .critical }.count
+    }
+    
+    func getReplayProtectionCacheSize() -> Int {
+        lock.lock()
+        defer { lock.unlock() }
+        return replayProtectionCache.count
     }
 }
 
-// MARK: - Deduplication Errors
-
-enum DeduplicationError: Error, LocalizedError {
-    case rateLimitExceeded
-    case invalidMessageFormat
-    case systemOverload
-    case cacheCorrupted
-    
-    var errorDescription: String? {
-        switch self {
-        case .rateLimitExceeded:
-            return "查詢速率超過限制，請稍後再試"
-        case .invalidMessageFormat:
-            return "訊息格式無效"
-        case .systemOverload:
-            return "系統過載，暫時無法處理請求"
-        case .cacheCorrupted:
-            return "快取資料損壞，已重新初始化"
-        }
-    }
-    
-    var recoverySuggestion: String? {
-        switch self {
-        case .rateLimitExceeded:
-            return "等待1分鐘後重試，或降低訊息發送頻率"
-        case .invalidMessageFormat:
-            return "檢查訊息格式並重新發送"
-        case .systemOverload:
-            return "等待系統負載降低後重試"
-        case .cacheCorrupted:
-            return "快取已自動重建，可以繼續使用"
-        }
-    }
-}
-
-// MARK: - Rate Limiter
-
-class RateLimiter {
-    private let maxQueriesPerMinute: Int
-    private let maxQueriesPerSecond: Int
-    private var queryCounter = 0
-    private var secondCounter = 0
-    private var lastResetTime = Date()
-    private var lastSecondResetTime = Date()
-    private let queue = DispatchQueue(label: "RateLimiter", qos: .utility)
-    
-    // 統計資訊
-    private var totalQueries = 0
-    private var rejectedQueries = 0
-    
-    init(maxQueriesPerMinute: Int = 1000, maxQueriesPerSecond: Int = 50) {
-        self.maxQueriesPerMinute = maxQueriesPerMinute
-        self.maxQueriesPerSecond = maxQueriesPerSecond
-    }
-    
-    /// 檢查速率限制
-    func checkRateLimit() throws {
-        try queue.sync {
-            let now = Date()
-            
-            // 重置每秒計數器
-            if now.timeIntervalSince(lastSecondResetTime) >= 1.0 {
-                secondCounter = 0
-                lastSecondResetTime = now
-            }
-            
-            // 重置每分鐘計數器
-            if now.timeIntervalSince(lastResetTime) >= 60.0 {
-                queryCounter = 0
-                lastResetTime = now
-                print("🔄 RateLimiter: 速率限制計數器已重置")
-            }
-            
-            // 檢查每秒限制
-            if secondCounter >= maxQueriesPerSecond {
-                rejectedQueries += 1
-                print("🚨 RateLimiter: 每秒查詢限制已達到 (\(secondCounter)/\(maxQueriesPerSecond))")
-                throw DeduplicationError.rateLimitExceeded
-            }
-            
-            // 檢查每分鐘限制
-            if queryCounter >= maxQueriesPerMinute {
-                rejectedQueries += 1
-                print("🚨 RateLimiter: 每分鐘查詢限制已達到 (\(queryCounter)/\(maxQueriesPerMinute))")
-                throw DeduplicationError.rateLimitExceeded
-            }
-            
-            // 增加計數器
-            queryCounter += 1
-            secondCounter += 1
-            totalQueries += 1
-        }
-    }
-    
-    /// 獲取速率限制統計
-    func getStatistics() -> RateLimitStatistics {
-        return queue.sync {
-            let now = Date()
-            let timeUntilReset = max(0, 60.0 - now.timeIntervalSince(lastResetTime))
-            
-            return RateLimitStatistics(
-                currentQueriesPerMinute: queryCounter,
-                maxQueriesPerMinute: maxQueriesPerMinute,
-                currentQueriesPerSecond: secondCounter,
-                maxQueriesPerSecond: maxQueriesPerSecond,
-                totalQueries: totalQueries,
-                rejectedQueries: rejectedQueries,
-                timeUntilReset: timeUntilReset,
-                utilizationRate: Double(queryCounter) / Double(maxQueriesPerMinute)
-            )
-        }
-    }
-    
-    /// 重置統計資料
-    func resetStatistics() {
-        queue.async {
-            self.totalQueries = 0
-            self.rejectedQueries = 0
-            print("📊 RateLimiter: 統計資料已重置")
-        }
-    }
-    
-    /// 動態調整速率限制
-    func adjustLimits(queriesPerMinute: Int? = nil, queriesPerSecond: Int? = nil) {
-        queue.async {
-            if let newMinuteLimit = queriesPerMinute {
-                print("⚙️ RateLimiter: 每分鐘限制調整 \(self.maxQueriesPerMinute) → \(newMinuteLimit)")
-            }
-            if let newSecondLimit = queriesPerSecond {
-                print("⚙️ RateLimiter: 每秒限制調整 \(self.maxQueriesPerSecond) → \(newSecondLimit)")
-            }
-        }
-    }
-}
-
-struct RateLimitStatistics {
-    let currentQueriesPerMinute: Int
-    let maxQueriesPerMinute: Int
-    let currentQueriesPerSecond: Int
-    let maxQueriesPerSecond: Int
-    let totalQueries: Int
-    let rejectedQueries: Int
-    let timeUntilReset: TimeInterval
-    let utilizationRate: Double
-    
-    var summary: String {
-        return """
-        速率限制統計:
-        每分鐘: \(currentQueriesPerMinute)/\(maxQueriesPerMinute) (\(String(format: "%.1f", utilizationRate * 100))%)
-        每秒: \(currentQueriesPerSecond)/\(maxQueriesPerSecond)
-        總查詢: \(totalQueries)
-        被拒絕: \(rejectedQueries)
-        重置倒數: \(Int(timeUntilReset))秒
-        """
-    }
-}
-
-// MARK: - SignalViewModel
+// MARK: - 主要 ViewModel
 class SignalViewModel: ObservableObject {
+    // MARK: - 發布的狀態
     @Published var messages: [SignalMessage] = []
-    @Published var deviceName: String = "SignalAir Rescue裝置"
-    @Published var connectionStatus: String = "未連線"
-    @Published var connectedPeers: [String] = []
-    @Published var lastSignalTime: Date?
+    @Published var isOnline: Bool = false
+    @Published var connectionStatus: String = "離線"
+    @Published var encryptionStatus: String = "未加密"
+    @Published var currentLocation: CLLocation?
+    @Published var isLocationEnabled: Bool = false
     
-    // Mesh 網路服務
-    private let networkService: NetworkService
+    // MARK: - 服務依賴
+    private let networkService: NetworkServiceProtocol
     private let securityService: SecurityService
-    private let meshManager: MeshManager
-    // 移除對TemporaryIDManager的直接依賴，改用ServiceContainer
-    private var deviceID: String {
-        return ServiceContainer.shared.temporaryIDManager.deviceID
-    }
+    private let settingsViewModel: SettingsViewModel
     private let selfDestructManager: SelfDestructManager
-    private let floodProtection: FloodProtection
     
-    // 安全事件記錄器
+    // MARK: - 安全和性能組件
     private let securityLogger = SecurityLogger()
+    private let messageDeduplicator = MessageDeduplicator()
+    private lazy var floodControl = EmergencyFloodControl()
     
-    // 防重放攻擊保護
-    private let replayProtection = ReplayAttackProtection()
-    
-    // 訊息去重器（使用更合理的30分鐘時間窗口）
-    private let messageDeduplicator = MessageDeduplicator(maxCacheSize: 1000, timeWindow: 1800)
-    
-    // Settings 參考
-    private var settingsViewModel: SettingsViewModel?
-    
-    // 位置服務 - 使用系統 CLLocationManager
+    // MARK: - 內部狀態
     private let locationManager = CLLocationManager()
-    private var currentLocation: CLLocation?
+    private var locationDelegate: LocationDelegate?
     private var cancellables = Set<AnyCancellable>()
+    private var statusUpdateTimer: Timer?
     
-    // MARK: - 初始化方法
-    
-    /// 依賴注入初始化
-    init(networkService: NetworkService = NetworkService(),
-         securityService: SecurityService = SecurityService(),
-         meshManager: MeshManager = MeshManager(),
-         selfDestructManager: SelfDestructManager = SelfDestructManager(),
-         floodProtection: FloodProtection = FloodProtection()) {
+    // MARK: - 初始化
+    init(
+        networkService: NetworkServiceProtocol? = nil,
+        securityService: SecurityService? = nil,
+        settingsViewModel: SettingsViewModel? = nil,
+        selfDestructManager: SelfDestructManager? = nil
+    ) {
+        self.networkService = networkService ?? ServiceContainer.shared.networkService
+        self.securityService = securityService ?? ServiceContainer.shared.securityService
+        self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel
+        self.selfDestructManager = selfDestructManager ?? ServiceContainer.shared.selfDestructManager
         
-        // 使用注入的服務或創建新的實例
-        self.networkService = networkService
-        self.securityService = securityService
-        // idManager 已移除，改用計算屬性
-        self.selfDestructManager = selfDestructManager
-        self.floodProtection = floodProtection
-        self.meshManager = meshManager
-        
-        setupMeshNetworking()
         setupLocationServices()
-        setupNotificationObservers()
+        setupNetworkObservers()
+        setupStatusMonitoring()
         
-        print("📡 SignalViewModel: 初始化完成，裝置ID: \(self.deviceID)")
+        print("📡 SignalViewModel: 災害通信系統初始化完成")
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        statusUpdateTimer?.invalidate()
+        locationManager.stopUpdatingLocation()
+    }
+    
+    // MARK: - 位置服務設定
+    private func setupLocationServices() {
+        locationDelegate = LocationDelegate(
+            onLocationUpdate: { [weak self] location in
+                DispatchQueue.main.async {
+                    self?.currentLocation = location
+                    self?.updateMessagesWithRelativePositions()
+                }
+            },
+            signalViewModel: self
+        )
+        
+        locationManager.delegate = locationDelegate
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        
+        // 檢查當前授權狀態，只有在需要時才請求授權
+        switch locationManager.authorizationStatus {
+        case .notDetermined:
+            // 只有在未確定狀態時才請求授權
+            locationManager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways:
+            // 已經授權，直接開始位置服務
+            if CLLocationManager.locationServicesEnabled() {
+                locationManager.startUpdatingLocation()
+                isLocationEnabled = true
+            }
+        case .denied, .restricted:
+            print("📍 位置服務被拒絕或限制")
+            isLocationEnabled = false
+        @unknown default:
+            print("📍 未知的位置授權狀態")
+        }
+    }
+    
+    // MARK: - 網路觀察者設定
+    private func setupNetworkObservers() {
+        // 監聽 ServiceContainer 的 Signal 訊息（支援二進制和JSON）
+        NotificationCenter.default.publisher(for: NSNotification.Name("SignalMessageReceived"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] notification in
+                Task {
+                    if let object = notification.object {
+                        await self?.handleReceivedSignalMessage(object)
+                    }
+                }
+            }
+            .store(in: &cancellables)
+        
+        // 監聽網路狀態變化
+        // 監聽連線狀態通知
+        NotificationCenter.default.publisher(for: NSNotification.Name("PeerConnectionChanged"))
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] _ in
+                self?.updateConnectionStatus()
+            }
+            .store(in: &cancellables)
+        
+        // 監聽暱稱變更通知
+        NotificationCenter.default.publisher(for: NSNotification.Name("NicknameDidChange"))
+            .receive(on: DispatchQueue.main)
+            .sink { _ in
+                // 暱稱變更通知已收到，SignalViewModel 會在發送信號時自動使用最新暱稱
+                print("📡 SignalViewModel: 收到暱稱變更通知")
+            }
+            .store(in: &cancellables)
+        
+        print("📡 SignalViewModel: 網路觀察者設置完成")
+    }
+    
+    // MARK: - 狀態監控設定
+    private func setupStatusMonitoring() {
+        statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            self?.updateConnectionStatus()
+        }
     }
     
     // MARK: - 公開方法
     
-    /// 設定 SettingsViewModel 參考
-    func setSettingsViewModel(_ settings: SettingsViewModel) {
-        self.settingsViewModel = settings
-    }
-    
-    /// 發送緊急訊號
-    func sendSignal(_ type: SignalType) async {
-        // 使用 deviceName 如果存在，否則使用設定中的暱稱
-        let userNickname = !deviceName.isEmpty ? deviceName : (settingsViewModel?.userNickname ?? "SignalAir Rescue裝置")
+    /// 發送緊急信號
+    func sendEmergencySignal(type: SignalType) {
+        let userNickname = settingsViewModel.userNickname
         
-        // 創建加密的信號數據
-        let signalData = createEncryptedSignalData(type: type, userNickname: userNickname)
-        
-        do {
-            // 檢查洪水保護
-            let dataToSend = try JSONSerialization.data(withJSONObject: signalData)
-            
-            if floodProtection.shouldAcceptMessage(
-                from: deviceID,
-                content: dataToSend,
-                size: dataToSend.count,
-                priority: .emergency
-            ) {
-                // 透過 Mesh 網路廣播加密訊息
-                try await meshManager.broadcast(
-                    dataToSend,
-                    priority: .emergency,
-                    userNickname: deviceID // 使用匿名ID而非真實暱稱
-                )
+        Task {
+            do {
+                // 創建信號數據（暫時不加密，先確保基本通訊正常）
+                let signalID = UUID().uuidString
+                let deviceID = ServiceContainer.shared.temporaryIDManager.deviceID
+                let gridCode = getCurrentGridCode() ?? ""
                 
-                // 追蹤自毀管理
-                if let messageId = signalData["id"] as? String {
-                    selfDestructManager.trackMessage(messageId, type: .signal, priority: .emergency)
-                }
-                
-                // 更新本地 UI（顯示真實暱稱）
-                let displayMessage = SignalMessage(
+                // 1. 編碼內部信號數據
+                let signalData = InlineBinaryEncoder.encodeSignalData(
+                    id: signalID,
                     type: type,
                     deviceName: userNickname,
-                    distance: nil,
-                    direction: nil,
-                    timestamp: Date()
+                    deviceID: deviceID,
+                    gridCode: gridCode
                 )
                 
-                await MainActor.run {
-                    messages.insert(displayMessage, at: 0)
-                    lastSignalTime = Date()
+                // 2. 添加協議頭部以便正確路由
+                var binaryPacket = Data()
+                binaryPacket.append(1) // 協議版本
+                binaryPacket.append(MeshMessageType.signal.rawValue) // 訊息類型
+                binaryPacket.append(signalData) // 信號數據
+                
+                print("📡 發送純二進制信號包：類型=\(type.rawValue), 內部=\(signalData.count)bytes, 總大小=\(binaryPacket.count)bytes")
+                
+                // 獲取連接的設備並廣播
+                let connectedPeers = networkService.connectedPeers
+                guard !connectedPeers.isEmpty else {
+                    print("⚠️ 沒有連接的設備，無法發送信號")
+                    return
                 }
                 
-                print("📡 SignalViewModel: 發送加密緊急訊號成功 - \(type.rawValue) 來自 \(userNickname)")
-                
-            } else {
-                print("🛡️ SignalViewModel: 訊號被洪水保護阻擋")
-                
-                // 即使被阻擋也顯示在本地列表
-                let displayMessage = SignalMessage(
-                    type: type,
-                    deviceName: "\(userNickname) (限制中)",
-                    distance: nil,
-                    direction: nil,
-                    timestamp: Date()
-                )
+                // 廣播給所有連接的設備
+                try await networkService.send(binaryPacket, to: connectedPeers)
+                print("✅ 信號廣播完成，發送給 \(connectedPeers.count) 個設備")
                 
                 await MainActor.run {
-                    messages.insert(displayMessage, at: 0)
+                    // 本地顯示發送的信號
+                    let localMessage = SignalMessage(
+                        type: type,
+                        deviceName: "\(userNickname) (我)",
+                        distance: 0,
+                        direction: nil,
+                        timestamp: Date(),
+                        gridCode: getCurrentGridCode()
+                    )
+                    
+                    messages.insert(localMessage, at: 0)
+                    
+                    // 限制訊息數量
+                    if messages.count > 50 {
+                        messages = Array(messages.prefix(50))
+                    }
+                    
+                    // 追蹤信號以便自毀
+                    selfDestructManager.trackMessage(localMessage.id.uuidString, type: .signal, priority: .emergency)
+                    
+                    print("📡 SignalViewModel: 發送緊急信號 - \(type.rawValue)")
                 }
             }
-        } catch {
-            print("❌ SignalViewModel: 發送訊號失敗 - \(error)")
-            
-            // 顯示錯誤狀態
-            let displayMessage = SignalMessage(
-                type: type,
-                deviceName: "\(userNickname) (發送失敗)",
-                distance: nil,
-                direction: nil,
-                timestamp: Date()
-            )
-            
-            await MainActor.run {
-                messages.insert(displayMessage, at: 0)
-            }
         }
     }
     
-    /// 更新連線狀態
-    func updateConnectionStatus() {
-        switch networkService.connectionStatus {
-        case .connected:
-            connectionStatus = "已連線"
-        case .connecting:
-            connectionStatus = "連線中"
-        case .disconnected:
-            connectionStatus = "未連線"
+    /// 清除所有訊息
+    func clearAllMessages() {
+        // 清除自毀管理器中的追蹤
+        for message in messages {
+            selfDestructManager.removeMessage(message.id.uuidString)
         }
-        connectedPeers = networkService.connectedPeers.map { $0.displayName }
-    }
-    
-    /// 手動重新連線
-    func reconnect() {
-        networkService.startNetworking()
-        print("📡 SignalViewModel: 嘗試重新連線")
-    }
-    
-    /// 斷開連線
-    func disconnect() async {
-        networkService.stopNetworking()
-        await MainActor.run {
-            connectionStatus = "未連線"
-            connectedPeers = []
-        }
-        print("📡 SignalViewModel: 已斷開連線")
-    }
-    
-    /// 清除訊息
-    func clearMessages() {
+        
         messages.removeAll()
-        print("📡 SignalViewModel: 清除所有訊號訊息")
-    }
-    
-    // MARK: - 安全監控方法
-    
-    /// 獲取最近的安全事件
-    func getRecentSecurityEvents(limit: Int = 20) -> [SecurityEvent] {
-        return securityLogger.getRecentEvents(limit: limit)
-    }
-    
-    /// 獲取特定 peer 的安全事件
-    func getSecurityEventsForPeer(_ peerID: String, limit: Int = 10) -> [SecurityEvent] {
-        return securityLogger.getEventsForPeer(peerID, limit: limit)
-    }
-    
-    /// 檢查是否有嚴重安全事件
-    func hasRecentCriticalSecurityEvents() -> Bool {
-        let recentEvents = securityLogger.getRecentEvents(limit: 10)
-        return recentEvents.contains { $0.severity == .critical }
-    }
-    
-    // MARK: - 重放攻擊保護監控方法
-    
-    /// 獲取重放攻擊保護快取統計
-    func getReplayProtectionStats() -> (count: Int, oldestMessage: Date?) {
-        return replayProtection.getCacheStats()
-    }
-    
-    /// 清除重放攻擊保護快取（用於測試或重置）
-    func clearReplayProtectionCache() {
-        replayProtection.clearCache()
-        print("🧹 SignalViewModel: 已清除重放攻擊保護快取")
-    }
-    
-    /// 檢查特定訊息是否會被視為重放攻擊
-    func wouldBeReplayAttack(messageID: String, senderID: String, timestamp: Date, content: Data) -> Bool {
-        return replayProtection.isReplayAttack(
-            messageID: messageID,
-            senderID: senderID,
-            timestamp: timestamp,
-            content: content
-        )
-    }
-    
-    // MARK: - 訊息去重監控方法
-    
-    /// 獲取訊息去重快取統計
-    func getDeduplicationStats() -> (count: Int, capacity: Int, utilizationRate: Double) {
-        return messageDeduplicator.getCacheStats()
-    }
-    
-    /// 清除訊息去重快取
-    func clearDeduplicationCache() {
-        messageDeduplicator.clearCache()
-        print("🧹 SignalViewModel: 已清除訊息去重快取")
-    }
-    
-    /// 獲取最近處理的訊息（安全版本）
-    /// - Parameters:
-    ///   - limit: 返回的訊息數量限制
-    ///   - includeContent: 是否包含完整內容（管理員系統已移除，此參數無效）
-    /// - Returns: 安全的訊息指紋陣列，僅包含基本資訊
-    func getRecentProcessedMessages(limit: Int = 10, includeContent: Bool = false) -> [SafeMessageFingerprint] {
-        // 管理員系統已移除，始終使用基本權限
-        let hasValidAdminSession = false
-        
-        // 記錄安全事件：訊息查詢請求
-        securityLogger.logEvent(
-            .dataAccess,
-            peerID: deviceID,
-            details: "Recent messages query - limit: \(limit), admin_system_removed",
-            severity: .low
-        )
-        
-        if includeContent {
-            // 記錄警告：嘗試存取完整內容但管理員系統已移除
-            securityLogger.logEvent(
-                .securityWarning,
-                peerID: deviceID,
-                details: "Attempt to access full content but admin system removed",
-                severity: .medium
-            )
-            print("⚠️ SignalViewModel: 嘗試存取完整內容，但管理員系統已移除")
-        }
-        
-        print("👤 SignalViewModel: 查詢最近訊息 - 僅基本資訊（管理員系統已移除）")
-        
-        // 獲取原始訊息指紋
-        let rawFingerprints = messageDeduplicator.getRecentMessages(limit: limit)
-        
-        // 轉換為安全版本（始終使用基本權限）
-        let safeFingerprints = rawFingerprints.map { fingerprint in
-            SafeMessageFingerprint.createSafe(
-                from: fingerprint,
-                includeFullContent: false,
-                hasAdminPermission: hasValidAdminSession
-            )
-        }
-        
-        // 記錄返回的資料量
-        print("📊 SignalViewModel: 返回 \(safeFingerprints.count) 個安全訊息指紋")
-        
-        return safeFingerprints
-    }
-    
-    // 管理員專用方法已完全移除
-    
-    /// 獲取最近處理的訊息（原始版本 - 已棄用，僅供向後相容）
-    @available(*, deprecated, message: "使用 getRecentProcessedMessages(limit:includeContent:hasAdminPermission:) 以獲得更好的安全性")
-    func getRecentProcessedMessagesUnsafe(limit: Int = 10) -> [MessageFingerprint] {
-        // 記錄安全警告：使用了不安全的API
-        securityLogger.logEvent(
-            .securityWarning,
-            peerID: deviceID,
-            details: "Deprecated unsafe message query API used",
-            severity: .high
-        )
-        
-        print("⚠️ SignalViewModel: 使用了已棄用的不安全API - getRecentProcessedMessagesUnsafe")
-        return messageDeduplicator.getRecentMessages(limit: limit)
-    }
-    
-    /// 手動添加訊息到去重快取
-    func addMessageToDeduplicationCache(messageID: String, senderID: String, timestamp: Date, content: Data) {
-        do {
-            try messageDeduplicator.addMessage(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: content
-            )
-            print("✅ SignalViewModel: 訊息已添加到去重快取 - \(messageID)")
-        } catch DeduplicationError.rateLimitExceeded {
-            print("🚨 SignalViewModel: 添加訊息到快取時速率限制觸發 - \(messageID)")
-            // 速率限制觸發時，我們可以選擇忽略或稍後重試
-        } catch {
-            print("❌ SignalViewModel: 添加訊息到快取失敗 - \(messageID): \(error.localizedDescription)")
-        }
+        print("📡 SignalViewModel: 清除所有緊急訊息")
     }
     
     // MARK: - 私有方法
     
-    /// 設定 Mesh 網路
-    private func setupMeshNetworking() {
-        // 設定接收處理
-        meshManager.setMessageHandler { [weak self] messageData in
-            Task { await self?.handleReceivedSignal(messageData) }
+    /// 處理接收到的信號訊息（純二進制協議）
+    private func handleReceivedSignalMessage(_ notification: Any) async {
+        if let binaryData = notification as? Data {
+            // 處理純二進制信號數據
+            await handlePureBinarySignal(binaryData)
+        } else if let signalDict = notification as? [String: Any] {
+            // 向後兼容 JSON 格式（逐步淘汰）
+            await handlePlainTextSignal(signalDict)
+        } else {
+            print("⚠️ 未知的信號訊息格式: \(type(of: notification))")
+        }
+    }
+    
+    /// 處理純二進制信號
+    private func handlePureBinarySignal(_ data: Data) async {
+        guard let decodedSignal = InlineBinaryEncoder.decodeInlineSignalData(data) else {
+            print("❌ 純二進制信號解碼失敗")
+            return
         }
         
-        // 啟動網路服務
-        networkService.startNetworking()
+        // 計算距離和方向（基於網格）
+        let (distance, direction) = calculateDistanceAndDirection(gridCode: decodedSignal.gridCode)
         
-        print("📡 SignalViewModel: Mesh 網路設定完成")
-    }
-    
-    /// 設定位置服務
-    private func setupLocationServices() {
-        locationManager.requestWhenInUseAuthorization()
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        // 檢查是否在附近區域
+        if let gridCode = decodedSignal.gridCode, !isNearbySignal(gridCode) {
+            print("⚠️ 信號距離過遠，忽略: \(decodedSignal.deviceName)")
+            return
+        }
         
-        #if targetEnvironment(simulator)
-        // 模擬器環境下設定測試位置
-        setupSimulatorLocation()
-        #endif
+        await MainActor.run {
+            let receivedMessage = SignalMessage(
+                type: decodedSignal.type,
+                deviceName: decodedSignal.deviceName,
+                distance: distance,
+                direction: direction,
+                timestamp: decodedSignal.timestamp,
+                gridCode: decodedSignal.gridCode
+            )
+            
+            messages.insert(receivedMessage, at: 0)
+            if messages.count > 50 {
+                messages = Array(messages.prefix(50))
+            }
+            
+            // 追蹤信號以便自毀
+            selfDestructManager.trackMessage(receivedMessage.id.uuidString, type: .signal, priority: .emergency)
+            
+            print("✅ 收到純二進制信號: \(decodedSignal.type.rawValue) 來自: \(decodedSignal.deviceName)")
+        }
     }
     
-    /// 設定模擬器位置
-    private func setupSimulatorLocation() {
-        // 台北市信義區的測試位置
-        currentLocation = CLLocation(latitude: 25.0330, longitude: 121.5654)
+    /// 處理二進制加密信號（優雅降級設計）
+    private func handleBinarySignalMessage(_ data: Data) async {
+        do {
+            // 解析外層加密包
+            guard let encryptedSignal = InlineBinaryEncoder.decodeEncryptedSignal(data) else {
+                print("❌ 二進制信號解析失敗")
+                return
+            }
+            
+            // 獲取發送者信息
+            let senderID = encryptedSignal.senderID
+            
+            // 嘗試解密內部數據
+            let decryptedData = try securityService.decrypt(encryptedSignal.encryptedPayload, from: senderID)
+            
+            // 解析內部信號數據
+            if let signalData = InlineBinaryEncoder.decodeSignalData(decryptedData) {
+                let (distance, direction) = calculateDistanceAndDirection(gridCode: signalData.gridCode)
+                
+                let displayMessage = SignalMessage(
+                    type: signalData.type,
+                    deviceName: signalData.deviceName,
+                    distance: distance,
+                    direction: direction,
+                    timestamp: signalData.timestamp,
+                    gridCode: signalData.gridCode
+                )
+                
+                await MainActor.run {
+                    messages.insert(displayMessage, at: 0)
+                    if messages.count > 50 {
+                        messages = Array(messages.prefix(50))
+                    }
+                }
+                
+                print("📡 接收二進制信號: \(signalData.type.rawValue) 來自 \(signalData.deviceName)")
+            }
+            
+        } catch {
+            // 優雅降級：解密失敗時顯示匿名信號
+            print("❌ 信號解密失敗，顯示匿名版本: \(error)")
+            await showAnonymousSignalFromBinary(data)
+        }
     }
     
-    /// 設定通知觀察者
-    private func setupNotificationObservers() {
-        // 監聽從 ServiceContainer 路由過來的信號
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("SignalReceived"),
-            object: nil,
-            queue: OperationQueue.main
-        ) { [weak self] notification in
-            guard let self = self,
-                  let data = notification.object as? Data else { return }
-            
-            print("📡 SignalViewModel: 收到路由的信號數據")
-            
-            // 在主線程上處理接收到的信號
-            Task {
-                await self.handleReceivedSignal(data)
+    /// 解密失敗時的優雅降級處理
+    private func showAnonymousSignalFromBinary(_ data: Data) async {
+        // 從頭部提取基本信息
+        let timestamp = data.subdata(in: 3..<7).withUnsafeBytes {
+            $0.load(as: UInt32.self).littleEndian
+        }
+        
+        let displayMessage = SignalMessage(
+            type: .safe, // 默認類型
+            deviceName: "未知設備 (加密)",
+            distance: nil,
+            direction: nil,
+            timestamp: Date(timeIntervalSince1970: TimeInterval(timestamp)),
+            gridCode: nil
+        )
+        
+        await MainActor.run {
+            messages.insert(displayMessage, at: 0)
+            if messages.count > 50 {
+                messages = Array(messages.prefix(50))
             }
         }
+        
+        print("🔒 顯示匿名信號（解密失敗但不影響系統）")
     }
     
-    /// 創建信號數據（只傳送網格代碼）
+    /// 取得當前網格代碼
+    private func getCurrentGridCode() -> String? {
+        guard let location = currentLocation else { return nil }
+        return coordinateToGrid(location.coordinate)
+    }
+    
+    /// 計算距離和方向
+    private func calculateDistanceAndDirection(gridCode: String?) -> (Double?, CompassDirection?) {
+        guard let currentLoc = currentLocation,
+              let gridCode = gridCode else { return (nil, nil) }
+        
+        let currentGrid = coordinateToGrid(currentLoc.coordinate)
+        let (distance, direction) = calculateRelativePosition(from: currentGrid, to: gridCode)
+        
+        return (distance, direction)
+    }
+    
+    /// 創建信號數據字典
     private func createSignalData(type: SignalType) -> [String: Any] {
+        let deviceName = settingsViewModel.userNickname
+        
         var data: [String: Any] = [
-            "id": UUID().uuidString,
             "type": type.rawValue,
-            "timestamp": Date().timeIntervalSince1970,
             "deviceName": deviceName
         ]
         
@@ -1191,118 +904,63 @@ class SignalViewModel: ObservableObject {
         return data
     }
     
-    /// 創建加密的信號數據
+    /// 創建加密的信號數據（簡化版本以避免崩潰）
     private func createEncryptedSignalData(type: SignalType, userNickname: String) -> [String: Any] {
-        // 創建原始信號數據結構
-        let originalSignalData: [String: Any] = [
-            "id": UUID().uuidString,
+        let signalID = UUID().uuidString
+        
+        // 創建基礎信號數據結構（較小的數據包）
+        let basicSignalData: [String: Any] = [
+            "id": signalID,
             "type": type.rawValue,
+            "deviceName": userNickname,
             "timestamp": Date().timeIntervalSince1970,
-            "deviceName": userNickname, // 真實暱稱將被加密
-            "gridCode": currentLocation != nil ? coordinateToGrid(currentLocation!.coordinate) : NSNull()
+            "gridCode": getCurrentGridCode() ?? ""
         ]
         
-        // 嘗試加密敏感資料
-        do {
-            // 將信號數據序列化
-            let plainTextData = try JSONSerialization.data(withJSONObject: originalSignalData)
-            
-            // 為每個連接的 peer 加密（廣播加密）
-            // 如果沒有可用的會話密鑰，返回 nil
-            let connectedPeers = networkService.connectedPeers
-            
-            if connectedPeers.isEmpty {
-                print("⚠️ SignalViewModel: 無連接的 peers，無法加密")
-                return [
-                    "id": UUID().uuidString,
-                    "type": type.rawValue,
-                    "timestamp": Date().timeIntervalSince1970,
-                    "deviceName": deviceID // 使用匿名ID而非真實暱稱
-                ]
-            }
-            
-            // 創建廣播加密結構
-            var encryptedForPeers: [String: Data] = [:]
-            var hasValidEncryption = false
-            
-            for peer in connectedPeers {
-                let peerID = peer.displayName
-                
-                // 檢查是否有該 peer 的會話密鑰
-                if securityService.hasSessionKey(for: peerID) {
-                    do {
-                        let encryptedData = try securityService.encrypt(plainTextData, for: peerID)
-                        encryptedForPeers[peerID] = encryptedData
-                        hasValidEncryption = true
-                        
-                        // 記錄安全事件：加密成功
-                        securityLogger.logEvent(
-                            .encryptionSuccess,
-                            peerID: peerID,
-                            details: "Signal message encrypted successfully",
-                            severity: .low
-                        )
-                        
-                        print("🔒 SignalViewModel: 為 \(peerID) 加密信號訊息")
-                    } catch {
-                        // 記錄安全事件：加密失敗
-                        securityLogger.logEvent(
-                            .decryptionFailed, // 使用通用的加密失敗事件
-                            peerID: peerID,
-                            details: "Signal encryption failed: \(error.localizedDescription)",
-                            severity: .high
-                        )
-                        
-                        print("❌ SignalViewModel: 為 \(peerID) 加密失敗 - \(error)")
-                    }
-                } else {
-                    // 記錄安全事件：會話密鑰缺失
-                    securityLogger.logEvent(
-                        .sessionKeyMissing,
-                        peerID: peerID,
-                        details: "No session key available for encryption",
-                        severity: .medium
-                    )
-                    
-                    print("⚠️ SignalViewModel: \(peerID) 沒有會話密鑰，跳過加密")
-                }
-            }
-            
-            if hasValidEncryption {
-                // 將 Data 轉換為 Base64 字串以供 JSON 序列化
-                var encryptedForPeersBase64: [String: String] = [:]
-                for (peerID, data) in encryptedForPeers {
-                    encryptedForPeersBase64[peerID] = data.base64EncodedString()
-                }
-                
-                // 返回加密後的廣播數據結構
-                return [
-                    "id": UUID().uuidString,
-                    "messageType": "encrypted_signal",
-                    "senderID": deviceID,
-                    "timestamp": Date().timeIntervalSince1970,
-                    "encryptedForPeers": encryptedForPeersBase64,
-                    "hasEncryption": true
-                ] as [String : Any]
-            } else {
-                // 加密失敗，返回匿名版本
-                print("⚠️ SignalViewModel: 無可用的加密會話，使用匿名模式")
-                return [
-                    "id": UUID().uuidString,
-                    "type": type.rawValue,
-                    "timestamp": Date().timeIntervalSince1970,
-                    "deviceName": deviceID // 使用匿名ID而非真實暱稱
-                ]
-            }
-            
-        } catch {
-            print("❌ SignalViewModel: 加密處理失敗 - \(error)")
-            return [
-                "id": UUID().uuidString,
-                "type": type.rawValue,
-                "timestamp": Date().timeIntervalSince1970,
-                "deviceName": deviceID // 使用匿名ID而非真實暱稱
-            ]
+        return basicSignalData
+    }
+    
+    /// 更新連線狀態
+    private func updateConnectionStatus() {
+        let connectedPeers = networkService.getConnectedPeers()
+        isOnline = !connectedPeers.isEmpty
+        
+        if isOnline {
+            connectionStatus = "已連線 (\(connectedPeers.count) 個設備)"
+            encryptionStatus = "端到端加密"
+        } else {
+            connectionStatus = "離線模式"
+            encryptionStatus = "未連線"
+        }
+    }
+    
+    /// 檢查訊號是否在附近區域
+    private func isNearbySignal(_ gridCode: String?) -> Bool {
+        guard let currentLoc = currentLocation,
+              let gridCode = gridCode else { return false }
+        
+        let currentGrid = coordinateToGrid(currentLoc.coordinate)
+        let (distance, _) = calculateRelativePosition(from: currentGrid, to: gridCode)
+        
+        // 只顯示5公里範圍內的信號
+        return distance <= 5000
+    }
+    
+    /// 格式化距離顯示
+    private func formatDistance(_ meters: Double) -> String {
+        switch meters {
+        case 0..<100:
+            return "< 100m"
+        case 100..<500:
+            return "約 \(Int(meters/100)*100)m"
+        case 500..<1000:
+            return "約 \(Int(meters/100)*100)m"
+        case 1000..<5000:
+            let km = meters / 1000
+            return "約 \(String(format: "%.1f", km)) 公里"
+        default:
+            let km = Int(meters / 1000)
+            return "約 \(km) 公里"
         }
     }
     
@@ -1334,221 +992,60 @@ class SignalViewModel: ObservableObject {
         }
     }
     
-    /// 處理接收到的訊號
-    private func handleReceivedSignal(_ messageData: Data) async {
-        do {
-            guard let signalDict = try JSONSerialization.jsonObject(with: messageData) as? [String: Any] else {
-                print("❌ SignalViewModel: 無效的信號數據格式")
-                return
-            }
-            
-            // 1. 提取基本訊息資訊進行重放攻擊檢查
-            let messageID = signalDict["id"] as? String ?? UUID().uuidString
-            let senderID = signalDict["senderID"] as? String ?? "unknown"
-            let timestampInterval = signalDict["timestamp"] as? TimeInterval ?? Date().timeIntervalSince1970
-            let messageTimestamp = Date(timeIntervalSince1970: timestampInterval)
-            
-            // 2. 執行重放攻擊檢查
-            if replayProtection.isReplayAttack(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: messageTimestamp,
-                content: messageData
-            ) {
-                // 記錄安全事件：檢測到重放攻擊
-                securityLogger.logEvent(
-                    .replayAttackDetected,
-                    peerID: senderID,
-                    details: "Replay attack detected - messageID: \(messageID), age: \(Int(Date().timeIntervalSince(messageTimestamp)))s",
-                    severity: .critical
-                )
-                
-                print("🚨 SignalViewModel: 拒絕重放攻擊訊息 - \(messageID) 來自 \(senderID)")
-                return // 拒絕處理重放攻擊訊息
-            }
-            
-            // 3. 執行訊息去重檢查（使用LRU快取）
-            do {
-                if try messageDeduplicator.isDuplicate(
-                    messageID: messageID,
-                    senderID: senderID,
-                    timestamp: messageTimestamp,
-                    content: messageData
-                ) {
-                    print("🔁 SignalViewModel: 拒絕重複訊息 - \(messageID) 來自 \(senderID)")
-                    return // 拒絕處理重複訊息
-                }
-            } catch DeduplicationError.rateLimitExceeded {
-                print("🚨 SignalViewModel: 去重檢查速率限制觸發 - \(messageID) 來自 \(senderID)")
-                // 速率限制觸發時，使用安全模式檢查
-                let safeResult = messageDeduplicator.isDuplicateSafe(
-                    messageID: messageID,
-                    senderID: senderID,
-                    timestamp: messageTimestamp,
-                    content: messageData
-                )
-                
-                if safeResult.isDuplicate {
-                    print("🔁 SignalViewModel: 安全模式檢測到重複訊息 - \(messageID)")
-                    return
-                }
-                
-                if let error = safeResult.error {
-                    print("⚠️ SignalViewModel: 安全模式檢查出現問題 - \(error.localizedDescription)")
-                }
-                
-                // 繼續處理訊息（保守但確保服務可用性）
-            } catch DeduplicationError.systemOverload {
-                print("🚨 SignalViewModel: 去重系統過載 - \(messageID) 來自 \(senderID)")
-                // 系統過載時，暫時跳過去重檢查，確保緊急訊息能夠傳遞
-                print("⚠️ SignalViewModel: 緊急模式：跳過去重檢查以確保訊息傳遞")
-            } catch {
-                print("❌ SignalViewModel: 去重檢查失敗 - \(messageID): \(error.localizedDescription)")
-                // 其他錯誤時，使用安全模式
-                let safeResult = messageDeduplicator.isDuplicateSafe(
-                    messageID: messageID,
-                    senderID: senderID,
-                    timestamp: messageTimestamp,
-                    content: messageData
-                )
-                
-                if safeResult.isDuplicate {
-                    print("🔁 SignalViewModel: 安全模式檢測到重複訊息 - \(messageID)")
-                    return
-                }
-            }
-            
-            // 4. 所有檢查通過，繼續處理訊息
-            if let messageType = signalDict["messageType"] as? String, messageType == "encrypted_signal" {
-                // 處理加密的 Signal 訊息
-                await handleEncryptedSignal(signalDict)
-            } else {
-                // 處理舊格式或未加密的訊息
-                await handlePlainTextSignal(signalDict)
-            }
-            
-        } catch {
-            print("❌ SignalViewModel: 解析接收訊號失敗 - \(error)")
-        }
-    }
-    
     /// 處理加密的 Signal 訊息
-    private func handleEncryptedSignal(_ signalDict: [String: Any]) async {
+    func handleEncryptedSignal(_ signalDict: [String: Any]) async {
         guard let senderID = signalDict["senderID"] as? String,
-              let encryptedPayloadData = signalDict["encryptedPayload"] as? Data,
+              let encryptedForPeersBase64 = signalDict["encryptedForPeers"] as? [String: String],
               let timestamp = signalDict["timestamp"] as? TimeInterval else {
             
             // 記錄安全事件：無效訊息格式
             securityLogger.logEvent(
                 .invalidMessageFormat,
                 peerID: signalDict["senderID"] as? String ?? "unknown",
-                details: "Missing required fields in encrypted signal",
+                details: "Missing required fields in encrypted signal: senderID=\(signalDict["senderID"] != nil), encryptedForPeers=\(signalDict["encryptedForPeers"] != nil), timestamp=\(signalDict["timestamp"] != nil)",
                 severity: .high
             )
-            print("❌ SignalViewModel: 加密訊息格式無效")
+            print("❌ SignalViewModel: 加密訊息格式無效 - 缺少必要欄位")
+            print("   可用欄位: \(signalDict.keys.sorted())")
             return
         }
         
+        // 嘗試用自己的 ID 解密
+        let myPeerID = networkService.myPeerID.displayName
+        
         do {
-            // 解析加密載荷
-            guard let encryptedPayload = try JSONSerialization.jsonObject(with: encryptedPayloadData) as? [String: Any],
-                  let encryptedForPeersBase64 = encryptedPayload["encryptedForPeers"] as? [String: String] else {
-                
-                // 記錄安全事件：載荷解析失敗
-                securityLogger.logEvent(
-                    .invalidMessageFormat,
-                    peerID: senderID,
-                    details: "Failed to parse encrypted payload structure",
-                    severity: .high
-                )
-                print("❌ SignalViewModel: 無法解析加密載荷")
-                return
-            }
-            
-            // 嘗試用自己的 ID 解密
-            let myPeerID = networkService.myPeerID.displayName
-            
             if let encryptedBase64 = encryptedForPeersBase64[myPeerID],
                let encryptedData = Data(base64Encoded: encryptedBase64) {
                 // 找到針對我的加密數據
-                do {
-                    let decryptedData = try securityService.decrypt(encryptedData, from: senderID)
-                    let originalSignal = try JSONSerialization.jsonObject(with: decryptedData) as? [String: Any]
-                    
-                    // 記錄安全事件：解密成功
-                    securityLogger.logEvent(
-                        .decryptionSuccess,
-                        peerID: senderID,
-                        details: "Signal message decrypted successfully",
-                        severity: .low
-                    )
-                    
-                    await processDecryptedSignal(originalSignal, senderID: senderID, timestamp: timestamp)
-                    
-                } catch {
-                    // 根據錯誤類型記錄不同的安全事件
-                    let eventType: SecurityEventType
-                    let severity: SecurityEvent.SecuritySeverity
-                    
-                    if let cryptoError = error as? CryptoError {
-                        switch cryptoError {
-                        case .invalidSignature:
-                            eventType = .hmacVerificationFailed
-                            severity = .critical
-                        case .messageNumberMismatch:
-                            eventType = .replayAttackDetected
-                            severity = .critical
-                        case .noSessionKey:
-                            eventType = .sessionKeyMissing
-                            severity = .high
-                        default:
-                            eventType = .decryptionFailed
-                            severity = .high
-                        }
-                    } else {
-                        eventType = .decryptionFailed
-                        severity = .high
-                    }
-                    
-                    securityLogger.logEvent(
-                        eventType,
-                        peerID: senderID,
-                        details: "Decryption failed: \(error.localizedDescription)",
-                        severity: severity
-                    )
-                    
-                    print("❌ SignalViewModel: 解密失敗 - \(error)")
-                    // 顯示匿名版本
-                    await showAnonymousSignal(senderID: senderID, timestamp: timestamp)
-                }
-            } else {
-                // 記錄安全事件：沒有會話密鑰
-                securityLogger.logEvent(
-                    .sessionKeyMissing,
-                    peerID: senderID,
-                    details: "No encrypted data found for my peer ID",
-                    severity: .medium
-                )
+                let _ = try securityService.decrypt(encryptedData, from: senderID)
                 
-                print("⚠️ SignalViewModel: 沒有針對我的加密數據，顯示匿名版本")
-                await showAnonymousSignal(senderID: senderID, timestamp: timestamp)
+                // 如果需要處理解密後的數據，在這裡添加邏輯
+                print("✅ SignalViewModel: 成功解密來自 \(senderID) 的信號")
+                
+            } else {
+                // 沒有針對我的加密數據，這是正常的
+                print("ℹ️ SignalViewModel: 未找到針對我的加密數據，跳過")
+                return
             }
-            
         } catch {
-            // 記錄安全事件：處理失敗
+            // 解密失敗，記錄安全事件並顯示匿名版本
+            let severity: SecurityLogger.SecuritySeverity = (error.localizedDescription.contains("key") ? .medium : .high)
+            
             securityLogger.logEvent(
-                .invalidMessageFormat,
+                .messageDecryptionFailed,
                 peerID: senderID,
-                details: "Failed to process encrypted message: \(error.localizedDescription)",
-                severity: .high
+                details: "Decryption failed: \(error.localizedDescription)",
+                severity: severity
             )
             
-            print("❌ SignalViewModel: 處理加密訊息失敗 - \(error)")
+            print("❌ SignalViewModel: 解密失敗 - \(error)")
+            // 顯示匿名版本
+            await showAnonymousSignal(senderID: senderID, timestamp: timestamp)
         }
     }
     
     /// 處理明文 Signal 訊息（向後兼容）
-    private func handlePlainTextSignal(_ signalDict: [String: Any]) async {
+    func handlePlainTextSignal(_ signalDict: [String: Any]) async {
         guard let typeString = signalDict["type"] as? String,
               let type = SignalType(rawValue: typeString),
               let deviceName = signalDict["deviceName"] as? String,
@@ -1578,45 +1075,11 @@ class SignalViewModel: ObservableObject {
             }
         }
         
-        print("📡 SignalViewModel: 接收到明文緊急訊號 - \(type.rawValue) 來自 \(deviceName)")
-    }
-    
-    /// 處理解密成功的 Signal 訊息
-    private func processDecryptedSignal(_ originalSignal: [String: Any]?, senderID: String, timestamp: TimeInterval) async {
-        guard let signal = originalSignal,
-              let typeString = signal["type"] as? String,
-              let type = SignalType(rawValue: typeString),
-              let realDeviceName = signal["deviceName"] as? String else {
-            print("❌ SignalViewModel: 解密後的訊息格式無效")
-            return
-        }
-        
-        // 計算距離和方向
-        let (distance, direction) = calculateDistanceAndDirection(gridCode: signal["gridCode"] as? String)
-        
-        let displayMessage = SignalMessage(
-            type: type,
-            deviceName: realDeviceName, // 顯示真實暱稱
-            distance: distance,
-            direction: direction,
-            timestamp: Date(timeIntervalSince1970: timestamp),
-            gridCode: signal["gridCode"] as? String
-        )
-        
-        await MainActor.run {
-            messages.insert(displayMessage, at: 0)
-            
-            // 限制訊息數量
-            if messages.count > 50 {
-                messages = Array(messages.prefix(50))
-            }
-        }
-        
-        print("🔓 SignalViewModel: 成功解密緊急訊號 - \(type.rawValue) 來自 \(realDeviceName)")
+        print("🔓 SignalViewModel: 成功解密緊急訊號 - \(type.rawValue) 來自 \(deviceName)")
     }
     
     /// 顯示匿名版本的 Signal 訊息
-    private func showAnonymousSignal(senderID: String, timestamp: TimeInterval) async {
+    func showAnonymousSignal(senderID: String, timestamp: TimeInterval) async {
         // 當無法解密時，顯示通用的緊急訊號
         let displayMessage = SignalMessage(
             type: .safe, // 默認顯示為安全訊號
@@ -1639,44 +1102,8 @@ class SignalViewModel: ObservableObject {
         print("🔒 SignalViewModel: 顯示匿名緊急訊號來自 \(senderID)")
     }
     
-    /// 計算距離和方向（使用網格系統）
-    private func calculateDistanceAndDirection(gridCode: String?) -> (Double?, CompassDirection?) {
-        guard let peerGridCode = gridCode,
-              let currentLoc = currentLocation else {
-            return (nil, nil)
-        }
-        
-        let currentGrid = coordinateToGrid(currentLoc.coordinate)
-        let (distance, direction) = calculateRelativePosition(
-            from: currentGrid,
-            to: peerGridCode
-        )
-        
-        return (distance, direction)
-    }
-    
-    /// 統一的距離格式化（本地實現）
-    func formatDistance(_ meters: Double) -> String {
-        switch meters {
-        case 0..<50:
-            return "< 50m"
-        case 50..<100:
-            return "約 \(Int(meters/10)*10)m"
-        case 100..<500:
-            return "約 \(Int(meters/50)*50)m"
-        case 500..<1000:
-            return "約 \(Int(meters/100)*100)m"
-        case 1000..<5000:
-            let km = meters / 1000
-            return "約 \(String(format: "%.1f", km)) 公里"
-        default:
-            let km = Int(meters / 1000)
-            return "約 \(km) 公里"
-        }
-    }
-    
     /// 生成訊號訊息
-    private func generateSignalMessage(for type: SignalType) -> String {
+    func generateSignalMessage(for type: SignalType) -> String {
         switch type {
         case .safe:
             return "我在這裡，狀況安全"
@@ -1706,7 +1133,7 @@ class SignalViewModel: ObservableObject {
         return "\(letter)\(y)"
     }
     
-    private func calculateRelativePosition(from myGrid: String, to peerGrid: String) -> (distance: Double, direction: CompassDirection?) {
+    func calculateRelativePosition(from myGrid: String, to peerGrid: String) -> (distance: Double, direction: CompassDirection?) {
         guard let myLetter = myGrid.first,
               let myNumber = Int(myGrid.dropFirst()),
               let peerLetter = peerGrid.first,
@@ -1742,221 +1169,99 @@ class SignalViewModel: ObservableObject {
         default: return .north
         }
     }
-    
-    // MARK: - 測試和開發方法 (DEBUG only)
-    
+
     #if DEBUG
-    /// 添加測試數據（僅開發模式）
-    func addTestData() {
-        let testMessages = [
-            SignalMessage(
-                type: .safe,
-                deviceName: "測試設備 A",
-                distance: 150.0,
-                direction: .northeast, // 45度 -> 東北
-                timestamp: Date().addingTimeInterval(-300), // 5分鐘前
-                gridCode: "GRID_001"
-            ),
-            SignalMessage(
-                type: .medical,
-                deviceName: "救護站",
-                distance: 320.0,
-                direction: .south, // 180度 -> 南
-                timestamp: Date().addingTimeInterval(-600), // 10分鐘前
-                gridCode: "GRID_002"
-            ),
-            SignalMessage(
-                type: .danger,
-                deviceName: "警報設備",
-                distance: 80.0,
-                direction: .west, // 270度 -> 西
-                timestamp: Date().addingTimeInterval(-120), // 2分鐘前
-                gridCode: "GRID_003"
-            ),
-            SignalMessage(
-                type: .supplies,
-                deviceName: "補給站 B",
-                distance: 500.0,
-                direction: .east, // 90度 -> 東
-                timestamp: Date().addingTimeInterval(-900), // 15分鐘前
-                gridCode: "GRID_004"
-            )
-        ]
+    /// 測試訊息去重系統
+    func testDeduplication() {
+        print("🧪 SignalViewModel: 開始測試訊息去重系統...")
         
-        DispatchQueue.main.async {
-            self.messages = testMessages
-            self.connectionStatus = "已連線"
-            self.connectedPeers = ["測試設備 A", "救護站", "警報設備", "補給站 B"]
+        let testMessage = "TEST_MESSAGE_\(UUID().uuidString)"
+        let senderID = "TEST_SENDER"
+        let messageID = UUID().uuidString
+        let timestamp = Date().timeIntervalSince1970
+        
+        // 第一次檢查 - 應該不是重複
+        let result1 = messageDeduplicator.isDuplicate(
+            messageID: messageID,
+            senderID: senderID,
+            timestamp: timestamp,
+            content: testMessage
+        )
+        print("   第一次檢查結果: \(result1 ? "重複" : "新訊息")")
+        
+        // 第二次檢查 - 應該是重複
+        let result2 = messageDeduplicator.isDuplicate(
+            messageID: messageID,
+            senderID: senderID,
+            timestamp: timestamp,
+            content: testMessage
+        )
+        print("   第二次檢查結果: \(result2 ? "重複" : "新訊息")")
+        
+        // 測試安全版本
+        let safeResult = messageDeduplicator.isDuplicateSafe(
+            messageID: messageID,
+            senderID: senderID,
+            timestamp: timestamp,
+            content: testMessage
+        )
+        
+        if let error = safeResult.error {
+            print("   安全模式錯誤: \(error.localizedDescription)")
+        } else {
+            print("   安全模式結果: \(safeResult.isDuplicate ? "重複" : "新訊息")")
         }
         
-        print("🧪 SignalViewModel: 已添加測試數據 (\(testMessages.count) 個訊息)")
-    }
-    
-    /// 獲取系統狀態摘要（調試用）
-    func getSystemStatusSummary() -> SystemStatusSummary {
-        let securityEvents = getRecentSecurityEvents(limit: 10)
-        let replayStats = getReplayProtectionStats()
-        let deduplicationStats = getDeduplicationStats()
-        
-        return SystemStatusSummary(
-            connectionStatus: connectionStatus,
-            connectedPeersCount: connectedPeers.count,
-            totalMessages: messages.count,
-            recentSecurityEvents: securityEvents.count,
-            criticalSecurityEvents: securityEvents.filter { $0.severity == .critical }.count,
-            replayProtectionCacheCount: replayStats.count,
-            deduplicationCacheCount: deduplicationStats.count,
-            deduplicationUtilization: deduplicationStats.utilizationRate
+        // 使用安全版本重試
+        let safeResult1 = messageDeduplicator.isDuplicateSafe(
+            messageID: messageID,
+            senderID: senderID,
+            timestamp: timestamp,
+            content: testMessage
         )
-    }
-    
-    /// 模擬安全事件（測試用）
-    func simulateSecurityEvent(type: SecurityEventType, severity: SecurityEvent.SecuritySeverity) {
-        securityLogger.logEvent(
-            type,
-            peerID: "TEST_DEVICE",
-            details: "模擬的安全事件用於測試",
-            severity: severity
-        )
-        print("🧪 模擬安全事件: \(type) (\(severity))")
-    }
-    
-    /// 測試訊息去重功能
-    func testMessageDeduplication() {
-        let testMessage = "TEST_MESSAGE_\(Date().timeIntervalSince1970)".data(using: .utf8)!
-        let messageID = UUID().uuidString
-        let senderID = "TEST_SENDER"
-        let timestamp = Date()
         
-        do {
-            // 第一次檢查（應該不重複）
-            let isDuplicate1 = try messageDeduplicator.isDuplicate(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: testMessage
-            )
-            
-            // 第二次檢查（應該重複）
-            let isDuplicate2 = try messageDeduplicator.isDuplicate(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: testMessage
-            )
-            
-            print("🧪 訊息去重測試:")
-            print("   第一次檢查: \(isDuplicate1 ? "重複" : "新訊息")")
-            print("   第二次檢查: \(isDuplicate2 ? "重複" : "新訊息")")
-            print("   結果: \(isDuplicate1 == false && isDuplicate2 == true ? "✅ 通過" : "❌ 失敗")")
-            
-            // 測試速率限制統計
-            let rateLimitStats = messageDeduplicator.getRateLimitStats()
-            print("   速率限制統計: \(rateLimitStats.summary)")
-            
-        } catch {
-            print("❌ 訊息去重測試失敗: \(error.localizedDescription)")
-            
-            // 使用安全版本重試
-            let safeResult1 = messageDeduplicator.isDuplicateSafe(
-                messageID: messageID,
-                senderID: senderID,
-                timestamp: timestamp,
-                content: testMessage
-            )
-            
-            if let error = safeResult1.error {
-                print("   安全模式錯誤: \(error.localizedDescription)")
-            } else {
-                print("   安全模式結果: \(safeResult1.isDuplicate ? "重複" : "新訊息")")
-            }
+        if let error = safeResult1.error {
+            print("   安全模式錯誤: \(error.localizedDescription)")
+        } else {
+            print("   安全模式結果: \(safeResult1.isDuplicate ? "重複" : "新訊息")")
         }
     }
     #endif
 }
 
-// MARK: - 預覽支援
-
-extension SignalViewModel {
-    static func preview() -> SignalViewModel {
-        let viewModel = SignalViewModel()
-        
-        // 添加一些有距離和方位的範例訊息
-        viewModel.messages = [
-            SignalMessage(
-                type: .safe,
-                deviceName: "救援隊-Alpha",
-                distance: 150.0,
-                direction: .north,
-                timestamp: Date().addingTimeInterval(-300),
-                gridCode: "A6"
-            ),
-            SignalMessage(
-                type: .medical,
-                deviceName: "醫療站-1",
-                distance: 450.0,
-                direction: .northeast,
-                timestamp: Date().addingTimeInterval(-600),
-                gridCode: "B7"
-            ),
-            SignalMessage(
-                type: .supplies,
-                deviceName: "補給點-Central",
-                distance: 750.0,
-                direction: .east,
-                timestamp: Date().addingTimeInterval(-900),
-                gridCode: "C5"
-            ),
-            SignalMessage(
-                type: .danger,
-                deviceName: "警戒區域",
-                distance: 1200.0,
-                direction: .south,
-                timestamp: Date().addingTimeInterval(-1200),
-                gridCode: "A3"
-            ),
-            SignalMessage(
-                type: .safe,
-                deviceName: "避難所-Beta",
-                distance: 2500.0,
-                direction: .southwest,
-                timestamp: Date().addingTimeInterval(-1500),
-                gridCode: "Z2"
-            )
-        ]
-        
-        viewModel.connectionStatus = "已連線"
-        viewModel.connectedPeers = ["裝置1", "裝置2", "裝置3"]
-        
-        return viewModel
-    }
-}
-
-// MARK: - 測試數據結構
-
-#if DEBUG
-struct SystemStatusSummary {
-    let connectionStatus: String
-    let connectedPeersCount: Int
-    let totalMessages: Int
-    let recentSecurityEvents: Int
-    let criticalSecurityEvents: Int
-    let replayProtectionCacheCount: Int
-    let deduplicationCacheCount: Int
-    let deduplicationUtilization: Double
+// MARK: - 位置代理
+private class LocationDelegate: NSObject, CLLocationManagerDelegate {
+    private let onLocationUpdate: (CLLocation) -> Void
+    private weak var signalViewModel: SignalViewModel?
     
-    var formattedSummary: String {
-        return """
-        📊 系統狀態摘要
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        🔗 連線狀態: \(connectionStatus)
-        👥 連接設備: \(connectedPeersCount) 個
-        📨 訊息總數: \(totalMessages) 個
-        🛡️ 安全事件: \(recentSecurityEvents) 個 (嚴重: \(criticalSecurityEvents))
-        🔄 重放保護: \(replayProtectionCacheCount) 個記錄
-        🔁 去重快取: \(deduplicationCacheCount) 個記錄 (\(String(format: "%.1f", deduplicationUtilization * 100))%)
-        ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        """
+    init(onLocationUpdate: @escaping (CLLocation) -> Void, signalViewModel: SignalViewModel? = nil) {
+        self.onLocationUpdate = onLocationUpdate
+        self.signalViewModel = signalViewModel
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        onLocationUpdate(location)
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("❌ LocationDelegate: 位置更新失敗 - \(error)")
+    }
+    
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedWhenInUse, .authorizedAlways:
+            // 授權成功，直接啟動位置更新
+            manager.startUpdatingLocation()
+            signalViewModel?.isLocationEnabled = true
+            print("📍 位置服務已啟用")
+        case .denied, .restricted:
+            print("📍 位置服務被拒絕或限制")
+            signalViewModel?.isLocationEnabled = false
+        case .notDetermined:
+            print("📍 位置授權尚未確定")
+        @unknown default:
+            print("📍 未知的位置授權狀態")
+        }
     }
 }
-#endif

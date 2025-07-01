@@ -10,13 +10,17 @@ protocol NetworkServiceProtocol: AnyObject {
     var onPeerDisconnected: ((String) -> Void)? { get set }
     
     func send(_ data: Data, to peers: [MCPeerID]) async throws
+    func sendMessage(_ data: Data, toPeer peer: String, messageType: MeshMessageType)
+    func getConnectedPeers() -> [String]
 }
 
 // MARK: - NetworkService
 class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
-    // MARK: - Configuration
+    // MARK: - Configuration  
     private let serviceType = "signalair"
-    // 移除對TemporaryIDManager的直接依賴
+    // 災難通信網路優化：限制連接數防止資源耗盡
+    private let maxConnections = 6  // MultipeerConnectivity實際穩定上限
+    private var connectionAttempts: Set<String> = []  // 防止重複連接嘗試
     
     // MARK: - Properties
     private var _myPeerID: MCPeerID!
@@ -31,7 +35,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
     // MARK: - MultipeerConnectivity Components
     private var session: MCSession
     private var advertiser: MCNearbyServiceAdvertiser
-    private var browser: MCNearbyServiceBrowser
+    var browser: MCNearbyServiceBrowser
     
     // MARK: - Published State
     @Published var connectionStatus: ConnectionStatus = .disconnected
@@ -52,7 +56,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
         self.session = MCSession(
             peer: _myPeerID!, 
             securityIdentity: nil, 
-            encryptionPreference: .required
+            encryptionPreference: .none  // 關閉MC層加密，避免與自定義加密衝突
         )
         
         self.advertiser = MCNearbyServiceAdvertiser(
@@ -117,9 +121,24 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
             throw NetworkError.notConnected
         }
         
+        // 驗證所有目標 peer 仍然連接中
+        let currentlyConnected = session.connectedPeers
+        let validPeers = targetPeers.filter { currentlyConnected.contains($0) }
+        
+        guard !validPeers.isEmpty else {
+            print("⚠️ All target peers disconnected, cannot send")
+            throw NetworkError.notConnected
+        }
+        
+        // 如果有些 peer 已斷線，只發送給仍連接的 peer
+        if validPeers.count < targetPeers.count {
+            let disconnectedCount = targetPeers.count - validPeers.count
+            print("⚠️ \(disconnectedCount) peer(s) disconnected, sending to \(validPeers.count) remaining peers")
+        }
+        
         do {
-            try session.send(data, toPeers: targetPeers, with: .reliable)
-            print("📤 Sent \(data.count) bytes to \(targetPeers.count) peers")
+            try session.send(data, toPeers: validPeers, with: .reliable)
+            print("📤 Sent \(data.count) bytes to \(validPeers.count) peers")
         } catch {
             print("❌ Failed to send data: \(error)")
             throw NetworkError.sendFailed
@@ -139,7 +158,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
     /// 手動連接到特定 peer
     func connect(to peer: MCPeerID) {
         print("🤝 Connecting to peer: \(peer.displayName)")
-        browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
+        browser.invitePeer(peer, to: session, withContext: nil, timeout: 90)
     }
     
     /// 斷開與特定 peer 的連接
@@ -172,6 +191,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
             print("✅ Peer connected: \(peer.displayName)")
             self.updateConnectionStatus()
             self.onPeerConnected?(peer.displayName)
+            
+            // 通知自動重連管理器清除斷線記錄（暫時註解）
+            // ServiceContainer.shared.autoReconnectManager?.clearDisconnectionRecord(peerID: peer)
         }
     }
     
@@ -180,6 +202,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
             print("❌ Peer disconnected: \(peer.displayName)")
             self.updateConnectionStatus()
             self.onPeerDisconnected?(peer.displayName)
+            
+            // 記錄斷線以便自動重連（暫時註解）
+            // ServiceContainer.shared.autoReconnectManager?.recordDisconnection(peerID: peer)
         }
     }
 }
@@ -187,14 +212,22 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol {
 // MARK: - MCSessionDelegate
 extension NetworkService: MCSessionDelegate {
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
+        // 日誌詳細的狀態變化
+        print("🔄 Session state changed for \(peerID.displayName): \(state)")
+        
         switch state {
         case .connecting:
             print("🔄 Connecting to: \(peerID.displayName)")
             
         case .connected:
-            handlePeerConnection(peerID)
+            print("✅ Connected to: \(peerID.displayName)")
+            // 稍微延遲以確保連接穩定
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.handlePeerConnection(peerID)
+            }
             
         case .notConnected:
+            print("❌ Peer disconnected: \(peerID.displayName)")
             handlePeerDisconnection(peerID)
             
         @unknown default:
@@ -225,8 +258,21 @@ extension NetworkService: MCSessionDelegate {
     }
     
     func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
-        print("📁 Finished receiving resource from: \(peerID.displayName)")
-        // Resource handling if needed in the future
+        if let error = error {
+            print("❌ Error receiving resource from \(peerID.displayName): \(error)")
+        } else {
+            print("📁 Finished receiving resource from: \(peerID.displayName)")
+        }
+    }
+    
+    // MARK: - Error Handling
+    func session(_ session: MCSession, didFailWithError error: Error) {
+        print("❌ Session failed with error: \(error)")
+        DispatchQueue.main.async {
+            self.connectionStatus = .disconnected
+            self.connectedPeers = []
+            self.isConnected = false
+        }
     }
 }
 
@@ -258,7 +304,48 @@ extension NetworkService: MCNearbyServiceBrowserDelegate {
             }
         }
         
-        // 自動嘗試連接
+        // 發送設備發現通知給自動重連管理器
+        NotificationCenter.default.post(
+            name: Notification.Name("PeerFound"),
+            object: peerID
+        )
+        
+        // 🚨 災難通信網路優化：智能連接管理
+        let currentConnections = session.connectedPeers.count
+        let peerName = peerID.displayName
+        
+        // 1. 檢查連接數限制
+        guard currentConnections < maxConnections else {
+            print("⚠️ 連接數已達上限 (\(maxConnections))，跳過連接 \(peerName)")
+            return
+        }
+        
+        // 2. 檢查是否已經連接
+        if session.connectedPeers.contains(peerID) {
+            print("ℹ️ 已經連接到 \(peerName)")
+            return
+        }
+        
+        // 3. 防止重複連接嘗試
+        guard !connectionAttempts.contains(peerName) else {
+            print("⚠️ 已在嘗試連接 \(peerName)，避免重複")
+            return
+        }
+        
+        // 4. 避免連接自己
+        guard peerName != myPeerID.displayName else {
+            return
+        }
+        
+        // 5. 記錄連接嘗試並設置自動清理
+        connectionAttempts.insert(peerName)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 30) { // 降低超時時間到30秒
+            self.connectionAttempts.remove(peerName)
+        }
+        
+        print("🤝 嘗試連接 \(peerName) (\(currentConnections+1)/\(maxConnections))")
+        
+        // 使用較短的超時時間以快速失敗和重試
         browser.invitePeer(peerID, to: session, withContext: nil, timeout: 30)
     }
     
@@ -275,5 +362,38 @@ extension NetworkService: MCNearbyServiceBrowserDelegate {
         DispatchQueue.main.async {
             self.connectionStatus = .disconnected
         }
+    }
+}
+
+// MARK: - Connection Reliability Enhancement
+extension NetworkService {
+    /// 檢查連接品質並提供穩定性建議
+    func checkConnectionQuality() {
+        let peerCount = connectedPeers.count
+        print("📊 連接品質檢查：\(peerCount) 個連接的設備")
+        
+        // 簡單穩定性檢查，不進行激進的重連
+        if peerCount == 0 && connectionStatus == .connected {
+            print("⚠️ 連接狀態不一致，需要更新狀態")
+            updateConnectionStatus()
+        }
+    }
+    
+    // MARK: - Protocol Methods
+    func sendMessage(_ data: Data, toPeer peer: String, messageType: MeshMessageType) {
+        // 找到對應的 MCPeerID
+        if let peerID = connectedPeers.first(where: { $0.displayName == peer }) {
+            Task {
+                do {
+                    try await send(data, to: [peerID])
+                } catch {
+                    print("❌ Failed to send message to \(peer): \(error)")
+                }
+            }
+        }
+    }
+    
+    func getConnectedPeers() -> [String] {
+        return connectedPeers.map { $0.displayName }
     }
 } 

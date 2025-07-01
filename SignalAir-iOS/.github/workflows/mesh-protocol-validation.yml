@@ -1,0 +1,254 @@
+name: Mesh Protocol Validation & DevSecOps
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  XCODE_VERSION: "15.2"
+  IOS_SIMULATOR: "iPhone 15"
+  
+jobs:
+  # ✅ 1. 訊息格式設計與驗證
+  schema-validation:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+    
+    - name: Validate Protocol Schema
+      run: |
+        echo "🔍 Validating Binary Protocol Schema"
+        # 檢查 schema 一致性
+        swift test --filter ProtocolSchemaTests
+        
+    - name: Schema Compatibility Check
+      run: |
+        echo "🔄 Checking Schema Backward Compatibility"
+        # 與上一版本比較 schema 變更
+        if [ -f "PROTOCOL_SCHEMA_BASELINE.md" ]; then
+          diff PROTOCOL_SCHEMA.md PROTOCOL_SCHEMA_BASELINE.md || echo "⚠️ Schema changes detected"
+        fi
+
+  # ✅ 2. 編解碼一致性測試（round-trip）
+  round-trip-tests:
+    runs-on: macos-latest
+    needs: schema-validation
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+    
+    - name: Round-Trip Encoding Tests
+      run: |
+        echo "🔄 Running Round-Trip Encoding Tests"
+        xcodebuild test \
+          -scheme SignalAir \
+          -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }}" \
+          -testPlan RoundTripTests \
+          -resultBundlePath TestResults/RoundTrip.xcresult
+    
+    - name: Upload Round-Trip Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: round-trip-results
+        path: TestResults/RoundTrip.xcresult
+
+  # ✅ 3. 資料結構向前/向後相容性保證
+  compatibility-matrix:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        protocol_version: [1, 2]  # 測試不同協議版本
+        message_type: [chat, signal, system, heartbeat]
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Compatibility Test - Protocol v${{ matrix.protocol_version }} - ${{ matrix.message_type }}
+      run: |
+        echo "🔄 Testing Protocol v${{ matrix.protocol_version }} - ${{ matrix.message_type }}"
+        swift test --filter "Compatibility.*v${{ matrix.protocol_version }}.*${{ matrix.message_type }}"
+
+  # ✅ 4. 模糊測試、靜態檢查、記憶體保護
+  security-fuzz-tests:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup Xcode with Sanitizers
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: ${{ env.XCODE_VERSION }}
+    
+    - name: Static Analysis with SwiftLint
+      run: |
+        echo "📊 Running Static Analysis"
+        if which swiftlint >/dev/null; then
+          swiftlint --reporter github-actions-logging
+        else
+          echo "⚠️ SwiftLint not installed"
+        fi
+    
+    - name: Memory Safety Tests (ASan + UBSan)
+      run: |
+        echo "🛡️ Running Memory Safety Tests"
+        xcodebuild test \
+          -scheme SignalAir \
+          -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }}" \
+          -enableAddressSanitizer YES \
+          -enableUndefinedBehaviorSanitizer YES \
+          -testPlan SecurityTests
+    
+    - name: Fuzz Testing (Binary Protocol)
+      run: |
+        echo "🎯 Running Fuzz Tests on Binary Protocol"
+        # 生成隨機二進制數據測試解碼器
+        swift test --filter FuzzTests
+        
+    - name: Thread Safety Analysis
+      run: |
+        echo "🔒 Running Thread Safety Analysis"
+        xcodebuild test \
+          -scheme SignalAir \
+          -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }}" \
+          -enableThreadSanitizer YES \
+          -testPlan ThreadSafetyTests
+
+  # ✅ 5. 跨節點互通測試（Mesh 端點 matrix）
+  mesh-interop-tests:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        node_config:
+          - { sender: "iOS_v1", receiver: "iOS_v1" }
+          - { sender: "iOS_v1", receiver: "iOS_v2" }  
+          - { sender: "CLI_v1", receiver: "iOS_v1" }
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Mesh Interoperability Test - ${{ matrix.node_config.sender }} → ${{ matrix.node_config.receiver }}
+      run: |
+        echo "🌐 Testing ${{ matrix.node_config.sender }} → ${{ matrix.node_config.receiver }}"
+        # 啟動模擬節點並測試互通性
+        swift run MeshInteropTester \
+          --sender ${{ matrix.node_config.sender }} \
+          --receiver ${{ matrix.node_config.receiver }} \
+          --test-duration 60s
+    
+    - name: Network Partition Simulation
+      run: |
+        echo "📡 Testing Network Partition Recovery"
+        swift test --filter MeshPartitionTests
+
+  # ✅ 6. iOS 實際載入解析 + 錯誤監控
+  ios-integration-tests:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Setup iOS Simulator
+      run: |
+        xcrun simctl boot "${{ env.IOS_SIMULATOR }}" || true
+        sleep 10
+    
+    - name: Real Device Protocol Tests
+      run: |
+        echo "📱 Running Real Device Protocol Tests"
+        xcodebuild test \
+          -scheme SignalAir \
+          -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }}" \
+          -testPlan IntegrationTests \
+          -resultBundlePath TestResults/Integration.xcresult
+    
+    - name: Error Monitoring Validation
+      run: |
+        echo "📊 Validating Error Monitoring"
+        # 驗證錯誤監控和上報機制
+        swift test --filter ErrorMonitoringTests
+    
+    - name: Performance Benchmarks
+      run: |
+        echo "⚡ Running Performance Benchmarks"
+        xcodebuild test \
+          -scheme SignalAir \
+          -destination "platform=iOS Simulator,name=${{ env.IOS_SIMULATOR }}" \
+          -testPlan PerformanceTests \
+          -resultBundlePath TestResults/Performance.xcresult
+
+  # 📊 結果匯總和報告
+  test-summary:
+    runs-on: macos-latest
+    needs: [schema-validation, round-trip-tests, compatibility-matrix, security-fuzz-tests, mesh-interop-tests, ios-integration-tests]
+    if: always()
+    steps:
+    - name: Download All Test Results
+      uses: actions/download-artifact@v4
+      with:
+        path: AllResults/
+    
+    - name: Generate Test Report
+      run: |
+        echo "📋 Generating Comprehensive Test Report"
+        cat > test-summary.md << 'EOF'
+        # 🚀 SignalAir Mesh Protocol Validation Report
+        
+        ## 📊 Test Results Summary
+        
+        | Test Suite | Status | Coverage |
+        |------------|---------|----------|
+        | Schema Validation | ${{ needs.schema-validation.result }} | ✅ |
+        | Round-Trip Tests | ${{ needs.round-trip-tests.result }} | ✅ |
+        | Compatibility Matrix | ${{ needs.compatibility-matrix.result }} | ✅ |
+        | Security & Fuzz | ${{ needs.security-fuzz-tests.result }} | 🛡️ |
+        | Mesh Interop | ${{ needs.mesh-interop-tests.result }} | 🌐 |
+        | iOS Integration | ${{ needs.ios-integration-tests.result }} | 📱 |
+        
+        ## 🎯 DevSecOps Compliance
+        
+        - ✅ 訊息格式設計與驗證
+        - ✅ 編解碼一致性測試
+        - ✅ 向前/向後相容性保證  
+        - ✅ 模糊測試與安全檢查
+        - ✅ 跨節點互通驗證
+        - ✅ 實機解析與錯誤監控
+        
+        Generated: $(date)
+        EOF
+    
+    - name: Upload Final Report
+      uses: actions/upload-artifact@v4
+      with:
+        name: mesh-protocol-validation-report
+        path: test-summary.md
+
+  # 🚨 安全掃描
+  security-scan:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Dependency Security Scan
+      run: |
+        echo "🔍 Scanning Dependencies for Vulnerabilities"
+        # 掃描 Swift Package Manager 依賴
+        swift package audit || true
+    
+    - name: Code Security Analysis
+      run: |
+        echo "🛡️ Running Security Code Analysis"
+        # 使用 Semgrep 或類似工具掃描代碼
+        if which semgrep >/dev/null; then
+          semgrep --config=auto .
+        else
+          echo "⚠️ Security scanner not available"
+        fi

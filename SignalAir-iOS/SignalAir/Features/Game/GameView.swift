@@ -179,7 +179,7 @@ struct BingoGameView: View {
         self.room = room
         self.onLeaveRoom = onLeaveRoom
         self.onGameWon = onGameWon
-        self._gameViewModel = StateObject(wrappedValue: BingoGameViewModel(languageService: ServiceContainer.shared.languageService))
+        self._gameViewModel = StateObject(wrappedValue: BingoGameViewModel(languageService: LanguageService()))
     }
     
     var body: some View {
@@ -195,7 +195,7 @@ struct BingoGameView: View {
                         
                         switch gameViewModel.gameState {
                         case .waitingForPlayers:
-                            Text("\(languageService.t("waiting_players")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")), \(languageService.t("needs_4_to_start")))")
+                            Text("\(languageService.t("waiting_players")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")), \(languageService.t("needs_2_to_start")))")
                                 .font(.caption)
                                 .foregroundColor(.gray)
                                 .padding(.top, 8)

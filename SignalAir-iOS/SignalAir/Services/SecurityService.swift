@@ -382,6 +382,8 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     // MARK: - Properties
     private var privateKey: Curve25519.KeyAgreement.PrivateKey?
     private var sessionKeys: [String: SessionKey] = [:]
+    private var deviceToNetworkMapping: [String: String] = [:] // DeviceID -> NetworkPeerID
+    private var networkToDeviceMapping: [String: String] = [:] // NetworkPeerID -> DeviceID
     private let keyRotationInterval: TimeInterval = 3600 // 1 hour
     private var keyRotationTimer: Timer?
     
@@ -416,7 +418,7 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     }
     
     /// 執行 ECDH 密鑰交換
-    func performKeyExchange(with peerPublicKey: Data, peerID: String) throws {
+    func performKeyExchange(with peerPublicKey: Data, peerID: String, deviceID: String? = nil) throws {
         guard let privateKey = privateKey else {
             throw CryptoError.noPrivateKey
         }
@@ -449,6 +451,13 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
                 encryptionKey: encryptionKey,
                 hmacKey: hmacKey
             )
+            
+            // 如果提供了設備ID，建立映射
+            if let deviceID = deviceID {
+                deviceToNetworkMapping[deviceID] = peerID
+                networkToDeviceMapping[peerID] = deviceID
+                print("🗺️ 建立映射：\(deviceID) -> \(peerID)")
+            }
             
             DispatchQueue.main.async {
                 self.activeConnections = self.sessionKeys.count
@@ -511,7 +520,20 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     
     /// 解密訊息（帶安全清理）
     func decrypt(_ data: Data, from peerID: String) throws -> Data {
-        guard var sessionKey = sessionKeys[peerID] else {
+        // 先嘗試直接查找會話密鑰
+        var actualPeerID = peerID
+        var sessionKey = sessionKeys[peerID]
+        
+        // 如果沒找到，嘗試通過設備ID映射查找
+        if sessionKey == nil, let networkPeerID = deviceToNetworkMapping[peerID] {
+            actualPeerID = networkPeerID
+            sessionKey = sessionKeys[networkPeerID]
+            print("🗺️ 通過映射找到會話密鑰：\(peerID) -> \(networkPeerID)")
+        }
+        
+        guard var sessionKey = sessionKey else {
+            print("❌ 找不到會話密鑰：\(peerID)，已有密鑰：\(sessionKeys.keys.sorted())")
+            print("❌ 設備映射：\(deviceToNetworkMapping)")
             throw CryptoError.noSessionKey
         }
         
@@ -530,7 +552,10 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             let encryptedMessage = try EncryptedMessage.decode(from: encryptedData)
             
             // 驗證訊息順序（防重放攻擊）
-            guard encryptedMessage.messageNumber >= sessionKey.messageNumber else {
+            // 允許一定的訊息編號容錯，處理網路延遲和亂序
+            let expectedMinNumber = max(0, sessionKey.messageNumber - 10) // 允許10個訊息的回退
+            guard encryptedMessage.messageNumber >= expectedMinNumber else {
+                print("❌ 訊息編號異常：收到 \(encryptedMessage.messageNumber)，期望 >= \(expectedMinNumber)（當前：\(sessionKey.messageNumber)）")
                 throw CryptoError.messageNumberMismatch
             }
             
@@ -551,7 +576,7 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             // 更新密鑰（Forward Secrecy）
             sessionKey = ratchetKey(sessionKey)
             sessionKey.messageNumber = encryptedMessage.messageNumber + 1
-            sessionKeys[peerID] = sessionKey
+            sessionKeys[actualPeerID] = sessionKey
             
             print("🔓 Decrypted message from: \(peerID), size: \(plaintext.count) bytes")
             return plaintext
@@ -596,7 +621,27 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     
     /// 檢查是否有會話密鑰
     func hasSessionKey(for peerID: String) -> Bool {
-        return sessionKeys[peerID] != nil
+        // 先嘗試直接查找
+        if sessionKeys[peerID] != nil {
+            return true
+        }
+        
+        // 如果沒找到，嘗試通過設備ID映射查找
+        if let networkPeerID = deviceToNetworkMapping[peerID] {
+            return sessionKeys[networkPeerID] != nil
+        }
+        
+        return false
+    }
+    
+    /// 獲取設備ID對應的網路對等裝置ID
+    func getDeviceID(for peerID: String) -> String? {
+        return networkToDeviceMapping[peerID]
+    }
+    
+    /// 獲取所有會話密鑰的對等裝置ID
+    func getAllSessionKeyPeerIDs() -> [String] {
+        return Array(sessionKeys.keys)
     }
     
     /// 移除會話密鑰（帶安全清理）

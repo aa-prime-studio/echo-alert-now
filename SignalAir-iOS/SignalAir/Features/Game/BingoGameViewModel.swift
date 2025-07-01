@@ -21,11 +21,15 @@ class BingoGameViewModel: ObservableObject {
     @Published var isInRoom: Bool = false
     @Published var isGameActive: Bool = false
     
+    // MARK: - 房間限制配置
+    private let maxPlayersPerRoom = 6  // 每房最多6人
+    private let minPlayersToStart = 2  // 最少2人可開始遊戲
+    
     // MARK: - 遊戲結果回調
     var onGameWon: ((String, Int) -> Void)?
     
     // MARK: - 服務依賴
-    private let meshManager: MeshManager
+    private var meshManager: MeshManagerProtocol
     private let securityService: SecurityService
     private let settingsViewModel: SettingsViewModel
     private let languageService: LanguageService
@@ -51,14 +55,14 @@ class BingoGameViewModel: ObservableObject {
     
     // MARK: - 初始化
     init(
-        meshManager: MeshManager = MeshManager(),
-        securityService: SecurityService = SecurityService(),
-        settingsViewModel: SettingsViewModel = SettingsViewModel(),
+        meshManager: MeshManagerProtocol? = nil,
+        securityService: SecurityService? = nil,
+        settingsViewModel: SettingsViewModel? = nil,
         languageService: LanguageService
     ) {
-        self.meshManager = meshManager
-        self.securityService = securityService
-        self.settingsViewModel = settingsViewModel
+        self.meshManager = meshManager ?? ServiceContainer.shared.meshManager!
+        self.securityService = securityService ?? ServiceContainer.shared.securityService
+        self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel
         self.languageService = languageService
         
         // 初始化玩家資訊
@@ -87,7 +91,7 @@ class BingoGameViewModel: ObservableObject {
         
         // 設定遊戲訊息接收回調
         meshManager.onMessageReceived = { [weak self] meshMessage in
-            if meshMessage.type == .game {
+            if meshMessage.type == MeshMessageType.game {
                 self?.handleIncomingGameMessage(meshMessage)
             }
         }
@@ -254,8 +258,15 @@ class BingoGameViewModel: ObservableObject {
         
         let playerState = PlayerState(id: components[0], name: components[1])
         
+        // 檢查房間是否已滿
+        if roomPlayers.count >= maxPlayersPerRoom {
+            print("⚠️ 房間已滿，拒絕玩家 \(playerState.name) 加入")
+            return
+        }
+        
         if !roomPlayers.contains(where: { $0.id == playerState.id }) {
             roomPlayers.append(playerState)
+            print("✅ 玩家 \(playerState.name) 加入房間 (\(roomPlayers.count)/\(maxPlayersPerRoom))")
         }
         
         broadcastGameMessage(.roomSync, data: encodeGameRoomState())
@@ -350,8 +361,17 @@ class BingoGameViewModel: ObservableObject {
     func startGame() {
         guard isHost && gameState == .waitingForPlayers else { return }
         
+        // 檢查最少人數要求
+        if roomPlayers.count < minPlayersToStart {
+            print("⚠️ 房間人數不足，需要至少 \(minPlayersToStart) 人才能開始遊戲")
+            addSystemMessage("需要至少 \(minPlayersToStart) 人才能開始遊戲")
+            return
+        }
+        
         gameState = .countdown
         countdown = 5
+        
+        print("🎮 開始遊戲，房間人數：\(roomPlayers.count)/\(maxPlayersPerRoom)")
         
         broadcastGameMessage(.gameStart, data: Data())
         
@@ -530,42 +550,44 @@ class BingoGameViewModel: ObservableObject {
     // MARK: - 網路通訊
     
     private func broadcastGameMessage(_ type: GameMessageType, data: Data) {
-        let gameMessage = GameMessage(
-            type: type,
-            senderID: playerID,
-            senderName: deviceName,
-            data: data,
-            timestamp: Date(),
-            gameRoomID: gameRoomID
-        )
-        
-        do {
-            let messageData = try JSONEncoder().encode(gameMessage)
-            // 使用正確的廣播方法
-            meshManager.broadcastMessage(messageData, messageType: .game)
-        } catch {
-            print("❌ 廣播遊戲訊息失敗: \(error)")
+        // 檢查網路連接狀態
+        guard isNetworkActive else {
+            print("📡 廣播跳過: 網路未啟動 (type: \(type.rawValue))")
+            return
         }
+        
+        // 只允許心跳消息通過，以保持連接活躍
+        if type == .heartbeat {
+            // 發送簡單的二進制心跳保持連接
+            let heartbeatMessage = MeshMessage(
+                id: UUID().uuidString,
+                type: .system,
+                data: "HEARTBEAT".data(using: .utf8) ?? Data()
+            )
+            
+            do {
+                let binaryData = try BinaryMessageEncoder.encode(heartbeatMessage)
+                meshManager.broadcastMessage(binaryData, messageType: .system)
+                print("💓 發送心跳包以保持連接活躍")
+            } catch {
+                print("❌ 心跳包編碼失敗: \(error)")
+            }
+            return
+        }
+        
+        print("📡 遊戲廣播暫時禁用 (避免協議衝突): \(type.rawValue)")
+        return
+        
     }
     
     private func encodeGameRoomState() -> Data {
-        guard let roomState = gameRoomState else { return Data() }
-        
-        do {
-            return try JSONEncoder().encode(roomState)
-        } catch {
-            print("❌ 編碼房間狀態失敗: \(error)")
-            return Data()
-        }
+        // 遊戲廣播暫時禁用，避免協議衝突
+        return Data()
     }
     
     private func encodeGameState(_ state: GameRoomState.GameState) -> Data {
-        do {
-            return try JSONEncoder().encode(state)
-        } catch {
-            print("❌ 編碼遊戲狀態失敗: \(error)")
-            return Data()
-        }
+        // 遊戲廣播暫時禁用，避免協議衝突
+        return Data()
     }
     
     // MARK: - 連線管理
@@ -592,13 +614,22 @@ class BingoGameViewModel: ObservableObject {
     }
     
     private func startHeartbeat() {
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-            self?.sendHeartbeat()
+        // 延遲啟動 heartbeat，等待網路連接穩定
+        DispatchQueue.main.asyncAfter(deadline: .now() + 10.0) { [weak self] in
+            self?.heartbeatTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
+                self?.sendHeartbeat()
+            }
         }
     }
     
     private func sendHeartbeat() {
         guard isNetworkActive else { return }
+        
+        // 檢查是否有連接的設備再發送
+        guard meshManager.getConnectedPeers().count > 0 else {
+            print("📡 Heartbeat: 無連接設備，跳過廣播")
+            return
+        }
         
         let heartbeatData = "\(playerID)|\(deviceName)".data(using: .utf8) ?? Data()
         broadcastGameMessage(.heartbeat, data: heartbeatData)

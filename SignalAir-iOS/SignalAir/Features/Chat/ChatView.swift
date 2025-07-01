@@ -5,6 +5,7 @@ struct ChatView: View {
     @StateObject private var viewModel = ChatViewModel()
     @EnvironmentObject var nicknameService: NicknameService
     @EnvironmentObject var languageService: LanguageService
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
@@ -21,6 +22,16 @@ struct ChatView: View {
         .onChange(of: nicknameService.nickname) { newNickname in
             viewModel.deviceName = newNickname
         }
+    }
+    
+    // MARK: - Helper Methods
+    
+    /// 發送訊息並收回鍵盤
+    private func sendMessageAndDismissKeyboard() {
+        guard !viewModel.newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        
+        viewModel.sendMessage()
+        isTextFieldFocused = false // 收回鍵盤
     }
     
     private var headerSection: some View {
@@ -92,9 +103,12 @@ struct ChatView: View {
             HStack(spacing: 12) {
                 TextField(languageService.t("enter_message"), text: $viewModel.newMessage)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .onSubmit { viewModel.sendMessage() }
+                    .focused($isTextFieldFocused)
+                    .onSubmit { 
+                        sendMessageAndDismissKeyboard()
+                    }
                 
-                Button(action: { viewModel.sendMessage() }) {
+                Button(action: { sendMessageAndDismissKeyboard() }) {
                     Image(systemName: "paperplane.fill")
                         .font(.title3)
                         .foregroundColor(.white)

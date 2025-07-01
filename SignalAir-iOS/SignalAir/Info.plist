@@ -80,5 +80,19 @@
 		<string>_signalair._tcp</string>
 		<string>_signalair._udp</string>
 	</array>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>SignalAir Rescue 需要使用藍牙來發現並連接附近的設備進行緊急通訊</string>
+	<key>NSBluetoothPeripheralUsageDescription</key>
+	<string>SignalAir Rescue 需要使用藍牙來與附近的設備建立緊急通訊連接</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SignalAir Rescue 需要使用位置信息來提供準確的緊急救援座標</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>SignalAir Rescue 需要使用位置信息來在緊急情況下提供準確的救援座標</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>bluetooth-central</string>
+		<string>bluetooth-peripheral</string>
+		<string>background-processing</string>
+	</array>
 </dict>
 </plist>

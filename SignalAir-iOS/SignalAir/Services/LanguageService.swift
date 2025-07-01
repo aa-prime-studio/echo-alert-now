@@ -103,7 +103,7 @@ class LanguageService: ObservableObject {
                 // 遊戲頁面
                 "room_status": "房間狀態:",
                 "waiting_players": "等待玩家",
-                "needs_4_to_start": "需4人開始",
+                "needs_2_to_start": "需2人開始",
                 "ready_to_start": "準備開始",
                 "game_in_progress": "遊戲進行中",
                 "game_finished": "遊戲結束",
@@ -239,7 +239,7 @@ class LanguageService: ObservableObject {
                 // Game page
                 "room_status": "Room Status:",
                 "waiting_players": "Waiting for Players",
-                "needs_4_to_start": "Need 4 to start",
+                "needs_2_to_start": "Need 2 to start",
                 "ready_to_start": "Ready to Start",
                 "game_in_progress": "Game in Progress",
                 "game_finished": "Game Finished",

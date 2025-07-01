@@ -497,6 +497,38 @@ class FloodProtection: FloodProtectionProtocol {
         return false
     }
     
+    /// 檢查是否應該接受訊息（兼容方法）
+    func shouldAcceptMessage(from deviceID: String, content: Data, size: Int, priority: MessagePriority) -> Bool {
+        // 緊急訊息傷有更寬鬆的限制
+        if priority == .emergency {
+            // 只檢查是否被禁止，不檢查速率限制
+            if banManager.isBanned(deviceID) {
+                print("🚫 Emergency message blocked from banned peer: \(deviceID)")
+                return false
+            }
+            
+            // 檢查訊息大小（緊急訊息允許更大）
+            if size > 2 * 1024 * 1024 { // 2MB 限制緊急訊息
+                print("🚫 Emergency message too large from: \(deviceID)")
+                return false
+            }
+            
+            return true
+        }
+        
+        // 非緊急訊息使用標準檢查
+        // 創建一個臨時的 MeshMessage 物件來使用現有的 shouldBlock 方法
+        let messageType: MeshMessageType = priority == .emergency ? .emergencyDanger : .signal
+        let tempMessage = MeshMessage(
+            type: messageType,
+            sourceID: deviceID,
+            targetID: nil,
+            data: content
+        )
+        
+        return !shouldBlock(tempMessage, from: deviceID)
+    }
+    
     /// 手動禁止 peer
     func banPeer(_ peerID: String, duration: TimeInterval? = nil) {
         let banDuration = duration ?? config.banDuration

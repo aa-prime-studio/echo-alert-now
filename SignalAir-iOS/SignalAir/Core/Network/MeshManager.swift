@@ -18,8 +18,8 @@ protocol MeshNetworkProtocol {
     func getNetworkTopology() -> [String: Set<String>]
 }
 
-// MARK: - Message Types with Emergency Priority
-enum MeshMessageType: String, CaseIterable, Codable {
+// MARK: - Extended Message Types with Emergency Priority
+enum ExtendedMeshMessageType: String, CaseIterable, Codable {
     case emergencyMedical = "emergency_medical"  // 最高優先級
     case emergencyDanger = "emergency_danger"    // 最高優先級
     case signal = "signal"
@@ -333,7 +333,7 @@ class SimpleIntelligentRouter {
 }
 
 // MARK: - Mesh Message Structure
-struct MeshMessage: Codable {
+struct ExtendedMeshMessage: Codable {
     let id: String
     let type: MeshMessageType
     let sourceID: String
@@ -611,7 +611,7 @@ class SimpleFloodProtection: FloodProtectionProtocol {
 
 // MARK: - Mesh Manager (智能路由整合版)
 @Observable
-class MeshManager: MeshNetworkProtocol {
+class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     // MARK: - Dependencies
     private let networkService: NetworkServiceProtocol
     private let securityService: SecurityServiceProtocol
@@ -629,10 +629,16 @@ class MeshManager: MeshNetworkProtocol {
     private var queueProcessingTimer: Timer?
     private var metricsCleanupTimer: Timer?
     
-    // MARK: - Configuration
-    private let heartbeatInterval: TimeInterval = 30.0      // 30秒心跳
-    private let queueProcessingInterval: TimeInterval = 0.1  // 100ms處理間隔
-    private let metricsCleanupInterval: TimeInterval = 120.0 // 2分鐘清理一次
+    // MARK: - Configuration (災難通信優化)
+    private let heartbeatInterval: TimeInterval = 120.0     // 2分鐘心跳 (大規模mesh優化)  
+    private let queueProcessingInterval: TimeInterval = 0.2  // 200ms處理間隔 (減少CPU負載)
+    private let metricsCleanupInterval: TimeInterval = 300.0 // 5分鐘清理一次 (減少頻繁操作)
+    
+    // MARK: - Send Failure Tracking
+    private var sendFailureCounts: [String: Int] = [:]
+    private var lastFailureTime: [String: Date] = [:]
+    private let maxFailureCount = 3  // 最多允許3次失敗
+    private let failureResetInterval: TimeInterval = 300.0  // 5分鐘後重置失敗計數
     
     // MARK: - Published State
     @Published var connectedPeers: [String] = []
@@ -641,9 +647,14 @@ class MeshManager: MeshNetworkProtocol {
     @Published var routingMetrics: [String: SimpleRouteMetrics] = [:]
     
     // MARK: - Callbacks
-    var onMessageReceived: ((Data, MeshMessageType, String) -> Void)?
+    var onDataReceived: ((Data, MeshMessageType, String) -> Void)?
     var onNetworkTopologyChanged: (([String: Set<String>]) -> Void)?
     var onEmergencyMessage: ((Data, MeshMessageType, String) -> Void)?
+    
+    // MARK: - Protocol Callbacks (符合 MeshManagerProtocol)
+    var onMessageReceived: ((MeshMessage) -> Void)?
+    var onPeerConnected: ((String) -> Void)?
+    var onPeerDisconnected: ((String) -> Void)?
     
     // MARK: - Initialization
     init(networkService: NetworkServiceProtocol, 
@@ -661,19 +672,74 @@ class MeshManager: MeshNetworkProtocol {
     
     // MARK: - MeshNetworkProtocol Implementation
     
+    func startMeshNetwork() {
+        if !isActive {
+            startServices()
+            print("🕸️ MeshManager: Mesh 網路已啟動")
+        }
+    }
+    
+    func stopMeshNetwork() {
+        if isActive {
+            stopServices()
+            print("🛑 MeshManager: Mesh 網路已停止")
+        }
+    }
+    
     func broadcastMessage(_ data: Data, messageType: MeshMessageType) {
+        // 🚨 災難通信優化：防止消息風暴的廣播機制
+        let connectedPeers = networkService.connectedPeers
+        
+        // 1. 檢查是否有連接的設備
+        guard !connectedPeers.isEmpty else {
+            print("📱 無連接設備，跳過廣播 \(messageType.rawValue)")
+            return
+        }
+        
+        // 2. 對緊急消息給予優先處理
+        let isEmergency = messageType.isEmergency
+        if isEmergency {
+            print("🚨 緊急消息廣播: \(messageType.rawValue)")
+        }
+        
+        // 3. 創建優化的MeshMessage
         let message = MeshMessage(
+            id: UUID().uuidString,
             type: messageType,
-            sourceID: networkService.myPeerID.displayName,
             data: data
         )
         
-        processOutgoingMessage(message)
-        
-        // 更新統計
-        updateStats(for: message, isSent: true)
-        
-        print("📡 Broadcasting \(messageType.rawValue) message")
+        // 4. 二進制編碼（災難場景優化）
+        do {
+            let binaryData = try BinaryMessageEncoder.encode(message)
+            let dataSize = binaryData.count
+            
+            // 5. 檢查數據大小（防止大數據包阻塞）
+            if dataSize > 1024 && !isEmergency {
+                print("⚠️ 非緊急消息過大 (\(dataSize) bytes)，考慮分片")
+            }
+            
+            print("📦 廣播 \(messageType.rawValue): \(dataSize) bytes → \(connectedPeers.count) 設備")
+            
+            // 6. 異步並發發送（提高效率）
+            Task {
+                await withTaskGroup(of: Void.self) { group in
+                    for peer in connectedPeers {
+                        group.addTask {
+                            do {
+                                try await self.networkService.send(binaryData, to: [peer])
+                            } catch {
+                                print("❌ 廣播到 \(peer.displayName) 失敗: \(error)")
+                                // 記錄失敗但不阻塞其他發送
+                            }
+                        }
+                    }
+                }
+            }
+            
+        } catch {
+            print("❌ 廣播編碼失敗: \(error)")
+        }
     }
     
     func sendDirectMessage(_ data: Data, to peerID: String, messageType: MeshMessageType) {
@@ -740,6 +806,43 @@ class MeshManager: MeshNetworkProtocol {
         print("🚫 Node \(peerID) marked as failed")
     }
     
+    /// 記錄發送失敗，只有在多次失敗後才標記節點為失敗
+    private func recordSendFailure(for peerID: String) {
+        let now = Date()
+        
+        // 檢查是否需要重置失敗計數（超過重置間隔）
+        if let lastFailure = lastFailureTime[peerID],
+           now.timeIntervalSince(lastFailure) > failureResetInterval {
+            sendFailureCounts[peerID] = 0
+        }
+        
+        // 增加失敗計數
+        sendFailureCounts[peerID, default: 0] += 1
+        lastFailureTime[peerID] = now
+        
+        let failureCount = sendFailureCounts[peerID, default: 0]
+        print("⚠️ Send failure for \(peerID): \(failureCount)/\(maxFailureCount)")
+        
+        // 只有在達到最大失敗次數時才標記為失敗
+        if failureCount >= maxFailureCount {
+            print("🚫 Node \(peerID) exceeded max failure count, marking as failed")
+            markNodeAsFailed(peerID)
+            
+            // 清理失敗記錄
+            sendFailureCounts.removeValue(forKey: peerID)
+            lastFailureTime.removeValue(forKey: peerID)
+        }
+    }
+    
+    /// 清理成功發送後的失敗記錄
+    private func clearSendFailure(for peerID: String) {
+        if sendFailureCounts[peerID] != nil {
+            sendFailureCounts.removeValue(forKey: peerID)
+            lastFailureTime.removeValue(forKey: peerID)
+            print("✅ Cleared failure record for \(peerID)")
+        }
+    }
+    
     // MARK: - Private Methods
     
     private func setupNetworkCallbacks() {
@@ -799,8 +902,8 @@ class MeshManager: MeshNetworkProtocol {
                 decryptedData = data
             }
             
-            // 解析訊息
-            let message = try JSONDecoder().decode(MeshMessage.self, from: decryptedData)
+            // 解析訊息 (使用二進制協議替換JSON)
+            let message = try BinaryMessageDecoder.decode(decryptedData)
             
             // 防洪檢查
             if floodProtection.shouldBlock(message, from: peerID) {
@@ -818,7 +921,10 @@ class MeshManager: MeshNetworkProtocol {
             addToProcessedMessages(message.id)
             
             // 處理訊息
-            handleMeshMessage(message, from: peerID)
+            handleSpecialMessageTypes(message, from: peerID)
+            
+            // 呼叫協議回調
+            onMessageReceived?(message)
             
             // 更新統計
             updateStats(for: message, isSent: false)
@@ -963,7 +1069,7 @@ class MeshManager: MeshNetworkProtocol {
     private func sendMessageToPeer(_ message: MeshMessage, peer: MCPeerID) {
         Task {
             do {
-                let messageData = try JSONEncoder().encode(message)
+                let messageData = try BinaryMessageEncoder.encode(message)
                 
                 // 加密數據（如果有會話密鑰）
                 let finalData: Data
@@ -975,11 +1081,14 @@ class MeshManager: MeshNetworkProtocol {
                 
                 try await networkService.send(finalData, to: [peer])
                 
+                // 發送成功，清理失敗記錄
+                clearSendFailure(for: peer.displayName)
+                
             } catch {
                 print("❌ Failed to send message to \(peer.displayName): \(error)")
                 
-                // 標記節點可能有問題
-                markNodeAsFailed(peer.displayName)
+                // 記錄發送失敗，但不立即標記為失敗
+                recordSendFailure(for: peer.displayName)
             }
         }
     }
@@ -1008,7 +1117,7 @@ class MeshManager: MeshNetworkProtocol {
     
     private func handleRoutingUpdate(_ message: MeshMessage, from peerID: String) {
         do {
-            let remoteTopology = try JSONDecoder().decode([String: Set<String>].self, from: message.data)
+            let remoteTopology = try BinaryMessageDecoder.decodeTopology(message.data)
             
             // 合併拓撲信息
             for (node, connections) in remoteTopology {
@@ -1037,6 +1146,9 @@ class MeshManager: MeshNetworkProtocol {
         // 初始化節點指標
         updateNodeMetrics(peerID: peerID, signalStrength: -50.0, packetLoss: 0.0)
         
+        // 呼叫協議回調
+        onPeerConnected?(peerID)
+        
         print("🤝 Peer connected: \(peerID)")
     }
     
@@ -1053,6 +1165,9 @@ class MeshManager: MeshNetworkProtocol {
             self.routingMetrics.removeValue(forKey: peerID)
         }
         
+        // 呼叫協議回調
+        onPeerDisconnected?(peerID)
+        
         print("👋 Peer disconnected: \(peerID)")
     }
     
@@ -1065,13 +1180,27 @@ class MeshManager: MeshNetworkProtocol {
     }
     
     private func sendHeartbeat() {
-        let heartbeatData = "heartbeat".data(using: .utf8) ?? Data()
+        // 🚨 災難通信優化：智能心跳管理
+        let connectedCount = networkService.connectedPeers.count
+        
+        // 1. 如果沒有連接，不發送心跳節省資源
+        guard connectedCount > 0 else {
+            print("📱 無連接設備，跳過心跳")
+            return
+        }
+        
+        // 2. 創建輕量級心跳數據（包含基本拓撲信息）
+        let myID = networkService.myPeerID.displayName
+        let heartbeatInfo = "\(myID):\(connectedCount)"
+        let heartbeatData = heartbeatInfo.data(using: .utf8) ?? Data()
+        
+        print("💓 發送心跳到 \(connectedCount) 個設備")
         broadcastMessage(heartbeatData, messageType: .heartbeat)
     }
     
     private func sendRoutingUpdate() {
         do {
-            let topologyData = try JSONEncoder().encode(topology.getConnections())
+            let topologyData = try BinaryMessageEncoder.encodeTopology(topology.getConnections())
             broadcastMessage(topologyData, messageType: .routingUpdate)
         } catch {
             print("❌ Failed to send routing update: \(error)")
