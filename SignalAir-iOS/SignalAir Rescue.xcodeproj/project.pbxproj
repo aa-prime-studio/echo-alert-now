@@ -39,6 +39,8 @@
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
+		88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */; };
+		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -105,6 +107,8 @@
 		F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageDecoder.swift; sourceTree = "<group>"; };
 		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
+		678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGameProtocol.swift; sourceTree = "<group>"; };
+		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -253,6 +257,7 @@
 			children = (
 				59C00C8FC4181AC6810C2275 /* Info.plist */,
 				0F2C5F106562648042E25C83 /* App */,
+				F6E36D29DD5546D59E9F2A84 /* Core */,
 				2E64BDA531252741703A165D /* Features */,
 				146EC0C5C7144F52FCB9D77C /* Services */,
 				97A5CBDBF6FF5CC9C79AD77A /* Shared */,
@@ -295,6 +300,31 @@
 				194D9D751FD8D5E4F70BC34F /* Components */,
 			);
 			path = Game;
+			sourceTree = "<group>";
+		};
+		F6E36D29DD5546D59E9F2A84 /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				EEB377D8A5A04D5FA9093D65 /* Protocol */,
+				CORENET1234567890ABCDEF /* Network */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		CORENET1234567890ABCDEF /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				TOPO001234567890ABCDE0 /* TopologyManager.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
+		EEB377D8A5A04D5FA9093D65 /* Protocol */ = {
+			isa = PBXGroup;
+			children = (
+				678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */,
+			);
+			path = Protocol;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -434,6 +464,8 @@
 				0A00C0E881064AA39F4FE064 /* SignalViews.swift in Sources */,
 				4836117A73E2E3AD6073F544 /* TermsOfServiceView.swift in Sources */,
 				TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */,
+				88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */,
+				TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

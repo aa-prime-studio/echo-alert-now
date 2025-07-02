@@ -23,24 +23,37 @@ struct DrawnNumbersView: View {
                     .frame(maxWidth: .infinity, alignment: .center)
                     .padding(.vertical, 20)
             } else {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(spacing: 8) {
-                        ForEach(drawnNumbers.reversed(), id: \.self) { number in
-                            Text("\(number)")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white)
-                                .frame(width: 32, height: 32)
-                                .background(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
-                                .cornerRadius(16)
-                                .overlay(
-                                    Circle()
-                                        .stroke(Color.white, lineWidth: 1)
-                                )
+                GeometryReader { geometry in
+                    ScrollViewReader { proxy in
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            LazyHStack(spacing: 8) {
+                                ForEach(drawnNumbers.reversed(), id: \.self) { number in
+                                    Text("\(number)")
+                                        .font(.system(size: min(14, geometry.size.width * 0.04), weight: .bold))
+                                        .foregroundColor(.white)
+                                        .frame(width: min(32, geometry.size.width * 0.08), 
+                                               height: min(32, geometry.size.width * 0.08))
+                                        .background(Color(red: 0.149, green: 0.243, blue: 0.894))
+                                        .cornerRadius(min(16, geometry.size.width * 0.04))
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.white, lineWidth: 1)
+                                        )
+                                        .id(number)
+                                }
+                            }
+                            .padding(.horizontal, 4)
+                        }
+                        .onChange(of: drawnNumbers.count) { _ in
+                            if let lastNumber = drawnNumbers.last {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    proxy.scrollTo(lastNumber, anchor: .trailing)
+                                }
+                            }
                         }
                     }
-                    .padding(.horizontal, 4)
                 }
-                .frame(height: 40)
+                .frame(height: min(40, UIScreen.main.bounds.width * 0.1))
             }
         }
         .padding()

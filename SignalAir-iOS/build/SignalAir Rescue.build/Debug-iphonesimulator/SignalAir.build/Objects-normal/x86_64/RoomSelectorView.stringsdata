@@ -1,0 +1,16 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/RoomSelectorView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "%lld %@",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 23
+        }
+      }
+    ]
+  },
+  "version": 1
+}

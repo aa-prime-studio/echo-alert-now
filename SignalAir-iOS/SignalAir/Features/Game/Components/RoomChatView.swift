@@ -7,6 +7,7 @@ struct RoomChatView: View {
     let onMessageChange: (String) -> Void
     let onSendMessage: () -> Void
     @EnvironmentObject var languageService: LanguageService
+    @FocusState private var isTextFieldFocused: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -35,8 +36,18 @@ struct RoomChatView: View {
                     set: onMessageChange
                 ))
                 .textFieldStyle(RoundedBorderTextFieldStyle())
+                .focused($isTextFieldFocused)
+                .onSubmit {
+                    if !newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        onSendMessage()
+                        isTextFieldFocused = false // 發送後關閉鍵盤
+                    }
+                }
                 
-                Button(action: onSendMessage) {
+                Button(action: {
+                    onSendMessage()
+                    isTextFieldFocused = false // 點擊發送後關閉鍵盤
+                }) {
                     Image(systemName: "paperplane.fill")
                         .font(.headline)
                         .foregroundColor(.white)
@@ -66,7 +77,7 @@ struct ChatMessageRow: View {
             VStack(alignment: message.isOwn ? .trailing : .leading, spacing: 4) {
                 HStack(spacing: 4) {
                     if !message.isOwn {
-                        Text(message.playerName)
+                        Text(NicknameFormatter.cleanNickname(message.playerName))
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4

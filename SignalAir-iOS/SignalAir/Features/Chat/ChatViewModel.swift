@@ -102,7 +102,8 @@ class ChatViewModel: ObservableObject {
         }
         
         let messageText = newMessage.trimmingCharacters(in: .whitespacesAndNewlines)
-        let currentDeviceName = settingsViewModel.userNickname
+        // 使用 NicknameService 的純暱稱，而不是 SettingsViewModel
+        let currentDeviceName = ServiceContainer.shared.nicknameService.userNickname
         let networkID = ServiceContainer.shared.networkService.myPeerID.displayName
         
         let chatMessage = ChatMessage(
@@ -126,34 +127,23 @@ class ChatViewModel: ObservableObject {
         addMessageToList(chatMessage)
         
         // 使用純二進制協議發送聊天訊息
-        Task {
-            do {
-                // 創建聊天訊息的二進制數據
-                let chatData = encodeChatMessage(chatMessage)
-                
-                // 添加協議頭部
-                var binaryPacket = Data()
-                binaryPacket.append(1) // 協議版本
-                binaryPacket.append(MeshMessageType.chat.rawValue) // 聊天訊息類型 (0x03)
-                binaryPacket.append(chatData)
-                
-                // 透過 meshManager 廣播
-                try await meshManager.broadcastMessage(binaryPacket, messageType: .chat)
-                
-                DispatchQueue.main.async {
-                    // 追蹤訊息以便自毀
-                    self.selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
-                    self.messagesSent += 1
-                    print("💬 ChatViewModel: 已發送二進制聊天訊息: \(messageText) (\(binaryPacket.count) bytes)")
-                    self.newMessage = ""
-                }
-            } catch {
-                DispatchQueue.main.async {
-                    self.addSystemMessage("❌ 發送失敗: \(error.localizedDescription)")
-                    print("❌ ChatViewModel: 發送失敗: \(error)")
-                }
-            }
-        }
+        // 創建聊天訊息的二進制數據
+        let chatData = encodeChatMessage(chatMessage)
+        
+        // 添加協議頭部
+        var binaryPacket = Data()
+        binaryPacket.append(1) // 協議版本
+        binaryPacket.append(MeshMessageType.chat.rawValue) // 聊天訊息類型 (0x03)
+        binaryPacket.append(chatData)
+        
+        // 透過 meshManager 廣播
+        meshManager.broadcastMessage(binaryPacket, messageType: .chat)
+        
+        // 追蹤訊息以便自毀
+        selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
+        messagesSent += 1
+        print("💬 ChatViewModel: 已發送二進制聊天訊息: \(messageText) (\(binaryPacket.count) bytes)")
+        newMessage = ""
     }
     
     /// 編碼聊天訊息為二進制格式
@@ -443,8 +433,6 @@ class ChatViewModel: ObservableObject {
         // 接收到的訊息一律標記為非本人發送
         // 使用網路層的 PeerID 來區分，而不是可能被污染的設備ID
         let myNetworkID = ServiceContainer.shared.networkService.myPeerID.displayName
-        let myNickname = settingsViewModel.userNickname
-        let myFullName = "\(myNickname) (\(myNetworkID))"
         
         // 檢查是否包含我的網路ID（更可靠的判斷）
         if chatMessage.deviceName.contains(myNetworkID) {

@@ -1,0 +1,18 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/TermsOfServiceContent.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/TermsOfServiceContent.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/TermsOfServiceContent.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/TermsOfServiceContent.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/TermsOfServiceContent.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/TermsOfServiceContent.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/DerivedSources/GeneratedAssetSymbols.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/GeneratedAssetSymbols.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/GeneratedAssetSymbols.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/GeneratedAssetSymbols.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/GeneratedAssetSymbols.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Protocol/BinaryGameProtocol.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryGameProtocol.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryGameProtocol.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryGameProtocol.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryGameProtocol.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryGameProtocol.d"

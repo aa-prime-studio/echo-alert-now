@@ -17,16 +17,16 @@ struct PlayerListView: View {
                     HStack {
                         // Player name with indicator for self
                         HStack(spacing: 8) {
-                            if player.name == deviceName {
+                            if NicknameFormatter.cleanNickname(player.name) == NicknameFormatter.cleanNickname(deviceName) {
                                 Image(systemName: "person.fill")
                                     .font(.caption)
                                     .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                             }
                             
-                            Text(player.name)
+                            Text(NicknameFormatter.cleanNickname(player.name))
                                 .font(.subheadline)
-                                .fontWeight(player.name == deviceName ? .semibold : .regular)
-                                .foregroundColor(player.name == deviceName ? Color(red: 0.149, green: 0.243, blue: 0.894) : .primary)
+                                .fontWeight(NicknameFormatter.cleanNickname(player.name) == NicknameFormatter.cleanNickname(deviceName) ? .semibold : .regular)
+                                .foregroundColor(NicknameFormatter.cleanNickname(player.name) == NicknameFormatter.cleanNickname(deviceName) ? Color(red: 0.149, green: 0.243, blue: 0.894) : .primary)
                         }
                         
                         Spacer()
@@ -47,7 +47,7 @@ struct PlayerListView: View {
                     .padding(.vertical, 4)
                     .padding(.horizontal, 8)
                     .background(
-                        player.name == deviceName ? 
+                        NicknameFormatter.cleanNickname(player.name) == NicknameFormatter.cleanNickname(deviceName) ? 
                         Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.1) : 
                         Color.clear
                     )

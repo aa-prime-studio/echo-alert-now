@@ -1,0 +1,24 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/ContentView.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/ContentView.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/ContentView.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/ContentView.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/ContentView.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/ContentView.o"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/BinaryMessageEncoder.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryMessageEncoder.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryMessageEncoder.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryMessageEncoder.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryMessageEncoder.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/BinaryMessageEncoder.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/DrawnNumbersView.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/DrawnNumbersView.dia"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/DrawnNumbersView.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/DrawnNumbersView.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/DrawnNumbersView.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/DrawnNumbersView.o"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/SharedTypes.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/SharedTypes.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/SharedTypes.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/SharedTypes.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/SharedTypes.swiftdeps"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphonesimulator/SignalAir.build/Objects-normal/x86_64/SharedTypes.d"

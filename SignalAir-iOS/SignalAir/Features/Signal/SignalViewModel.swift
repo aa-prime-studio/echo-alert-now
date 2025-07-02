@@ -605,22 +605,12 @@ class SignalViewModel: ObservableObject {
         locationManager.delegate = locationDelegate
         locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
         
-        // 檢查當前授權狀態，只有在需要時才請求授權
-        switch locationManager.authorizationStatus {
-        case .notDetermined:
-            // 只有在未確定狀態時才請求授權
+        // 請求位置授權，授權狀態變化將通過 locationManagerDidChangeAuthorization 回調處理
+        if locationManager.authorizationStatus == .notDetermined {
             locationManager.requestWhenInUseAuthorization()
-        case .authorizedWhenInUse, .authorizedAlways:
-            // 已經授權，直接開始位置服務
-            if CLLocationManager.locationServicesEnabled() {
-                locationManager.startUpdatingLocation()
-                isLocationEnabled = true
-            }
-        case .denied, .restricted:
-            print("📍 位置服務被拒絕或限制")
-            isLocationEnabled = false
-        @unknown default:
-            print("📍 未知的位置授權狀態")
+        } else {
+            // 如果已有授權狀態，手動觸發授權回調處理
+            locationDelegate?.locationManagerDidChangeAuthorization(locationManager)
         }
     }
     
@@ -670,7 +660,8 @@ class SignalViewModel: ObservableObject {
     
     /// 發送緊急信號
     func sendEmergencySignal(type: SignalType) {
-        let userNickname = settingsViewModel.userNickname
+        // 使用 NicknameService 的純暱稱，而不是 SettingsViewModel
+        let userNickname = ServiceContainer.shared.nicknameService.userNickname
         
         Task {
             do {
@@ -1251,7 +1242,7 @@ private class LocationDelegate: NSObject, CLLocationManagerDelegate {
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            // 授權成功，直接啟動位置更新
+            // 授權成功，啟動位置更新
             manager.startUpdatingLocation()
             signalViewModel?.isLocationEnabled = true
             print("📍 位置服務已啟用")

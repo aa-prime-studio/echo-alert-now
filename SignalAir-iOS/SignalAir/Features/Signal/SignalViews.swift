@@ -137,7 +137,7 @@ struct MessageRowView: View {
                     .fontWeight(.medium)
                     .foregroundColor(.black)
                 
-                Text("\(languageService.t("from")) \(message.deviceName)")
+                Text("\(languageService.t("from")) \(NicknameFormatter.cleanNickname(message.deviceName))")
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 

@@ -150,7 +150,7 @@ class LocalBinaryEncoder {
         data.append(1) // BinaryProtocolVersion.v1.rawValue
         
         // 1 byte: 消息類型
-        data.append(6) // 專用密鑰交換類型，不與MeshMessageType衝突
+        data.append(5) // 使用正確的密鑰交換類型 0x05
         
         // 1 byte: 重試次數
         data.append(retryCount)
@@ -416,7 +416,7 @@ class ServiceContainer: ObservableObject {
         print("✅ ServiceContainer: 完整服務容器初始化完成")
         
         // 延遲啟動網路服務，避免阻塞主線程
-        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 0.1) {
+        DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 1.0) {
             self.networkService.startNetworking()
             // self.connectionKeepAlive?.start()
             // self.autoReconnectManager?.start()
@@ -515,12 +515,10 @@ class ServiceContainer: ObservableObject {
         let messageType = data[1]
         
         switch messageType {
-        case 6: // keyExchange (專用類型，不與MeshMessageType衝突)
-            await handleBinaryKeyExchange(data, from: peerDisplayName)
         case 7: // keyExchangeResponse (專用類型)
             await handleBinaryKeyExchangeResponse(data, from: peerDisplayName)
         default:
-            // 其他消息路由到相應的處理器
+            // 所有其他消息（包括遊戲訊息類型6）路由到相應的處理器
             await routeMessage(data, from: peerDisplayName)
         }
     }
@@ -542,7 +540,7 @@ class ServiceContainer: ObservableObject {
                 // 發送二進制回應
                 let responseData = LocalBinaryEncoder.encodeKeyExchangeResponse(
                     publicKey: try securityService.getPublicKey(),
-                    senderID: temporaryIDManager.deviceID,
+                    senderID: nicknameService.displayName,  // 使用用戶設置的暱稱
                     status: LocalKeyExchangeStatus.alreadyEstablished
                 )
                 
@@ -560,7 +558,7 @@ class ServiceContainer: ObservableObject {
             // 發送二進制回應
             let responseData = LocalBinaryEncoder.encodeKeyExchangeResponse(
                 publicKey: try securityService.getPublicKey(),
-                senderID: temporaryIDManager.deviceID,
+                senderID: nicknameService.displayName,  // 使用用戶設置的暱稱
                 status: LocalKeyExchangeStatus.success
             )
             
@@ -576,7 +574,7 @@ class ServiceContainer: ObservableObject {
             do {
                 let errorResponse = LocalBinaryEncoder.encodeKeyExchangeResponse(
                     publicKey: Data(),
-                    senderID: temporaryIDManager.deviceID,
+                    senderID: nicknameService.displayName,  // 使用用戶設置的暱稱
                     status: LocalKeyExchangeStatus.error,
                     errorMessage: error.localizedDescription
                 )
@@ -646,9 +644,11 @@ class ServiceContainer: ObservableObject {
         case .system:      // 0x04
             await routeSystemMessage(data, from: peerDisplayName)
         case .keyExchange: // 0x05
-            print("⚠️ 密鑰交換應該在 handleReceivedData 中處理")
+            await handleBinaryKeyExchange(data, from: peerDisplayName)
         case .game:        // 0x06
             await routeGameMessage(data, from: peerDisplayName)
+        case .topology:    // 0x07
+            await routeTopologyMessage(data, from: peerDisplayName)
         case nil:
             print("❓ 未知的二進制訊息類型: \(messageType)")
         }
@@ -695,7 +695,7 @@ class ServiceContainer: ObservableObject {
                 // 創建二進制密鑰交換訊息
                 let messageData = LocalBinaryEncoder.encodeKeyExchange(
                     publicKey: publicKey,
-                    senderID: temporaryIDManager.deviceID,
+                    senderID: nicknameService.displayName,  // 使用用戶設置的暱稱而不是隨機生成的
                     retryCount: UInt8(retryCount)
                 )
                 
@@ -843,15 +843,74 @@ class ServiceContainer: ObservableObject {
     }
     
     private func routeGameMessage(_ data: Data, from peerDisplayName: String) async {
-        // 遊戲訊息路由到 BingoGameViewModel
-        DispatchQueue.main.async {
-            NotificationCenter.default.post(
-                name: NSNotification.Name("GameMessageReceived"),
-                object: data,
-                userInfo: ["sender": peerDisplayName]
-            )
+        let startTime = Date()
+        
+        // 跳過協議頭部（版本+類型），提取內部遊戲數據
+        guard data.count >= 3 else {
+            print("⚠️ 遊戲數據太短: \(data.count)bytes, 來源=\(peerDisplayName)")
+            return
         }
-        print("🎮 已路由遊戲訊息，大小: \(data.count) 字節，二進制: \(data[0] == 1)")
+        
+        // 解碼為完整的 MeshMessage 以檢查是否為遊戲類型
+        do {
+            let meshMessage = try BinaryMessageDecoder.decode(data)
+            print("🎮 收到遊戲訊息: ID=\(meshMessage.id), 類型=\(meshMessage.type), 數據大小=\(meshMessage.data.count)bytes, 來源=\(peerDisplayName)")
+            
+            // 確保是遊戲訊息類型
+            guard meshMessage.type == .game else {
+                print("⚠️ 非遊戲訊息類型: \(meshMessage.type)")
+                return
+            }
+            
+            let headerParseTime = Date().timeIntervalSince(startTime) * 1000
+            
+            // 轉發完整的 MeshMessage 給 BingoGameViewModel
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("GameMessageReceived"),
+                    object: data,  // 轉發完整數據讓 BingoGameViewModel 自己解碼
+                    userInfo: ["sender": peerDisplayName]
+                )
+            }
+            
+            print("🎮 遊戲訊息路由完成 - 解析時間: \(String(format: "%.3f", headerParseTime))ms, 訊息ID: \(meshMessage.id), 來源: \(peerDisplayName)")
+            
+        } catch {
+            print("❌ 解碼遊戲訊息失敗: \(error)")
+        }
+    }
+    
+    // MARK: - 拓撲訊息路由
+    private func routeTopologyMessage(_ data: Data, from peerDisplayName: String) async {
+        let startTime = Date()
+        
+        // 解碼拓撲訊息
+        do {
+            let meshMessage = try BinaryMessageDecoder.decode(data)
+            print("🌐 收到拓撲訊息: ID=\(meshMessage.id), 類型=\(meshMessage.type), 數據大小=\(meshMessage.data.count)bytes, 來源=\(peerDisplayName)")
+            
+            // 確保是拓撲訊息類型
+            guard meshMessage.type == .topology else {
+                print("⚠️ 非拓撲訊息類型: \(meshMessage.type)")
+                return
+            }
+            
+            let parseTime = Date().timeIntervalSince(startTime) * 1000
+            
+            // 使用統一的 NotificationCenter 路由模式，轉發給 TopologyManager
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("TopologyMessageReceived"),
+                    object: data,  // 轉發完整數據讓 TopologyManager 自己解碼
+                    userInfo: ["sender": peerDisplayName]
+                )
+            }
+            
+            print("🌐 拓撲訊息路由完成 - 解析時間: \(String(format: "%.3f", parseTime))ms, 訊息ID: \(meshMessage.id), 來源: \(peerDisplayName)")
+            
+        } catch {
+            print("❌ 解碼拓撲訊息失敗: \(error)")
+        }
     }
     
     // MARK: - 輔助方法

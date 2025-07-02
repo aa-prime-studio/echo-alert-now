@@ -139,7 +139,7 @@ struct ChatMessageView: View {
             VStack(alignment: message.isOwn ? .trailing : .leading, spacing: 4) {
                 HStack(spacing: 8) {
                     if !message.isOwn {
-                        Text(message.deviceName)
+                        Text(NicknameFormatter.cleanNickname(message.deviceName))
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)

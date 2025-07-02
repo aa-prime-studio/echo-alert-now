@@ -11,11 +11,13 @@ public class BinaryMessageDecoder {
     
     // MARK: - 訊息類型映射 (與編碼器保持一致)
     private enum BinaryMessageType: UInt8 {
-        case chat = 1
-        case game = 2
-        case signal = 3
-        case system = 4
-        case topology = 5
+        case signal = 1     // 0x01 - 對應 MeshMessageType.signal
+        case emergency = 2  // 0x02 - 對應 MeshMessageType.emergency
+        case chat = 3       // 0x03 - 對應 MeshMessageType.chat
+        case system = 4     // 0x04 - 對應 MeshMessageType.system
+        case keyExchange = 5 // 0x05 - 對應 MeshMessageType.keyExchange
+        case game = 6       // 0x06 - 對應 MeshMessageType.game
+        case topology = 7   // 0x07 - 內部拓撲協議
     }
     
     // MARK: - MeshMessage解碼 (核心功能，替換JSON)
@@ -292,16 +294,20 @@ public class BinaryMessageDecoder {
     // MARK: - 工具方法
     private static func binaryToMeshType(_ binaryType: BinaryMessageType) -> MeshMessageType {
         switch binaryType {
-        case .chat:
-            return .chat
-        case .game:
-            return .game
         case .signal:
             return .signal
+        case .emergency:
+            return .emergency
+        case .chat:
+            return .chat
         case .system:
             return .system
+        case .keyExchange:
+            return .keyExchange
+        case .game:
+            return .game
         case .topology:
-            return .system // 拓撲訊息歸類為系統訊息
+            return .topology
         }
     }
     

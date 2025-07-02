@@ -17,14 +17,14 @@ struct BingoCardView: View {
                             let index = row * 5 + col
                             let number = bingoCard.numbers[index]
                             let isMarked = bingoCard.marked[index]
-                            let isDrawn = drawnNumbers.contains(number)
+                            let isDrawn = bingoCard.drawn[index]
                             
                             Button(action: {
-                                onMarkNumber(index)
+                                onMarkNumber(number)
                             }) {
                                 Text("\(number)")
                                     .font(.system(size: 14, weight: .bold))
-                                    .foregroundColor(textColor(isMarked: isMarked))
+                                    .foregroundColor(textColor(isMarked: isMarked, isDrawn: isDrawn))
                                     .frame(width: 48, height: 48)
                                     .background(backgroundColor(isMarked: isMarked, isDrawn: isDrawn))
                                     .overlay(
@@ -34,7 +34,7 @@ struct BingoCardView: View {
                                     .cornerRadius(4)
                                     .opacity(isDrawn ? 1.0 : 0.5)
                             }
-                            .disabled(!isDrawn || isMarked || gameWon)
+                            .disabled(!isDrawn || gameWon)
                         }
                     }
                 }
@@ -53,28 +53,34 @@ struct BingoCardView: View {
         }
     }
     
-    // 完全對齊 React 版本的顏色邏輯
+    // 新的顏色邏輯：藍色(已抽中) -> 綠色(已確認)
     private func backgroundColor(isMarked: Bool, isDrawn: Bool) -> Color {
         if isMarked {
-            return Color(red: 0.063, green: 0.843, blue: 0.416) // #10d76a (green for marked)
+            return Color(red: 0.063, green: 0.843, blue: 0.416) // #10d76a (green for confirmed)
+        } else if isDrawn {
+            return Color(red: 0.149, green: 0.243, blue: 0.894) // #263ee4 (blue for drawn)
         } else {
-            return Color(red: 0.149, green: 0.243, blue: 0.894) // #263ee4 (blue for available/drawn)
+            return Color(red: 177/255, green: 153/255, blue: 234/255).opacity(0.3) // 未抽中的號碼為紫色（對標物資需求按鈕）
         }
     }
     
     private func borderColor(isMarked: Bool, isDrawn: Bool) -> Color {
         if isMarked {
             return Color(red: 0.063, green: 0.843, blue: 0.416) // #10d76a
-        } else {
+        } else if isDrawn {
             return Color(red: 0.149, green: 0.243, blue: 0.894) // #263ee4
+        } else {
+            return Color(red: 177/255, green: 153/255, blue: 234/255).opacity(0.5) // 未抽中的號碼邊框為紫色
         }
     }
     
-    private func textColor(isMarked: Bool) -> Color {
+    private func textColor(isMarked: Bool, isDrawn: Bool) -> Color {
         if isMarked {
-            return .white
+            return .white // 綠色狀態使用白色文字
+        } else if isDrawn {
+            return .white // 藍色狀態使用白色文字
         } else {
-            return Color(red: 1.0, green: 0.925, blue: 0.475) // #ffec79 (yellow text)
+            return .black // 原始狀態數字為黑色
         }
     }
 }

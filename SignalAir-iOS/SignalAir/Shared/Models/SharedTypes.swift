@@ -233,11 +233,13 @@ struct DistanceFormatter {
 // 遊戲卡片
 struct BingoCard {
     let numbers: [Int]
-    var marked: [Bool]
+    var marked: [Bool] // true表示用戶已點擊確認（綠色）
+    var drawn: [Bool]  // true表示號碼已被抽中（藍色）
     
     init(numbers: [Int]) {
         self.numbers = numbers
         self.marked = Array(repeating: false, count: 25)
+        self.drawn = Array(repeating: false, count: 25)
     }
 }
 
@@ -293,6 +295,7 @@ enum MeshMessageType: UInt8, Codable {
     case system = 0x04      // 系統訊息
     case keyExchange = 0x05 // 密鑰交換
     case game = 0x06        // 遊戲訊息
+    case topology = 0x07    // 網路拓撲
     
     var stringValue: String {
         switch self {
@@ -302,6 +305,7 @@ enum MeshMessageType: UInt8, Codable {
         case .system: return "system"
         case .keyExchange: return "keyExchange"
         case .game: return "game"
+        case .topology: return "topology"
         }
     }
 }
@@ -342,6 +346,7 @@ enum GameMessageType: String, Codable, CaseIterable {
     case roomSync = "room_sync"
     case reconnectRequest = "reconnect_request"
     case heartbeat = "heartbeat"
+    case emote = "emote"
 }
 
 // 遊戲訊息
@@ -406,6 +411,33 @@ enum MessagePriority: String {
     case normal = "normal"
     case high = "high"
     case emergency = "emergency"
+}
+
+// MARK: - 暱稱處理工具
+struct NicknameFormatter {
+    /// 清理暱稱顯示，移除設備ID和只顯示"#"前的部分
+    static func cleanNickname(_ fullName: String) -> String {
+        var cleanName = fullName
+        
+        // 移除設備ID格式 "暱稱 (設備ID)" 或 "暱稱 (來源未知)"
+        if let parenIndex = cleanName.firstIndex(of: "(") {
+            cleanName = String(cleanName[..<parenIndex]).trimmingCharacters(in: .whitespaces)
+        }
+        
+        // 只顯示"#"前的部分
+        if let hashIndex = cleanName.firstIndex(of: "#") {
+            cleanName = String(cleanName[..<hashIndex])
+        }
+        
+        let finalName = cleanName.trimmingCharacters(in: .whitespaces)
+        
+        // 如果結果是默認的"使用者"，使用更有意義的顯示名稱
+        if finalName == "使用者" || finalName.isEmpty {
+            return "用戶"
+        }
+        
+        return finalName
+    }
 }
 
 // MARK: - 基本服務類型（避免重複定義）
@@ -521,5 +553,67 @@ class SettingsViewModel: ObservableObject {
     init() {}
 }
 
- 
- 
+// MARK: - 網路拓撲相關類型
+
+// 網路拓撲訊息類型
+enum TopologyMessageType: String, Codable {
+    case nodeInfo = "node_info"              // 節點資訊廣播
+    case peerDiscovery = "peer_discovery"    // 節點發現
+    case routeUpdate = "route_update"        // 路由更新
+    case healthCheck = "health_check"        // 健康檢查
+    case loadReport = "load_report"          // 負載報告
+}
+
+// 節點資訊
+struct NodeInfo: Codable {
+    let nodeID: String                       // 節點唯一ID
+    let deviceName: String                   // 設備顯示名稱
+    let connectedPeers: [String]             // 直接連接的節點列表
+    let signalStrength: [String: Int]        // 各連接的信號強度 (0-100)
+    let lastUpdate: Date                     // 最後更新時間
+    let hopCount: Int                        // 到根節點的跳數
+    let batteryLevel: Int?                   // 電池電量 (0-100)
+    let isRootNode: Bool                     // 是否為根節點
+}
+
+// 路由資訊
+struct RouteInfo: Codable {
+    let destination: String                  // 目標節點ID
+    let nextHop: String                      // 下一跳節點ID
+    let hopCount: Int                        // 跳數
+    let latency: Double                      // 延遲(毫秒)
+    let reliability: Double                  // 可靠性 (0.0-1.0)
+    let lastUsed: Date                       // 最後使用時間
+}
+
+// 網路拓撲狀態
+struct NetworkTopology: Codable {
+    let nodes: [String: NodeInfo]            // 所有已知節點
+    let routes: [String: [RouteInfo]]        // 路由表
+    let lastUpdate: Date                     // 最後更新時間
+    let totalNodes: Int                      // 總節點數
+    let connectedNodes: Int                  // 已連接節點數
+    let networkHealth: Double                // 網路健康度 (0.0-1.0)
+}
+
+// 負載統計
+struct LoadStatistics: Codable {
+    let nodeID: String                       // 節點ID
+    let cpuUsage: Double                     // CPU使用率 (0.0-1.0)
+    let memoryUsage: Double                  // 記憶體使用率 (0.0-1.0)
+    let messagesSent: Int                    // 已發送訊息數
+    let messagesReceived: Int                // 已接收訊息數
+    let dataTransferred: Int                 // 傳輸數據量(bytes)
+    let timestamp: Date                      // 統計時間
+}
+
+// 拓撲訊息
+struct TopologyMessage: Codable {
+    let type: TopologyMessageType           // 訊息類型
+    let senderID: String                    // 發送者ID
+    let senderName: String                  // 發送者名稱
+    let data: Data                          // 訊息數據
+    let timestamp: Date                     // 時間戳
+    let sequenceNumber: Int                 // 序列號
+    let ttl: Int                           // 生存時間(跳數)
+}

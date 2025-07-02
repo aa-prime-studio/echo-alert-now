@@ -49,6 +49,7 @@ class SettingsViewModel: ObservableObject {
     
     deinit {
         statusUpdateTimer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
         removeNetworkObservers()
     }
     
@@ -162,6 +163,22 @@ class SettingsViewModel: ObservableObject {
     }
     
     // MARK: - Private Methods
+    
+    /// 設定資料綁定
+    private func setupBindings() {
+        // 監聽暱稱變更通知
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("NicknameDidChange"),
+            object: nil,
+            queue: .main
+        ) { [weak self] notification in
+            if let userInfo = notification.userInfo,
+               let newNickname = userInfo["newNickname"] as? String {
+                self?.userNickname = newNickname
+                print("⚙️ SettingsViewModel: 收到暱稱變更通知，更新為: \(newNickname)")
+            }
+        }
+    }
     
     /// 設定初始狀態
     private func setupInitialState() {

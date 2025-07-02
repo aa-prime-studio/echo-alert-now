@@ -31,7 +31,7 @@ struct LeaderboardView: View {
                                 .cornerRadius(10)
                             
                             // Player name
-                            Text(score.deviceName)
+                            Text(NicknameFormatter.cleanNickname(score.deviceName))
                                 .font(.subheadline)
                                 .foregroundColor(.primary)
                             
