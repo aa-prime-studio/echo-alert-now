@@ -621,8 +621,23 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     private var topology = NetworkTopology()
     private let messageQueue = MessageQueue()
     private let intelligentRouter = SimpleIntelligentRouter()
-    private var processedMessages: Set<String> = []
-    private let processedMessagesLimit = 5000  // 減少記憶體使用
+    
+    // 線程安全的 processedMessages 管理
+    private let processedMessagesQueue = DispatchQueue(label: "com.signalair.meshmanager.messages", attributes: .concurrent)
+    private var _processedMessages: Set<String> = []
+    private let processedMessagesLimit = 1000  // 減少記憶體使用從5000降到1000
+    
+    // 線程安全的 processedMessages 存取
+    private var processedMessages: Set<String> {
+        get {
+            return processedMessagesQueue.sync { _processedMessages }
+        }
+        set {
+            processedMessagesQueue.async(flags: .barrier) {
+                self._processedMessages = newValue
+            }
+        }
+    }
     
     // MARK: - Timers
     private var heartbeatTimer: Timer?
@@ -634,11 +649,23 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     private let queueProcessingInterval: TimeInterval = 0.2  // 200ms處理間隔 (減少CPU負載)
     private let metricsCleanupInterval: TimeInterval = 300.0 // 5分鐘清理一次 (減少頻繁操作)
     
-    // MARK: - Send Failure Tracking
-    private var sendFailureCounts: [String: Int] = [:]
-    private var lastFailureTime: [String: Date] = [:]
+    // MARK: - Send Failure Tracking (線程安全)
+    private let failureTrackingQueue = DispatchQueue(label: "com.signalair.meshmanager.failure", attributes: .concurrent)
+    private var _sendFailureCounts: [String: Int] = [:]
+    private var _lastFailureTime: [String: Date] = [:]
     private let maxFailureCount = 3  // 最多允許3次失敗
     private let failureResetInterval: TimeInterval = 300.0  // 5分鐘後重置失敗計數
+    
+    // 線程安全的失敗計數訪問
+    private var sendFailureCounts: [String: Int] {
+        get { failureTrackingQueue.sync { _sendFailureCounts } }
+        set { failureTrackingQueue.async(flags: .barrier) { self._sendFailureCounts = newValue } }
+    }
+    
+    private var lastFailureTime: [String: Date] {
+        get { failureTrackingQueue.sync { _lastFailureTime } }
+        set { failureTrackingQueue.async(flags: .barrier) { self._lastFailureTime = newValue } }
+    }
     
     // MARK: - Published State
     @Published var connectedPeers: [String] = []
@@ -668,6 +695,26 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         startServices()
         
         print("🕸️ MeshManager initialized with intelligent routing")
+    }
+    
+    deinit {
+        // 線程安全的 Timer 清理
+        DispatchQueue.main.async { [weak self] in
+            self?.heartbeatTimer?.invalidate()
+            self?.heartbeatTimer = nil
+            self?.queueProcessingTimer?.invalidate()
+            self?.queueProcessingTimer = nil
+            self?.metricsCleanupTimer?.invalidate()
+            self?.metricsCleanupTimer = nil
+        }
+        
+        // 停止網路服務
+        stopMeshNetwork()
+        
+        // 清理 processedMessages
+        clearProcessedMessages()
+        
+        print("🧹 MeshManager: 所有資源已清理")
     }
     
     // MARK: - MeshNetworkProtocol Implementation
@@ -862,18 +909,21 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     private func startServices() {
         isActive = true
         
-        // 啟動心跳計時器
-        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: heartbeatInterval, repeats: true) { _ in
+        // 啟動心跳計時器（修復循環引用）
+        heartbeatTimer = Timer.scheduledTimer(withTimeInterval: heartbeatInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             self.sendHeartbeat()
         }
         
-        // 啟動訊息佇列處理
-        queueProcessingTimer = Timer.scheduledTimer(withTimeInterval: queueProcessingInterval, repeats: true) { _ in
+        // 啟動訊息佇列處理（修復循環引用）
+        queueProcessingTimer = Timer.scheduledTimer(withTimeInterval: queueProcessingInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             self.processMessageQueue()
         }
         
-        // 啟動清理計時器
-        metricsCleanupTimer = Timer.scheduledTimer(withTimeInterval: metricsCleanupInterval, repeats: true) { _ in
+        // 啟動清理計時器（修復循環引用）
+        metricsCleanupTimer = Timer.scheduledTimer(withTimeInterval: metricsCleanupInterval, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
             self.performCleanup()
         }
         
@@ -883,9 +933,15 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     private func stopServices() {
         isActive = false
         
-        heartbeatTimer?.invalidate()
-        queueProcessingTimer?.invalidate()
-        metricsCleanupTimer?.invalidate()
+        // 線程安全的 Timer 清理
+        DispatchQueue.main.async { [weak self] in
+            self?.heartbeatTimer?.invalidate()
+            self?.heartbeatTimer = nil
+            self?.queueProcessingTimer?.invalidate()
+            self?.queueProcessingTimer = nil
+            self?.metricsCleanupTimer?.invalidate()
+            self?.metricsCleanupTimer = nil
+        }
         
         messageQueue.clear()
         
@@ -911,13 +967,13 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
                 return
             }
             
-            // 重複訊息檢查
-            if processedMessages.contains(message.id) {
+            // 重複訊息檢查（線程安全）
+            if containsProcessedMessage(message.id) {
                 print("🔁 Duplicate message ignored: \(message.id)")
                 return
             }
             
-            // 記錄已處理訊息
+            // 記錄已處理訊息（線程安全）
             addToProcessedMessages(message.id)
             
             // 處理訊息
@@ -1223,17 +1279,36 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         }
     }
     
+    // 線程安全的 processedMessages 管理方法
+    private func containsProcessedMessage(_ messageID: String) -> Bool {
+        return processedMessagesQueue.sync {
+            _processedMessages.contains(messageID)
+        }
+    }
+    
     private func addToProcessedMessages(_ messageID: String) {
-        processedMessages.insert(messageID)
-        
-        // 限制記憶體使用
-        if processedMessages.count > processedMessagesLimit {
-            let excess = processedMessages.count - processedMessagesLimit / 2
-            let toRemove = Array(processedMessages.prefix(excess))
+        processedMessagesQueue.async(flags: .barrier) { [weak self] in
+            guard let self = self else { return }
             
-            for id in toRemove {
-                processedMessages.remove(id)
+            self._processedMessages.insert(messageID)
+            
+            // 限制記憶體使用 - LRU 清理策略
+            if self._processedMessages.count > self.processedMessagesLimit {
+                let excess = self._processedMessages.count - self.processedMessagesLimit / 2
+                let toRemove = Array(self._processedMessages.prefix(excess))
+                
+                for id in toRemove {
+                    self._processedMessages.remove(id)
+                }
+                
+                print("🧩 Cleaned \(excess) old processed messages")
             }
+        }
+    }
+    
+    private func clearProcessedMessages() {
+        processedMessagesQueue.async(flags: .barrier) { [weak self] in
+            self?._processedMessages.removeAll()
         }
     }
     

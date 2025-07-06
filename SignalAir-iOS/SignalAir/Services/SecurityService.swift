@@ -7,36 +7,48 @@ import Security
 class SecureString {
     private var data: UnsafeMutableRawPointer?
     private var length: Int = 0
-    private let isLocked: Bool
+    private let lockQueue = DispatchQueue(label: "com.signalair.securestring.lock")
+    private var _isLocked: Bool = false
+    var isLocked: Bool {
+        get { lockQueue.sync { _isLocked } }
+        set { lockQueue.sync { _isLocked = newValue } }
+    }
     
-    /// 初始化安全字串
+    /// 初始化安全字串（優化為非阻塞版本）
     /// - Parameter string: 要保護的字串
     init(_ string: String) {
         let utf8Data = string.utf8
         self.length = utf8Data.count
         
-        // 分配記憶體並鎖定防止 swap
+        // 分配記憶體
         self.data = UnsafeMutableRawPointer.allocate(
             byteCount: length,
             alignment: MemoryLayout<UInt8>.alignment
         )
         
-        // 嘗試鎖定記憶體頁面防止 swap
-        self.isLocked = mlock(data!, length) == 0
-        
-        if !isLocked {
-            print("⚠️ SecureString: 無法鎖定記憶體頁面，敏感資料可能進入 swap")
-        }
-        
-        // 複製資料
+        // 複製資料（優先完成）
         _ = utf8Data.withContiguousStorageIfAvailable { bytes in
             data!.copyMemory(from: bytes.baseAddress!, byteCount: length)
         }
         
-        print("🔒 SecureString: 已建立安全字串，長度: \(length) bytes, 已鎖定: \(isLocked)")
+        // 異步嘗試鎖定記憶體頁面，避免阻塞初始化
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self, let data = self.data else { return }
+            
+            // 嘗試鎖定記憶體頁面防止 swap
+            let locked = mlock(data, self.length) == 0
+            self.isLocked = locked
+            
+            if !locked {
+                print("⚠️ SecureString: 無法鎖定記憶體頁面，敏感資料可能進入 swap")
+            } else {
+                print("🔒 SecureString: 記憶體頁面已鎖定")
+            }
+        }
+        print("🚀 SecureString: 快速初始化完成，長度: \(length) bytes")
     }
     
-    /// 初始化空的安全字串
+    /// 初始化空的安全字串（優化為非阻塞版本）
     init(capacity: Int) {
         self.length = capacity
         self.data = UnsafeMutableRawPointer.allocate(
@@ -44,11 +56,24 @@ class SecureString {
             alignment: MemoryLayout<UInt8>.alignment
         )
         
-        // 鎖定記憶體
-        self.isLocked = mlock(data!, capacity) == 0
-        
-        // 初始化為零
+        // 初始化為零（優先完成）
         data!.initializeMemory(as: UInt8.self, repeating: 0, count: capacity)
+        
+        // 異步鎖定記憶體
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self, let data = self.data else { return }
+            
+            let locked = mlock(data, capacity) == 0
+            self.isLocked = locked
+            
+            if !locked {
+                print("⚠️ SecureString: 容量初始化無法鎖定記憶體頁面")
+            } else {
+                print("🔒 SecureString: 容量初始化記憶體已鎖定")
+            }
+        }
+        
+        print("🚀 SecureString: 容量初始化完成，容量: \(capacity) bytes")
     }
     
     deinit {
@@ -404,6 +429,8 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     
     deinit {
         keyRotationTimer?.invalidate()
+        keyRotationTimer = nil
+        print("🧹 SecurityService: deinit 完成，Timer已清理")
     }
     
     // MARK: - Public Methods
@@ -756,8 +783,8 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     
     /// 定期密鑰輪轉
     private func startKeyRotationTimer() {
-        keyRotationTimer = Timer.scheduledTimer(withTimeInterval: keyRotationInterval, repeats: true) { _ in
-            self.rotateExpiredKeys()
+        keyRotationTimer = Timer.scheduledTimer(withTimeInterval: keyRotationInterval, repeats: true) { [weak self] _ in
+            self?.rotateExpiredKeys()
         }
     }
     

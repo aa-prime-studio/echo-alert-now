@@ -2,14 +2,25 @@ import SwiftUI
 import Foundation
 
 struct GameView: View {
-    @State private var currentRoom: BingoRoom?
+    @State private var currentRoomID: Int = -1
     @State private var leaderboard: [BingoScore] = []
     @State private var roomPlayerCounts: [Int: Int] = [1: 0, 2: 0, 3: 0] // 房間ID到玩家數量的映射
     @EnvironmentObject var languageService: LanguageService
     @EnvironmentObject var nicknameService: NicknameService
     
+    // 將 ViewModel 提升到父視圖層級，只創建一次
+    @StateObject private var bingoViewModel: BingoGameViewModel = ServiceContainer.shared.createBingoGameViewModel()
+    
     // 持久化存儲鍵
     private let leaderboardKey = "SignalAir_Rescue_BingoLeaderboard"
+    private let weeklyLeaderboardPrefix = "SignalAir_WeeklyLeaderboard_"
+    
+    // 統計追蹤
+    @State private var interactionCount = 0  // DJ榜：互動次數統計
+    @State private var reactionTimes: [Double] = []  // 烏龜神：反應時間統計
+    
+    // Timer 管理
+    @State private var roomMonitoringTimer: Timer?
     
     // 3個賓果房間 - 基礎結構
     private let baseRooms: [BingoRoom] = [
@@ -40,23 +51,30 @@ struct GameView: View {
             Divider()
             
             // Content Section - 確保可以滑動，使用 Spacer() 佔用剩餘空間
-            if let room = currentRoom {
+            if currentRoomID > 0 {
+                // 傳遞已存在的 ViewModel，而不是創建新的
                 BingoGameView(
-                    room: room, 
+                    viewModel: bingoViewModel,
+                    currentRoomID: currentRoomID,
                     onLeaveRoom: { 
-                        // 當離開房間時，重置該房間的玩家數量
-                        roomPlayerCounts[room.id] = 0
-                        currentRoom = nil 
+                        // 當離開房間時，重置該房間的玩家數量並保存統計
+                        roomPlayerCounts[currentRoomID] = 0
+                        saveInteractionStats()
+                        currentRoomID = -1
                     }, 
                     onGameWon: { deviceName, score in
                         addGameResult(deviceName: deviceName, score: score)
-                        // 遊戲結束後自動退出房間回到第一層
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
-                            currentRoom = nil
-                        }
+                        // 保存統計數據
+                        saveInteractionStats()
                     },
                     onPlayerCountChanged: { roomId, playerCount in
                         roomPlayerCounts[roomId] = playerCount
+                    },
+                    onInteraction: {
+                        interactionCount += 1
+                    },
+                    onReactionTime: { reactionTime in
+                        reactionTimes.append(reactionTime)
                     }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -65,7 +83,11 @@ struct GameView: View {
                     rooms: rooms,
                     leaderboard: leaderboard,
                     onJoinRoom: { room in
-                        currentRoom = room
+                        print("🚨🚨🚨 ROOM SELECTED: id=\(room.id) name=\(room.name) 🚨🚨🚨")
+                        DispatchQueue.main.async {
+                            currentRoomID = room.id
+                            print("🚨🚨🚨 CURRENT ROOM SET ON MAIN THREAD: \(room.id) 🚨🚨🚨")
+                        }
                     }
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -73,8 +95,25 @@ struct GameView: View {
         }
         .background(Color.gray.opacity(0.05))
         .onAppear {
+            print("🚨🚨🚨 GAME VIEW APPEARED, currentRoomID: \(currentRoomID) 🚨🚨🚨")
             setupLeaderboard()
             startRoomMonitoring()
+        }
+        .onDisappear {
+            // 清理所有 Timer 防止記憶體洩漏
+            roomMonitoringTimer?.invalidate()
+            roomMonitoringTimer = nil
+            print("🧹 GameView: 已清理房間監控 Timer")
+        }
+        .onChange(of: currentRoomID) { newRoomID in
+            print("🚨🚨🚨 CURRENT ROOM CHANGED TO: \(newRoomID) 🚨🚨🚨")
+            if newRoomID > 0 {
+                print("🚨🚨🚨 SHOULD SHOW BINGO GAME VIEW NOW 🚨🚨🚨")
+                // 更新現有 ViewModel 的房間
+                bingoViewModel.updateRoom(newRoomID)
+            } else {
+                print("🚨🚨🚨 SHOULD SHOW ROOM LIST NOW 🚨🚨🚨")
+            }
         }
     }
     
@@ -86,17 +125,17 @@ struct GameView: View {
                     .fontWeight(.bold)
                     .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
                 
-                if let room = currentRoom {
-                    Text("\(languageService.t("playing_in")) \(room.name.uppercased())")
+                if currentRoomID > 0 {
+                    Text("\(languageService.t("playing_in")) room \(currentRoomID)")
                         .font(.caption)
                         .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475).opacity(0.8))
                 }
             }
             Spacer()
             
-            if currentRoom != nil {
+            if currentRoomID > 0 {
                 Button(languageService.t("leave")) {
-                    currentRoom = nil
+                    currentRoomID = -1
                 }
                 .font(.headline)
                 .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
@@ -111,66 +150,289 @@ struct GameView: View {
     }
     
     private func startRoomMonitoring() {
-        // 監聽來自其他房間的玩家數量廣播
-        // 這裡可以添加網路監聽邏輯，暫時使用定時器模擬
-        Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { _ in
+        // 清理現有 Timer - 完整清理避免記憶體洩漏
+        roomMonitoringTimer?.invalidate()
+        roomMonitoringTimer = nil
+        
+        // 監聽來自其他房間的玩家數量廣播 - 安全的 Timer 管理
+        roomMonitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { timer in
             // 實際實現時這裡會監聽網路廣播
             // 暫時保持現有邏輯
         }
+        
+        // 檢查是否需要重置本週排行榜
+        checkAndResetWeeklyLeaderboard()
+    }
+    
+    /// 檢查並重置本週排行榜（如果跨週了）
+    private func checkAndResetWeeklyLeaderboard() {
+        let lastResetKey = "SignalAir_LastWeeklyReset"
+        let currentWeekStart = getThisWeekMonday()
+        let currentWeekTimestamp = Int(currentWeekStart.timeIntervalSince1970)
+        
+        // 獲取上次重置的週開始時間
+        let lastResetTimestamp = UserDefaults.standard.integer(forKey: lastResetKey)
+        
+        // 如果當前週與上次重置週不同，需要重置
+        if lastResetTimestamp != currentWeekTimestamp {
+            print("🗓️ 檢測到新週，重置本週排行榜")
+            
+            // 清除舊的排行榜數據
+            clearOldWeeklyLeaderboards()
+            
+            // 更新最後重置時間
+            UserDefaults.standard.set(currentWeekTimestamp, forKey: lastResetKey)
+            
+            print("✅ 本週排行榜重置完成")
+        }
+    }
+    
+    /// 清除舊的本週排行榜數據
+    private func clearOldWeeklyLeaderboards() {
+        let allKeys = UserDefaults.standard.dictionaryRepresentation().keys
+        let weeklyKeys = allKeys.filter { $0.hasPrefix(weeklyLeaderboardPrefix) }
+        
+        // 計算保留週數（保留最近4週的數據）
+        let currentWeekStart = getThisWeekMonday()
+        let fourWeeksAgo = Calendar.current.date(byAdding: .weekOfYear, value: -4, to: currentWeekStart) ?? currentWeekStart
+        let cutoffTimestamp = Int(fourWeeksAgo.timeIntervalSince1970)
+        
+        for key in weeklyKeys {
+            // 從鍵名提取時間戳
+            let timestampString = key.replacingOccurrences(of: weeklyLeaderboardPrefix, with: "")
+            if let timestamp = Int(timestampString), timestamp < cutoffTimestamp {
+                UserDefaults.standard.removeObject(forKey: key)
+                print("🗑️ 清除舊排行榜數據: \(key)")
+            }
+        }
+    }
+    
+    /// 獲取本週一00:00的時間戳
+    private func getThisWeekMonday() -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 獲取本週一
+        var components = calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: now)
+        components.weekday = 2 // 週一
+        components.hour = 0
+        components.minute = 0
+        components.second = 0
+        
+        return calendar.date(from: components) ?? now
     }
     
     // MARK: - 排行榜數據管理
     
-    /// 從本地存儲讀取排行榜數據
+    /// 從本地存儲讀取週排行榜數據 - 使用二進制協議
     private func loadLeaderboardFromStorage() {
-        if let data = UserDefaults.standard.data(forKey: leaderboardKey),
-           let savedLeaderboard = try? JSONDecoder().decode([BingoScore].self, from: data) {
-            // 過濾今日數據
-            let today = getTodayString()
-            leaderboard = savedLeaderboard
-                .filter { $0.date == today }
-                .sorted { $0.score > $1.score }
-                .prefix(10) // 最多顯示前10名
-                .map { $0 }
-        } else {
+        // 只顯示本週勝場榜作為主要排行榜
+        let weekStartTime = getThisWeekMonday()
+        let weekKey = "\(weeklyLeaderboardPrefix)\(BinaryGameProtocol.LeaderboardType.wins.rawValue)_\(Int(weekStartTime.timeIntervalSince1970))"
+        
+        guard let data = UserDefaults.standard.data(forKey: weekKey),
+              let (_, _, entries) = BinaryGameProtocol.decodeWeeklyLeaderboard(data) else {
+            // 沒有存儲數據時初始化為空
             leaderboard = []
+            return
         }
+        
+        // 將週排行榜條目轉換為 BingoScore 格式以兼容現有UI
+        leaderboard = entries.map { entry in
+            BingoScore(
+                deviceName: entry.nickname,
+                score: Int(entry.value), // 勝場數
+                timestamp: entry.lastUpdate.timeIntervalSince1970,
+                date: getTodayString() // 使用當前日期
+            )
+        }
+        .sorted { $0.score > $1.score }
+        .prefix(10) // 最多顯示前10名
+        .map { $0 }
+        
+        print("✅ 成功載入週排行榜數據: \(leaderboard.count) 條記錄")
     }
     
-    /// 保存排行榜數據到本地存儲
+    /// 保存排行榜數據 - 已移除，改用週排行榜二進制協議
     private func saveLeaderboardToStorage() {
-        if let encoded = try? JSONEncoder().encode(leaderboard) {
-            UserDefaults.standard.set(encoded, forKey: leaderboardKey)
-        }
+        // 此方法已廢棄，週排行榜數據通過 updateWeeklyLeaderboard 方法自動保存
+        print("ℹ️ 排行榜數據現在通過週排行榜自動保存")
     }
     
-    /// 添加新的遊戲記錄到排行榜
+    /// 添加新的遊戲記錄到週排行榜
     func addGameResult(deviceName: String, score: Int) {
-        let today = getTodayString()
-        let newScore = BingoScore(
-            deviceName: deviceName,
-            score: score,
-            timestamp: Date().timeIntervalSince1970,
-            date: today
+        // 只更新本週排行榜（勝場榜）- 使用二進制協議
+        updateWeeklyLeaderboard(playerName: deviceName, winCount: 1)
+        
+        // 重新載入排行榜數據以更新UI顯示
+        loadLeaderboardFromStorage()
+        
+        print("✅ 遊戲結果已添加到週排行榜: \(deviceName) - \(score) 線")
+    }
+    
+    /// 更新本週排行榜數據 - 使用二進制協議
+    private func updateWeeklyLeaderboard(playerName: String, winCount: Int) {
+        let weekStartTime = getThisWeekMonday()
+        let weekKey = "\(weeklyLeaderboardPrefix)\(Int(weekStartTime.timeIntervalSince1970))"
+        
+        // 獲取當前玩家ID（使用設備名稱作為ID）
+        let playerID = nicknameService.nickname
+        
+        // 讀取現有的本週排行榜數據
+        var weeklyWins: [String: Float] = [:]
+        
+        if let existingData = UserDefaults.standard.data(forKey: weekKey),
+           let (_, _, entries) = BinaryGameProtocol.decodeWeeklyLeaderboard(existingData) {
+            // 從現有條目中構建映射
+            for entry in entries {
+                weeklyWins[entry.playerID] = entry.value
+            }
+        }
+        
+        // 更新當前玩家的勝場數
+        weeklyWins[playerID] = (weeklyWins[playerID] ?? 0) + Float(winCount)
+        
+        // 轉換為排序的條目列表（只保留前3名）
+        let sortedEntries = weeklyWins
+            .map { (playerID, wins) in
+                BinaryGameProtocol.WeeklyLeaderboardEntry(
+                    playerID: playerID,
+                    nickname: playerID == self.nicknameService.nickname ? NicknameFormatter.cleanNickname(playerName) : playerID,
+                    value: wins,
+                    lastUpdate: Date()
+                )
+            }
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .map { $0 }
+        
+        // 編碼為二進制並保存
+        let binaryData = BinaryGameProtocol.encodeWeeklyLeaderboard(
+            type: .wins,
+            entries: sortedEntries,
+            weekStartTime: weekStartTime
         )
         
-        // 讀取完整的歷史數據
-        var allScores: [BingoScore] = []
-        if let data = UserDefaults.standard.data(forKey: leaderboardKey),
-           let savedScores = try? JSONDecoder().decode([BingoScore].self, from: data) {
-            allScores = savedScores
+        UserDefaults.standard.set(binaryData, forKey: weekKey)
+    }
+    
+    /// 廣播本週排行榜更新
+    private func broadcastWeeklyLeaderboardUpdate(data: Data) {
+        // 通過BinaryGameProtocol發送排行榜更新消息
+        let gameMessage = BinaryGameProtocol.encodeGameMessage(
+            type: .weeklyLeaderboardUpdate,
+            senderID: nicknameService.nickname,
+            senderName: nicknameService.nickname,
+            gameRoomID: "global", // 排行榜是全局的
+            data: data
+        )
+        
+        // 通過網路服務廣播排行榜更新
+        Task {
+            do {
+                guard let meshManager = ServiceContainer.shared.meshManager else {
+                    print("⚠️ MeshManager 未初始化，無法廣播排行榜更新")
+                    return
+                }
+                
+                try await meshManager.broadcast(
+                    gameMessage,
+                    priority: .normal,
+                    userNickname: nicknameService.nickname
+                )
+                print("✅ 排行榜更新廣播成功: \(data.count) bytes")
+            } catch {
+                print("❌ 排行榜更新廣播失敗: \(error)")
+            }
+        }
+    }
+    
+    /// 保存互動統計數據
+    private func saveInteractionStats() {
+        let playerID = nicknameService.nickname
+        
+        // 保存DJ榜數據（互動次數）
+        if interactionCount > 0 {
+            updateWeeklyLeaderboard(
+                playerName: playerID,
+                value: Float(interactionCount),
+                type: .interactions
+            )
         }
         
-        // 添加新記錄
-        allScores.append(newScore)
-        
-        // 保存完整歷史數據
-        if let encoded = try? JSONEncoder().encode(allScores) {
-            UserDefaults.standard.set(encoded, forKey: leaderboardKey)
+        // 保存烏龜神數據（平均反應時間）
+        if !reactionTimes.isEmpty {
+            let averageReactionTime = reactionTimes.reduce(0, +) / Double(reactionTimes.count)
+            updateWeeklyLeaderboard(
+                playerName: playerID,
+                value: Float(averageReactionTime),
+                type: .reaction
+            )
         }
         
-        // 更新今日排行榜顯示
-        loadLeaderboardFromStorage()
+        // 重置統計
+        interactionCount = 0
+        reactionTimes.removeAll()
+    }
+    
+    /// 更新指定類型的本週排行榜數據 - 使用二進制協議
+    private func updateWeeklyLeaderboard(playerName: String, value: Float, type: BinaryGameProtocol.LeaderboardType) {
+        let weekStartTime = getThisWeekMonday()
+        let weekKey = "\(weeklyLeaderboardPrefix)\(type.rawValue)_\(Int(weekStartTime.timeIntervalSince1970))"
+        
+        let playerID = nicknameService.nickname
+        
+        // 讀取現有數據
+        var playerValues: [String: Float] = [:]
+        
+        if let existingData = UserDefaults.standard.data(forKey: weekKey),
+           let (_, _, entries) = BinaryGameProtocol.decodeWeeklyLeaderboard(existingData) {
+            for entry in entries {
+                playerValues[entry.playerID] = entry.value
+            }
+        }
+        
+        // 更新數據
+        if type == .interactions {
+            // 互動次數累加
+            playerValues[playerID] = (playerValues[playerID] ?? 0) + value
+        } else if type == .reaction {
+            // 反應時間取平均值
+            if let existingValue = playerValues[playerID] {
+                playerValues[playerID] = (existingValue + value) / 2.0
+            } else {
+                playerValues[playerID] = value
+            }
+        }
+        
+        // 轉換為排序的條目列表
+        let sortedEntries = playerValues
+            .map { (playerID, val) in
+                BinaryGameProtocol.WeeklyLeaderboardEntry(
+                    playerID: playerID,
+                    nickname: playerID == self.nicknameService.nickname ? NicknameFormatter.cleanNickname(playerName) : playerID,
+                    value: val,
+                    lastUpdate: Date()
+                )
+            }
+            .sorted { 
+                if type == .reaction {
+                    return $0.value > $1.value  // 烏龜神：反應時間越大越好（最慢第一名）
+                } else {
+                    return $0.value > $1.value  // 其他數值越大越好
+                }
+            }
+            .prefix(3)
+            .map { $0 }
+        
+        // 編碼並保存
+        let binaryData = BinaryGameProtocol.encodeWeeklyLeaderboard(
+            type: type,
+            entries: sortedEntries,
+            weekStartTime: weekStartTime
+        )
+        
+        UserDefaults.standard.set(binaryData, forKey: weekKey)
     }
     
     /// 獲取今日日期字串
@@ -208,29 +470,37 @@ struct RoomListView: View {
 
 // MARK: - Bingo Game View (第二層)
 struct BingoGameView: View {
-    let room: BingoRoom
+    // 使用傳入的 ViewModel，不要創建新的
+    @ObservedObject var viewModel: BingoGameViewModel
+    let currentRoomID: Int
     let onLeaveRoom: () -> Void
     let onGameWon: (String, Int) -> Void
     let onPlayerCountChanged: (Int, Int) -> Void
+    let onInteraction: () -> Void
+    let onReactionTime: (Double) -> Void
     
     @EnvironmentObject var nicknameService: NicknameService
     @EnvironmentObject var languageService: LanguageService
-    @StateObject private var gameViewModel: BingoGameViewModel
     @State private var showEmoteText = false
     @State private var emoteText = ""
     @State private var isPureEmoji = false
+    @State private var showWinnerDisplay = false
+    @State private var winnerName = ""
+    @State private var winnerScore = 0
+    @State private var showCountdown = false
+    @State private var countdownNumber = 5
     
-    init(room: BingoRoom, onLeaveRoom: @escaping () -> Void, onGameWon: @escaping (String, Int) -> Void, onPlayerCountChanged: @escaping (Int, Int) -> Void) {
-        self.room = room
-        self.onLeaveRoom = onLeaveRoom
-        self.onGameWon = onGameWon
-        self.onPlayerCountChanged = onPlayerCountChanged
-        self._gameViewModel = StateObject(wrappedValue: BingoGameViewModel(languageService: LanguageService()))
-    }
+    // 移除 init，直接使用傳入的參數
     
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
-            LazyVStack(spacing: 20) {
+            VStack(spacing: 20) {
+                // Debug view to ensure this view is being rendered
+                Text("🚨 BINGO GAME VIEW BODY RENDERED: room=\(currentRoomID) 🚨")
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.top)
+                
                 // Game Status Info
                 VStack(spacing: 8) {
                     // 房間狀態和人數
@@ -239,10 +509,10 @@ struct BingoGameView: View {
                             .font(.headline)
                             .foregroundColor(.secondary)
                         
-                        switch gameViewModel.gameState {
+                        switch viewModel.gameState {
                         case .waitingForPlayers:
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("\(languageService.t("waiting_players")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")))")
+                                Text("\(languageService.t("waiting_players")) (\(viewModel.roomPlayers.count)/6\(languageService.t("people")))")
                                     .font(.headline)
                                     .foregroundColor(.black)
                                 Text(languageService.t("needs_2_to_start"))
@@ -250,16 +520,16 @@ struct BingoGameView: View {
                                     .foregroundColor(.gray)
                             }
                         case .countdown:
-                            Text("\(languageService.t("ready_to_start")) (\(gameViewModel.countdown)\(languageService.t("seconds")))")
+                            Text("\(languageService.t("ready_to_start")) (\(viewModel.countdown)\(languageService.t("seconds")))")
                                 .font(.headline)
                                 .foregroundColor(.blue)
                         case .playing:
                             VStack(alignment: .leading, spacing: 4) {
-                                Text("\(languageService.t("game_in_progress")) (\(gameViewModel.roomPlayers.count)/6\(languageService.t("people")))")
+                                Text("\(languageService.t("game_in_progress")) (\(viewModel.roomPlayers.count)/6\(languageService.t("people")))")
                                     .font(.headline)
                                     .foregroundColor(.green)
-                                if gameViewModel.roomPlayers.count < 6 {
-                                    Text("可繼續加入至滿房")
+                                if viewModel.roomPlayers.count < 6 {
+                                    Text(languageService.t("can_join_until_full"))
                                         .font(.caption)
                                         .foregroundColor(.green.opacity(0.8))
                                 }
@@ -274,13 +544,13 @@ struct BingoGameView: View {
                     }
                     
                     // 個人遊戲狀態
-                    if gameViewModel.gameState == .playing {
+                    if viewModel.gameState == .playing {
                         HStack {
-                            Text("\(languageService.t("completed_lines")): \(gameViewModel.completedLines)/5")
+                            Text("\(languageService.t("completed_lines")): \(viewModel.completedLines)/5")
                                 .font(.subheadline)
                                 .foregroundColor(.primary)
                             
-                            if gameViewModel.gameWon {
+                            if viewModel.gameWon {
                                 Text(languageService.t("won"))
                                     .font(.headline)
                                     .foregroundColor(.green)
@@ -294,57 +564,146 @@ struct BingoGameView: View {
                 .padding(.horizontal)
                 
                 // Player List
-                PlayerListView(players: gameViewModel.roomPlayers.map { player in
+                PlayerListView(players: viewModel.roomPlayers.map { player in
                     RoomPlayer(name: player.name, completedLines: player.completedLines, hasWon: player.hasWon)
-                }, deviceName: gameViewModel.deviceName)
+                }, deviceName: viewModel.deviceName)
                 
                 // Drawn Numbers Display
-                DrawnNumbersView(drawnNumbers: gameViewModel.drawnNumbers)
+                DrawnNumbersView(drawnNumbers: viewModel.drawnNumbers)
                 
                 // Bingo Card - 完整對齊 React 版本
-                if let bingoCard = gameViewModel.bingoCard {
+                if let bingoCard = viewModel.bingoCard {
                     BingoCardView(
                         bingoCard: bingoCard,
-                        drawnNumbers: gameViewModel.drawnNumbers,
-                        gameWon: gameViewModel.gameWon,
-                        onMarkNumber: gameViewModel.markNumber
+                        drawnNumbers: viewModel.drawnNumbers,
+                        gameWon: viewModel.gameWon,
+                        onMarkNumber: viewModel.markNumber,
+                        onReactionTime: onReactionTime
                     )
                 }
                 
                 // Emote Buttons - 互動按鈕
-                EmoteButtonsView(gameViewModel: gameViewModel)
+                EmoteButtonsView(
+                    viewModel: viewModel,
+                    onInteraction: onInteraction
+                )
                 
                 // Room Chat - 放在最下方，可以滑動到這裡
                 RoomChatView(
-                    roomName: room.name,
-                    messages: gameViewModel.roomChatMessages,
-                    newMessage: gameViewModel.newChatMessage,
-                    onMessageChange: { gameViewModel.newChatMessage = $0 },
-                    onSendMessage: gameViewModel.sendRoomChatMessage
+                    roomName: "Room \(currentRoomID)",
+                    messages: viewModel.roomChatMessages,
+                    newMessage: viewModel.newChatMessage,
+                    onMessageChange: { viewModel.newChatMessage = $0 },
+                    onSendMessage: viewModel.sendRoomChatMessage
                 )
                 .frame(minHeight: 300)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            // 使用房間ID作為遊戲房間ID，先嘗試加入，如果沒有主機則成為主機
-            gameViewModel.attemptToJoinOrCreateRoom(roomID: room.id.description)
+            print("🚨🚨🚨 BINGO GAME VIEW APPEARED: room=\(currentRoomID) 🚨🚨🚨")
+            print("🚨🚨🚨 BINGO GAME VIEW BODY WAS RENDERED 🚨🚨🚨")
+            // 只在第一次出現時加入房間
+            if viewModel.gameRoomID != String(currentRoomID) {
+                viewModel.attemptToJoinOrCreateRoom(roomID: String(currentRoomID))
+            }
+            print("🚨🚨🚨 AFTER CALLING attemptToJoinOrCreateRoom 🚨🚨🚨")
             
             // 設置遊戲獲勝回調
-            gameViewModel.onGameWon = { deviceName, score in
+            viewModel.onGameWon = { deviceName, score in
+                // 顯示冠軍
+                winnerName = NicknameFormatter.cleanNickname(deviceName)
+                winnerScore = score
+                withAnimation {
+                    showWinnerDisplay = true
+                }
+                
+                // 記錄到排行榜
                 onGameWon(deviceName, score)
+                
+                // 2秒後開始倒數
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                    withAnimation {
+                        showWinnerDisplay = false
+                    }
+                    
+                    // 檢查房間人數，如果還有≥ 2人則顯示倒數
+                    if viewModel.roomPlayers.count >= 2 {
+                        print("🔄 房間還有 \(viewModel.roomPlayers.count) 人，開始倒數")
+                        
+                        // 開始5秒倒數
+                        countdownNumber = 5
+                        withAnimation {
+                            showCountdown = true
+                        }
+                        
+                        // 開始倒數動畫 - 使用簡化的方法避免Timer管理問題
+                        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { timer in
+                            DispatchQueue.main.async {
+                                if countdownNumber > 1 {
+                                    withAnimation(.easeInOut(duration: 0.3)) {
+                                        countdownNumber -= 1
+                                    }
+                                } else {
+                                    timer.invalidate()
+                                    withAnimation {
+                                        showCountdown = false
+                                    }
+                                    // 倒數結束後重新開始遊戲
+                                    Task { @MainActor in
+                                        viewModel.restartGame()
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        print("🚪 房間人數不足，不自動重新開始")
+                    }
+                }
             }
+            
+            // 請求其他玩家的排行榜數據
+            viewModel.requestWeeklyLeaderboardData()
         }
         .onDisappear {
-            gameViewModel.leaveGameRoom()
+            viewModel.leaveGameRoom()
         }
-        .onReceive(gameViewModel.$roomPlayers) { players in
+        .onReceive(viewModel.$roomPlayers) { players in
             // 當房間玩家數量變化時，更新父視圖
-            onPlayerCountChanged(room.id, players.count)
+            onPlayerCountChanged(currentRoomID, players.count)
         }
         .overlay(
             Group {
-                if showEmoteText {
+                // 冠軍顯示（優先權最高）
+                if showWinnerDisplay {
+                    VStack(spacing: 16) {
+                        // 冠軍圖標
+                        Text("🏆")
+                            .font(.system(size: 100))
+                        
+                        // 玩家名稱
+                        Text(winnerName)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.black)
+                    }
+                    .padding(24)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white)
+                    )
+                    .shadow(color: Color.gray.opacity(0.3), radius: 10, x: 0, y: 5)
+                    .transition(.scale.combined(with: .opacity))
+                } else if showCountdown {
+                    // 倒數顯示
+                    Text("\(countdownNumber)")
+                        .font(.system(size: 150, weight: .bold, design: .default)) // 改為默認設計（黑體）
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
+                        .shadow(color: Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.3), radius: 10, x: 0, y: 5)
+                        .scaleEffect(countdownNumber == 5 ? 1.5 : 1.0)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.5), value: countdownNumber)
+                        .transition(.scale.combined(with: .opacity))
+                } else if showEmoteText {
                     if isPureEmoji {
                         // 純emoji：大emoji在賓果卡正中央，暱稱在上方
                         VStack(spacing: 8) {
@@ -390,7 +749,7 @@ struct BingoGameView: View {
                 }
             }
         )
-        .onReceive(gameViewModel.emotePublisher) { emote in
+        .onReceive(viewModel.emotePublisher) { emote in
             emoteText = emote.text
             isPureEmoji = emote.isPureEmoji
             withAnimation { showEmoteText = true }
@@ -428,8 +787,9 @@ struct BingoGameView: View {
 
 // MARK: - Emote Buttons View
 struct EmoteButtonsView: View {
-    @ObservedObject var gameViewModel: BingoGameViewModel
+    @ObservedObject var viewModel: BingoGameViewModel
     @EnvironmentObject var languageService: LanguageService
+    let onInteraction: () -> Void
     
     // 所有可用的表情
     private let allEmotes: [EmoteType] = [
@@ -443,7 +803,7 @@ struct EmoteButtonsView: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            Text("成為player")
+            Text(languageService.t("become_player"))
                 .font(.headline)
                 .foregroundColor(.secondary)
             
@@ -451,7 +811,10 @@ struct EmoteButtonsView: View {
                 ForEach(allEmotes, id: \.self) { emote in
                     EmojiButton(
                         emoji: emote.emoji,
-                        action: { gameViewModel.sendEmote(emote) }
+                        action: { 
+                            viewModel.sendEmote(emote)
+                            onInteraction() // 記錄互動次數
+                        }
                     )
                 }
             }

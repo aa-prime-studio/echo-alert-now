@@ -36,6 +36,7 @@ class SelfDestructManager {
         stopCleanupTimer()
         removeBackgroundNotifications()
         saveToStorage()
+        print("🧹 SelfDestructManager: deinit 完成，Timer已清理")
     }
     
     // MARK: - 公開方法
@@ -175,6 +176,7 @@ class SelfDestructManager {
     private func stopCleanupTimer() {
         cleanupTimer?.invalidate()
         cleanupTimer = nil
+        print("🧹 SelfDestructManager: 清理定時器已停止")
     }
     
     /// 初始清理（App 啟動時）

@@ -305,7 +305,9 @@ class AutomaticBanSystem {
     
     private func setupScoreDecayTimer() {
         Timer.scheduledTimer(withTimeInterval: scoreDecayInterval, repeats: true) { [weak self] _ in
-            self?.applyScoreDecay()
+            DispatchQueue.global(qos: .background).async {
+                self?.applyScoreDecay()
+            }
         }
     }
     

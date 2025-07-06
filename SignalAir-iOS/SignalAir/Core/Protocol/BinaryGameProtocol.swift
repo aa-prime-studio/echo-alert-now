@@ -19,6 +19,13 @@ class BinaryGameProtocol {
         case gameEnd = 0x0A
         case heartbeat = 0x0B
         case emote = 0x0C
+        // 本週排行榜相關訊息
+        case weeklyLeaderboardUpdate = 0x20
+        case weeklyLeaderboardSync = 0x21
+        case weeklyLeaderboardRequest = 0x22
+        // 冠軍廣播相關訊息
+        case winnerAnnouncement = 0x30
+        case gameRestart = 0x31
     }
     
     // MARK: - 編碼方法
@@ -34,10 +41,10 @@ class BinaryGameProtocol {
         var binaryData = Data()
         
         // 1. 協議版本 (1 byte)
-        binaryData.append(1)
+        binaryData.append(BinaryProtocolConstants.VERSION)
         
-        // 2. MeshMessage 類型 (1 byte) - 必須是 0x06 (game)
-        binaryData.append(0x06)
+        // 2. MeshMessage 類型 (1 byte) - 使用標準遊戲類型
+        binaryData.append(MeshMessageType.game.rawValue)
         
         // 3. 遊戲訊息子類型 (1 byte)
         binaryData.append(gameMessageTypeToBinary(type).rawValue)
@@ -81,12 +88,12 @@ class BinaryGameProtocol {
         
         // 1. 協議版本
         let version = data[offset]
-        guard version == 1 else { return nil }
+        guard version == BinaryProtocolConstants.VERSION else { return nil }
         offset += 1
         
-        // 2. MeshMessage 類型 - 必須是 0x06 (game)
+        // 2. MeshMessage 類型 - 必須是遊戲類型
         let meshType = data[offset]
-        guard meshType == 0x06 else { return nil }
+        guard meshType == MeshMessageType.game.rawValue else { return nil }
         offset += 1
         
         // 3. 遊戲訊息子類型
@@ -227,6 +234,150 @@ class BinaryGameProtocol {
         return data
     }
     
+    // MARK: - 本週排行榜編碼
+    
+    /// 排行榜類型
+    enum LeaderboardType: UInt8 {
+        case wins = 0x01        // 勝場榜
+        case interactions = 0x02 // DJ榜（互動統計）
+        case reaction = 0x03     // 等車榜（反應時間）
+    }
+    
+    /// 本週排行榜條目（用於二進制編解碼）
+    struct WeeklyLeaderboardEntry {
+        let playerID: String
+        let nickname: String
+        let value: Float        // 勝場數/互動次數/平均反應時間
+        let lastUpdate: Date
+        
+        // 標準初始化
+        init(playerID: String, nickname: String, value: Float, lastUpdate: Date) {
+            self.playerID = playerID
+            self.nickname = nickname
+            self.value = value
+            self.lastUpdate = lastUpdate
+        }
+        
+        // 從WeeklyScore轉換
+        init(from weeklyScore: WeeklyScore) {
+            self.playerID = weeklyScore.playerID
+            self.nickname = weeklyScore.nickname
+            self.value = weeklyScore.value
+            self.lastUpdate = weeklyScore.lastUpdate
+        }
+    }
+    
+    /// 編碼本週排行榜資料
+    static func encodeWeeklyLeaderboard(
+        type: LeaderboardType,
+        entries: [WeeklyLeaderboardEntry],
+        weekStartTime: Date
+    ) -> Data {
+        var data = Data()
+        
+        // 1. 排行榜類型 (1 byte)
+        data.append(type.rawValue)
+        
+        // 2. 週開始時間戳 (8 bytes)
+        let weekTimestamp = UInt64(weekStartTime.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: weekTimestamp.littleEndian) { Array($0) })
+        
+        // 3. 條目數量 (1 byte, 最多3個)
+        let entryCount = min(entries.count, 3)
+        data.append(UInt8(entryCount))
+        
+        // 4. 每個條目
+        for entry in entries.prefix(3) {
+            // 玩家ID長度 + 內容
+            let playerIDData = entry.playerID.data(using: .utf8) ?? Data()
+            let safePlayerIDLength = min(playerIDData.count, 255)
+            data.append(UInt8(safePlayerIDLength))
+            data.append(playerIDData.prefix(safePlayerIDLength))
+            
+            // 暱稱長度 + 內容（使用清理後的暱稱）
+            let cleanNickname = NicknameFormatter.cleanNickname(entry.nickname)
+            let nicknameData = cleanNickname.data(using: .utf8) ?? Data()
+            let safeNicknameLength = min(nicknameData.count, 255)
+            data.append(UInt8(safeNicknameLength))
+            data.append(nicknameData.prefix(safeNicknameLength))
+            
+            // 數值 (4 bytes, Float32)
+            data.append(contentsOf: withUnsafeBytes(of: entry.value) { Array($0) })
+            
+            // 最後更新時間戳 (4 bytes)
+            let updateTimestamp = UInt32(entry.lastUpdate.timeIntervalSince1970)
+            data.append(contentsOf: withUnsafeBytes(of: updateTimestamp.littleEndian) { Array($0) })
+        }
+        
+        return data
+    }
+    
+    /// 解碼本週排行榜資料
+    static func decodeWeeklyLeaderboard(_ data: Data) -> (LeaderboardType, Date, [WeeklyLeaderboardEntry])? {
+        guard data.count >= 10 else { return nil } // 最小長度檢查
+        
+        var offset = 0
+        
+        // 1. 排行榜類型
+        guard let type = LeaderboardType(rawValue: data[offset]) else { return nil }
+        offset += 1
+        
+        // 2. 週開始時間戳
+        let weekTimestamp = data.subdata(in: offset..<offset+8).withUnsafeBytes {
+            $0.load(as: UInt64.self).littleEndian
+        }
+        let weekStartTime = Date(timeIntervalSince1970: Double(weekTimestamp))
+        offset += 8
+        
+        // 3. 條目數量
+        let entryCount = Int(data[offset])
+        offset += 1
+        
+        // 4. 解析條目
+        var entries: [WeeklyLeaderboardEntry] = []
+        for _ in 0..<entryCount {
+            // 玩家ID
+            guard offset < data.count else { return nil }
+            let playerIDLength = Int(data[offset])
+            offset += 1
+            guard offset + playerIDLength <= data.count else { return nil }
+            let playerID = String(data: data.subdata(in: offset..<offset+playerIDLength), encoding: .utf8) ?? ""
+            offset += playerIDLength
+            
+            // 暱稱
+            guard offset < data.count else { return nil }
+            let nicknameLength = Int(data[offset])
+            offset += 1
+            guard offset + nicknameLength <= data.count else { return nil }
+            let nickname = String(data: data.subdata(in: offset..<offset+nicknameLength), encoding: .utf8) ?? ""
+            offset += nicknameLength
+            
+            // 數值
+            guard offset + 4 <= data.count else { return nil }
+            let value = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+                $0.load(as: Float.self)
+            }
+            offset += 4
+            
+            // 最後更新時間戳
+            guard offset + 4 <= data.count else { return nil }
+            let updateTimestamp = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+                $0.load(as: UInt32.self).littleEndian
+            }
+            let lastUpdate = Date(timeIntervalSince1970: Double(updateTimestamp))
+            offset += 4
+            
+            entries.append(WeeklyLeaderboardEntry(
+                playerID: playerID,
+                nickname: NicknameFormatter.cleanNickname(nickname),
+                value: value,
+                lastUpdate: lastUpdate
+            ))
+        }
+        
+        return (type, weekStartTime, entries)
+    }
+    
     /// 解碼房間同步狀態
     static func decodeRoomState(_ data: Data) -> GameRoomState? {
         guard data.count >= 5 else { return nil }
@@ -357,6 +508,11 @@ class BinaryGameProtocol {
         case .gameEnd: return .gameEnd
         case .heartbeat: return .heartbeat
         case .emote: return .emote
+        case .weeklyLeaderboardUpdate: return .weeklyLeaderboardUpdate
+        case .weeklyLeaderboardSync: return .weeklyLeaderboardSync
+        case .weeklyLeaderboardRequest: return .weeklyLeaderboardRequest
+        case .winnerAnnouncement: return .winnerAnnouncement
+        case .gameRestart: return .gameRestart
         }
     }
     
@@ -374,6 +530,11 @@ class BinaryGameProtocol {
         case .gameEnd: return .gameEnd
         case .heartbeat: return .heartbeat
         case .emote: return .emote
+        case .weeklyLeaderboardUpdate: return .weeklyLeaderboardUpdate
+        case .weeklyLeaderboardSync: return .weeklyLeaderboardSync
+        case .weeklyLeaderboardRequest: return .weeklyLeaderboardRequest
+        case .winnerAnnouncement: return .winnerAnnouncement
+        case .gameRestart: return .gameRestart
         }
     }
     

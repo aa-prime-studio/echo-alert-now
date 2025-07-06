@@ -132,7 +132,9 @@ class TemporaryIDManager: ObservableObject {
         } else {
             // 安排在正確時間更新
             autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeToNextUpdate, repeats: false) { [weak self] _ in
-                self?.performScheduledUpdate()
+                DispatchQueue.global(qos: .background).async {
+                    self?.performScheduledUpdate()
+                }
             }
             
             print("📱 TemporaryIDManager: 安排 \(Int(timeToNextUpdate/3600)) 小時後更新")
@@ -142,7 +144,9 @@ class TemporaryIDManager: ObservableObject {
     /// 安排下次更新
     private func scheduleNextUpdate() {
         autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
-            self?.performScheduledUpdate()
+            DispatchQueue.global(qos: .background).async {
+                self?.performScheduledUpdate()
+            }
         }
     }
     

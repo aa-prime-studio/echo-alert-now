@@ -152,7 +152,7 @@ struct RoomChatMessage: Identifiable, Codable {
     }
 }
 
-// 遊戲排行榜分數
+// 遊戲排行榜分數（保留原有的日榜結構）
 struct BingoScore: Identifiable, Codable {
     let id: UUID
     let deviceName: String
@@ -166,6 +166,47 @@ struct BingoScore: Identifiable, Codable {
         self.score = score
         self.timestamp = timestamp
         self.date = date
+    }
+}
+
+// 本週排行榜相關類型
+struct WeeklyLeaderboard: Codable {
+    let weekStartTime: Date
+    let winsBoard: [WeeklyScore]     // 勝場榜
+    let djBoard: [WeeklyScore]       // DJ榜
+    let reactionBoard: [WeeklyScore] // 等車榜
+    let lastUpdate: Date
+    
+    init(weekStartTime: Date) {
+        self.weekStartTime = weekStartTime
+        self.winsBoard = []
+        self.djBoard = []
+        self.reactionBoard = []
+        self.lastUpdate = Date()
+    }
+    
+    init(weekStartTime: Date, winsBoard: [WeeklyScore], djBoard: [WeeklyScore] = [], reactionBoard: [WeeklyScore] = []) {
+        self.weekStartTime = weekStartTime
+        self.winsBoard = winsBoard
+        self.djBoard = djBoard
+        self.reactionBoard = reactionBoard
+        self.lastUpdate = Date()
+    }
+}
+
+struct WeeklyScore: Identifiable, Codable {
+    let id: UUID
+    let playerID: String
+    let nickname: String
+    let value: Float        // 勝場數/互動次數/平均反應時間(ms)
+    let lastUpdate: Date
+    
+    init(playerID: String, nickname: String, value: Float) {
+        self.id = UUID()
+        self.playerID = playerID
+        self.nickname = NicknameFormatter.cleanNickname(nickname)
+        self.value = value
+        self.lastUpdate = Date()
     }
 }
 
@@ -185,7 +226,7 @@ struct RoomPlayer: Identifiable, Codable {
 }
 
 // Bingo 房間
-struct BingoRoom: Identifiable, Codable {
+struct BingoRoom: Identifiable, Codable, Equatable {
     let id: Int
     let name: String
     let players: [String]
@@ -243,6 +284,17 @@ struct BingoCard {
     }
 }
 
+// MARK: - 協議常數定義
+
+/// 二進制協議共享常數
+struct BinaryProtocolConstants {
+    static let VERSION: UInt8 = 1
+    static let HEADER_SIZE = 12
+    static let MIN_HEADER_SIZE = 10
+    static let ENCRYPTED_FLAG: UInt8 = 1
+    static let UNENCRYPTED_FLAG: UInt8 = 0
+}
+
 // MARK: - 網路和服務相關類型
 
 // 網路連線狀態
@@ -289,13 +341,14 @@ struct ConnectedPeer {
 
 // Mesh 訊息類型（支援二進制協議）
 enum MeshMessageType: UInt8, Codable {
-    case signal = 0x01      // 信號訊息
-    case emergency = 0x02   // 緊急訊息  
-    case chat = 0x03        // 聊天訊息
-    case system = 0x04      // 系統訊息
-    case keyExchange = 0x05 // 密鑰交換
-    case game = 0x06        // 遊戲訊息
-    case topology = 0x07    // 網路拓撲
+    case signal = 0x01          // 信號訊息
+    case emergency = 0x02       // 緊急訊息  
+    case chat = 0x03            // 聊天訊息
+    case system = 0x04          // 系統訊息
+    case keyExchange = 0x05     // 密鑰交換請求
+    case game = 0x06            // 遊戲訊息
+    case topology = 0x07        // 網路拓撲
+    case keyExchangeResponse = 0x08 // 密鑰交換響應
     
     var stringValue: String {
         switch self {
@@ -306,6 +359,7 @@ enum MeshMessageType: UInt8, Codable {
         case .keyExchange: return "keyExchange"
         case .game: return "game"
         case .topology: return "topology"
+        case .keyExchangeResponse: return "keyExchangeResponse"
         }
     }
 }
@@ -347,6 +401,13 @@ enum GameMessageType: String, Codable, CaseIterable {
     case reconnectRequest = "reconnect_request"
     case heartbeat = "heartbeat"
     case emote = "emote"
+    // 本週排行榜相關訊息
+    case weeklyLeaderboardUpdate = "weekly_leaderboard_update"
+    case weeklyLeaderboardSync = "weekly_leaderboard_sync"
+    case weeklyLeaderboardRequest = "weekly_leaderboard_request"
+    // 冠軍廣播相關訊息
+    case winnerAnnouncement = "winner_announcement"
+    case gameRestart = "game_restart"
 }
 
 // 遊戲訊息
@@ -357,6 +418,15 @@ struct GameMessage: Codable {
     let data: Data
     let timestamp: Date
     let gameRoomID: String
+}
+
+// 冠軍廣播訊息
+struct WinnerAnnouncement: Codable {
+    let winnerPlayerID: String
+    let winnerName: String
+    let completedLines: Int
+    let gameEndTime: Date
+    let restartCountdown: Int // 重新開始倒數秒數
 }
 
 // 玩家狀態
@@ -443,7 +513,8 @@ struct NicknameFormatter {
 // MARK: - 基本服務類型（避免重複定義）
 
 // MARK: - Protocols for Services
-protocol MeshManagerProtocol {
+@MainActor
+protocol MeshManagerProtocol: Sendable {
     // 基本方法
     func broadcastMessage(_ data: Data, messageType: MeshMessageType)
     func getConnectedPeers() -> [String]
@@ -478,7 +549,8 @@ class FloodProtection: FloodProtectionProtocol {
 
 // MARK: - Fallback MeshManager Implementation
 // 注意：這是備用版本，優先使用 SignalAir/Core/Network/MeshManager.swift
-class MeshManager: MeshManagerProtocol {
+@MainActor
+class MeshManager: MeshManagerProtocol, @unchecked Sendable {
     var onMessageReceived: ((MeshMessage) -> Void)?
     var onPeerConnected: ((String) -> Void)?
     var onPeerDisconnected: ((String) -> Void)?
@@ -521,10 +593,12 @@ class MeshManager: MeshManagerProtocol {
         }
     }
     
+    @MainActor
     func getConnectedPeers() -> [String] { 
         return networkService?.connectedPeers.map { $0.displayName } ?? []
     }
     
+    @MainActor
     func broadcast(_ data: Data, priority: MessagePriority, userNickname: String) async throws {
         guard let networkService = networkService else {
             print("❌ MeshManager: NetworkService 未初始化")

@@ -328,8 +328,10 @@ class TrustScoreManager: ObservableObject {
     
     /// 啟動清理定時器
     private func startCleanupTimer() {
-        cleanupTimer = Timer.scheduledTimer(withTimeInterval: cleanupInterval, repeats: true) { _ in
-            self.performCleanup()
+        cleanupTimer = Timer.scheduledTimer(withTimeInterval: cleanupInterval, repeats: true) { [weak self] _ in
+            DispatchQueue.global(qos: .background).async {
+                self?.performCleanup()
+            }
         }
     }
     
