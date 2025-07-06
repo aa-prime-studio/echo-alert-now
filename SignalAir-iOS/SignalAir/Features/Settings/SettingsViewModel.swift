@@ -49,8 +49,10 @@ class SettingsViewModel: ObservableObject {
     
     deinit {
         statusUpdateTimer?.invalidate()
+        statusUpdateTimer = nil
         NotificationCenter.default.removeObserver(self)
         removeNetworkObservers()
+        print("🧹 SettingsViewModel: deinit 完成，Timer已清理")
     }
     
     // MARK: - Public Methods
@@ -238,11 +240,14 @@ class SettingsViewModel: ObservableObject {
         networkService.onPeerDisconnected = nil
     }
     
-    /// 開始定期更新狀態
+    /// 開始定期更新狀態 - 優化為降低頻率，避免主線程阻塞
     private func startStatusUpdates() {
-        statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.updateConnectionStatus()
-            self?.updateDeviceIDInfo()
+        statusUpdateTimer?.invalidate() // 清理舊的Timer
+        statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
+            DispatchQueue.global(qos: .utility).async {
+                self?.updateConnectionStatus()
+                self?.updateDeviceIDInfo()
+            }
         }
     }
     

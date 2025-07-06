@@ -17,10 +17,9 @@ class NicknameService: ObservableObject {
     private let remainingChangesKey = "nickname_remaining_changes"
     private let discriminatorKey = "userDiscriminator"
     private let discriminatorTypeKey = "discriminatorType"
-    // 移除對舊TemporaryIDManager的依賴，改用ServiceContainer
-    private func getDeviceID() -> String {
-        return ServiceContainer.shared.temporaryIDManager.deviceID
-    }
+    // 移除對舊TemporaryIDManager的依賴
+    // 注意：如果需要使用 deviceID，應該直接從 ServiceContainer 獲取
+    // 例如：ServiceContainer.shared.temporaryIDManager.deviceID
     
     init() {
         // 從 UserDefaults 讀取，如果沒有則使用預設暱稱

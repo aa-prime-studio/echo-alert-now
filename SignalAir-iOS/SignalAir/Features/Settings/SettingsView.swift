@@ -89,7 +89,7 @@ struct SettingsView: View {
                 icon: "heart.fill",
                 title: languageService.t("subscription_status"),
                 value: {
-                    if let tierName = purchaseService.getPurchasedTierDisplayName(language: languageService.currentLanguage) {
+                    if let tierName = purchaseService.getPurchasedTierDisplayName(language: PurchaseService.convertLanguage(languageService.currentLanguage)) {
                         return tierName
                     } else {
                         return languageService.t("free_user")
@@ -157,13 +157,13 @@ struct SettingsView: View {
                         
                         Spacer()
                         
-                        Button("取消") {
+                        Button(languageService.t("cancel")) {
                             isEditingNickname = false
                         }
                         .foregroundColor(.gray)
                         .font(.caption)
                         
-                        Button("完成") {
+                        Button(languageService.t("done")) {
                             saveNickname()
                         }
                         .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
@@ -220,7 +220,7 @@ struct SettingsView: View {
             
             HStack {
                 Spacer()
-                Text("00:00 ——— 午夜自動更新")
+                Text(languageService.t("midnight_auto_update"))
                     .font(.caption)
                     .foregroundColor(.gray)
             }
@@ -298,6 +298,31 @@ struct SettingsView: View {
                     
                     Image(systemName: "chevron.right")
                         .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
+            }
+            
+            // 🔍 診斷工具（僅開發/測試用）
+            Divider()
+            
+            Button(action: {
+                serviceContainer.networkService.performQuickDiagnostic()
+                print(serviceContainer.networkService.getDiagnosticReport())
+            }) {
+                HStack {
+                    Image(systemName: "stethoscope")
+                        .foregroundColor(.orange)
+                        .frame(width: 24)
+                    
+                    Text("🔍 網路診斷")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    Image(systemName: "play.circle")
+                        .foregroundColor(.orange)
                         .font(.caption)
                 }
                 .padding()

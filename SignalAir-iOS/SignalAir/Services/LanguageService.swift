@@ -135,7 +135,6 @@ class LanguageService: ObservableObject {
                 // 遊戲狀態和連線
                 "offline": "離線",
                 "waiting_sync": "等待同步",
-                "connected_devices": "已連線 %d 個裝置",
                 "click_drawn_numbers": "點擊已抽取的號碼來標記",
                 "room_created": "🏠 已創建遊戲房間:",
                 "joining_room": "🔍 正在加入遊戲房間:",
@@ -172,7 +171,49 @@ class LanguageService: ObservableObject {
                 // Purchase related
                 "unlock_full_features": "解鎖完整功能",
                 "choose_best_plan": "選擇最適合您的方案",
-                "purchase": "購買"
+                "purchase": "購買",
+                
+                // 解鎖畫面和賓果遊戲室相關
+                "bingo_game_room": "賓果遊戲室",
+                "ready": "準備就緒",
+                "game_features": "遊戲特色",
+                "multiplayer_battle": "多人連線對戰",
+                "max_6_players": "最多6人同時遊戲",
+                "daily_leaderboard_title": "每日排行榜",
+                "daily_best_scores": "競爭每日最佳成績",
+                "realtime_chat": "即時聊天",
+                "interact_with_players": "與其他玩家互動交流",
+                "unlock_full_experience": "立即解鎖享受完整遊戲體驗",
+                "upgrade_options": "升級選項",
+                "recommended_plan": "推薦方案",
+                
+                // 遊戲室相關
+                "can_join_until_full": "可繼續加入至滿房",
+                "become_player": "成為player",
+                "connecting_to_room": "正在連接房間",
+                "became_room_host": "已成為房間主機",
+                "game_starting": "遊戲即將開始...",
+                "start_drawing": "開始抽卡！",
+                "need_at_least": "需要至少",
+                "players_to_start": "人才能開始遊戲",
+                
+                // 連線狀態
+                "connected": "已連線",
+                "connecting": "連線中",
+                "disconnected": "未連線",
+                "connected_devices": "已連線 (%@ 個設備)",
+                "midnight_auto_update": "00:00 ——— 午夜自動更新",
+                
+                // 表情模板
+                "emote_bingo": "%@ 喊出 BINGO!",
+                "emote_nen": "%@ 說你嫩！",
+                "emote_wow": "%@ 大叫太扯！",
+                "emote_rocket": "%@ 說一起飛向宇宙",
+                "emote_burger": "%@ 想吃漢堡",
+                "emote_battery": "%@ 需要充電",
+                "emote_dizzy": "%@ 頭暈了",
+                "emote_mouse": "%@ 説家裡有老鼠",
+                "emote_ring": "%@ 問你要不要嫁給他"
             ]
         case .english:
             return [
@@ -288,7 +329,6 @@ class LanguageService: ObservableObject {
                 // Game status and connection
                 "offline": "Offline",
                 "waiting_sync": "Waiting for sync",
-                "connected_devices": "Connected %d devices",
                 "click_drawn_numbers": "Click drawn numbers to mark",
                 "room_created": "🏠 Created game room:",
                 "joining_room": "🔍 Joining game room:",
@@ -308,7 +348,49 @@ class LanguageService: ObservableObject {
                 // Purchase related
                 "unlock_full_features": "Unlock Full Features",
                 "choose_best_plan": "Choose the best plan for you",
-                "purchase": "Purchase"
+                "purchase": "Purchase",
+                
+                // Unlock screen and Bingo game room related
+                "bingo_game_room": "Bingo Game Room",
+                "ready": "Ready",
+                "game_features": "Game Features",
+                "multiplayer_battle": "Multiplayer Online Battle",
+                "max_6_players": "Up to 6 players simultaneously",
+                "daily_leaderboard_title": "Daily Leaderboard",
+                "daily_best_scores": "Compete for daily best scores",
+                "realtime_chat": "Real-time Chat",
+                "interact_with_players": "Interact with other players",
+                "unlock_full_experience": "Unlock immediately to enjoy full gaming experience",
+                "upgrade_options": "Upgrade Options",
+                "recommended_plan": "Recommended",
+                
+                // Game room related
+                "can_join_until_full": "Can join until room is full",
+                "become_player": "Become Player",
+                "connecting_to_room": "Connecting to room",
+                "became_room_host": "Became room host",
+                "game_starting": "Game starting...",
+                "start_drawing": "Start drawing cards!",
+                "need_at_least": "Need at least",
+                "players_to_start": "players to start game",
+                
+                // Connection status
+                "connected": "Connected",
+                "connecting": "Connecting",
+                "disconnected": "Disconnected",
+                "connected_devices": "Connected (%@ devices)",
+                "midnight_auto_update": "00:00 — Automatic midnight update",
+                
+                // Emote templates
+                "emote_bingo": "%@ shouts BINGO!",
+                "emote_nen": "%@ says you're new!",
+                "emote_wow": "%@ shouts too much!",
+                "emote_rocket": "%@ says let's fly to space",
+                "emote_burger": "%@ wants to eat burger",
+                "emote_battery": "%@ needs charging",
+                "emote_dizzy": "%@ is dizzy",
+                "emote_mouse": "%@ says there's a mouse at home",
+                "emote_ring": "%@ asks if you want to marry them"
             ]
         }
     }
