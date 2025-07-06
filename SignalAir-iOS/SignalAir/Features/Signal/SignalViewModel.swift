@@ -540,6 +540,7 @@ class SecurityLogger {
 }
 
 // MARK: - 主要 ViewModel
+@MainActor
 class SignalViewModel: ObservableObject {
     // MARK: - 發布的狀態
     @Published var messages: [SignalMessage] = []
@@ -594,9 +595,9 @@ class SignalViewModel: ObservableObject {
     private func setupLocationServices() {
         locationDelegate = LocationDelegate(
             onLocationUpdate: { [weak self] location in
-                DispatchQueue.main.async {
-                    self?.currentLocation = location
-                    self?.updateMessagesWithRelativePositions()
+                // 優化：只有在位置顯著變化時才更新相對位置
+                Task { @MainActor in
+                    self?.handleLocationUpdate(location)
                 }
             },
             signalViewModel: self
@@ -652,7 +653,9 @@ class SignalViewModel: ObservableObject {
     // MARK: - 狀態監控設定
     private func setupStatusMonitoring() {
         statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 10.0, repeats: true) { [weak self] _ in
-            self?.updateConnectionStatus()
+            Task { @MainActor in
+                self?.updateConnectionStatus()
+            }
         }
     }
     
@@ -955,6 +958,29 @@ class SignalViewModel: ObservableObject {
         }
     }
     
+    /// 處理位置更新 - 只有在位置顯著變化時才更新UI
+    private func handleLocationUpdate(_ newLocation: CLLocation) {
+        let shouldUpdate: Bool
+        
+        if let lastLocation = currentLocation {
+            // 只有當位置變化超過100米時才更新相對位置
+            let distance = lastLocation.distance(from: newLocation)
+            shouldUpdate = distance > 100
+        } else {
+            shouldUpdate = true // 首次獲取位置
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.currentLocation = newLocation
+        }
+        
+        if shouldUpdate {
+            DispatchQueue.main.async { [weak self] in
+                self?.updateMessagesWithRelativePositions()
+            }
+        }
+    }
+    
     /// 更新訊息的相對位置
     private func updateMessagesWithRelativePositions() {
         guard let currentLoc = currentLocation else { return }
@@ -1244,11 +1270,15 @@ private class LocationDelegate: NSObject, CLLocationManagerDelegate {
         case .authorizedWhenInUse, .authorizedAlways:
             // 授權成功，啟動位置更新
             manager.startUpdatingLocation()
-            signalViewModel?.isLocationEnabled = true
+            Task { @MainActor in
+                signalViewModel?.isLocationEnabled = true
+            }
             print("📍 位置服務已啟用")
         case .denied, .restricted:
             print("📍 位置服務被拒絕或限制")
-            signalViewModel?.isLocationEnabled = false
+            Task { @MainActor in
+                signalViewModel?.isLocationEnabled = false
+            }
         case .notDetermined:
             print("📍 位置授權尚未確定")
         @unknown default:

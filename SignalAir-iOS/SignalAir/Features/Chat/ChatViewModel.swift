@@ -2,6 +2,7 @@ import Foundation
 import SwiftUI
 import Combine
 
+@MainActor
 class ChatViewModel: ObservableObject {
     @Published var messages: [ChatMessage] = []
     @Published var newMessage: String = ""
@@ -40,7 +41,10 @@ class ChatViewModel: ObservableObject {
         settingsViewModel: SettingsViewModel? = nil
     ) {
         // 使用 ServiceContainer 中的正確初始化服務
-        self.meshManager = meshManager ?? ServiceContainer.shared.meshManager!
+        guard let resolvedMeshManager = meshManager ?? ServiceContainer.shared.meshManager else {
+            fatalError("❌ ChatViewModel: 無法獲取 meshManager")
+        }
+        self.meshManager = resolvedMeshManager
         self.securityService = securityService ?? ServiceContainer.shared.securityService
         self.selfDestructManager = selfDestructManager ?? ServiceContainer.shared.selfDestructManager
         self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel
@@ -55,9 +59,13 @@ class ChatViewModel: ObservableObject {
     
     deinit {
         cleanupTimer?.invalidate()
+        cleanupTimer = nil
         typingTimer?.invalidate()
+        typingTimer = nil
         statusUpdateTimer?.invalidate()
-        meshManager.stopMeshNetwork()
+        statusUpdateTimer = nil
+        // meshManager.stopMeshNetwork() 在 deinit 中無法安全調用，由系統自動管理
+        print("🧹 ChatViewModel: 計時器已清理，網路服務由系統管理")
     }
     
     // MARK: - Mesh 網路設定
@@ -308,7 +316,9 @@ class ChatViewModel: ObservableObject {
         // 重置打字定時器
         typingTimer?.invalidate()
         typingTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: false) { [weak self] _ in
-            self?.stopTyping()
+            Task { @MainActor in
+                self?.stopTyping()
+            }
         }
     }
     
@@ -316,6 +326,7 @@ class ChatViewModel: ObservableObject {
     func stopTyping() {
         isTyping = false
         typingTimer?.invalidate()
+        typingTimer = nil
     }
     
     /// 清除訊息
@@ -528,7 +539,9 @@ class ChatViewModel: ObservableObject {
     /// 設定狀態更新定時器
     private func setupStatusUpdates() {
         statusUpdateTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: true) { [weak self] _ in
-            self?.updateConnectionStatus()
+            Task { @MainActor in
+                self?.updateConnectionStatus()
+            }
         }
     }
     

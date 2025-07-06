@@ -1,5 +1,66 @@
 import SwiftUI
 
+// MARK: - ViewModel Container for Lazy Initialization
+@MainActor
+class ViewModelContainer: ObservableObject, @unchecked Sendable {
+    @Published var isReady = false
+    @Published var initializationError: String?
+    
+    private var _chatViewModel: ChatViewModel?
+    private var _signalViewModel: SignalViewModel?
+    private var _bingoGameViewModel: BingoGameViewModel?
+    
+    // 同步鎖以防止競爭條件
+    private let viewModelLock = NSLock()
+    
+    var chatViewModel: ChatViewModel {
+        viewModelLock.lock()
+        defer { viewModelLock.unlock() }
+        
+        if _chatViewModel == nil {
+            _chatViewModel = ServiceContainer.shared.createChatViewModel()
+        }
+        return _chatViewModel ?? ChatViewModel(
+            meshManager: nil,
+            securityService: ServiceContainer.shared.securityService,
+            selfDestructManager: ServiceContainer.shared.selfDestructManager,
+            settingsViewModel: ServiceContainer.shared.settingsViewModel
+        )
+    }
+    
+    var signalViewModel: SignalViewModel {
+        viewModelLock.lock()
+        defer { viewModelLock.unlock() }
+        
+        if _signalViewModel == nil {
+            _signalViewModel = ServiceContainer.shared.createSignalViewModel()
+        }
+        return _signalViewModel ?? SignalViewModel(
+            networkService: ServiceContainer.shared.networkService,
+            securityService: ServiceContainer.shared.securityService,
+            settingsViewModel: ServiceContainer.shared.settingsViewModel,
+            selfDestructManager: ServiceContainer.shared.selfDestructManager
+        )
+    }
+    
+    var bingoGameViewModel: BingoGameViewModel {
+        viewModelLock.lock()
+        defer { viewModelLock.unlock() }
+        
+        if _bingoGameViewModel == nil {
+            _bingoGameViewModel = ServiceContainer.shared.createBingoGameViewModel()
+        }
+        return _bingoGameViewModel ?? ServiceContainer.shared.createBingoGameViewModel()
+    }
+    
+    init() {
+        // 立即標記為準備好，不等待任何初始化
+        Task { @MainActor in
+            self.isReady = true
+        }
+    }
+}
+
 struct ContentView: View {
     @EnvironmentObject var languageService: LanguageService
     @EnvironmentObject var purchaseService: PurchaseService
@@ -9,44 +70,118 @@ struct ContentView: View {
     @State private var selectedTab = 0
     @State private var showingSettings = false
     
-    // ViewModels created through service container
-    @StateObject private var chatViewModel = ServiceContainer.shared.createChatViewModel()
-    @StateObject private var signalViewModel = ServiceContainer.shared.createSignalViewModel()
-    @StateObject private var bingoGameViewModel = ServiceContainer.shared.createBingoGameViewModel()
+    // ViewModels - 延遲初始化避免阻塞
+    @StateObject private var viewModelContainer = ViewModelContainer()
     
     var body: some View {
-        TabView(selection: $selectedTab) {
-            SignalTabView(signalViewModel: signalViewModel)
-                .tabItem {
-                    Image(systemName: "antenna.radiowaves.left.and.right")
-                    Text(languageService.t("signals"))
+        Group {
+            if let error = viewModelContainer.initializationError {
+                // 錯誤處理視圖
+                ErrorView(errorMessage: error) {
+                    // 重試動作
+                    viewModelContainer.initializationError = nil
+                    viewModelContainer.isReady = true
                 }
-                .tag(0)
-            
-            ChatTabView()
-                .tabItem {
-                    Image(systemName: "message")
-                    Text(languageService.t("chat"))
+            } else if viewModelContainer.isReady {
+                TabView(selection: $selectedTab) {
+                    SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
+                        .tabItem {
+                            Image(systemName: "antenna.radiowaves.left.and.right")
+                            Text(languageService.t("signals"))
+                        }
+                        .tag(0)
+                    
+                    ChatTabView()
+                        .tabItem {
+                            Image(systemName: "message")
+                            Text(languageService.t("chat"))
+                        }
+                        .tag(1)
+                    
+                    GameTabView(isPremiumUser: purchaseService.isPremiumUser)
+                        .tabItem {
+                            Image(systemName: "gamecontroller")
+                            Text(languageService.t("games"))
+                        }
+                        .tag(2)
+                    
+                    SettingsView()
+                        .tabItem {
+                            Image(systemName: "gear")
+                            Text(languageService.t("settings"))
+                        }
+                        .tag(3)
                 }
-                .tag(1)
-            
-            GameTabView(isPremiumUser: purchaseService.isPremiumUser)
-                .tabItem {
-                    Image(systemName: "gamecontroller")
-                    Text(languageService.t("games"))
+                .accentColor(.blue)
+                .transaction { transaction in
+                    transaction.disablesAnimations = true
                 }
-                .tag(2)
-            
-            SettingsView()
-                .tabItem {
-                    Image(systemName: "gear")
-                    Text(languageService.t("settings"))
-                }
-                .tag(3)
+            } else {
+                // 顯示輕量級載入指示器，不阻塞UI
+                LoadingIndicatorView()
+                    .transition(.opacity)
+            }
         }
-        .accentColor(.blue)
-        .transaction { transaction in
-            transaction.disablesAnimations = true
+    }
+}
+
+// MARK: - Error View
+struct ErrorView: View {
+    let errorMessage: String
+    let onRetry: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .font(.system(size: 50))
+                .foregroundColor(.orange)
+            
+            Text("發生錯誤")
+                .font(.title2)
+                .fontWeight(.semibold)
+            
+            Text(errorMessage)
+                .font(.body)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal)
+            
+            Button(action: onRetry) {
+                Text("重試")
+                    .fontWeight(.medium)
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 30)
+                    .padding(.vertical, 12)
+                    .background(Color.blue)
+                    .cornerRadius(8)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(UIColor.systemBackground))
+    }
+}
+
+// MARK: - Loading Indicator
+struct LoadingIndicatorView: View {
+    @State private var isAnimating = false
+    
+    var body: some View {
+        VStack(spacing: 20) {
+            Circle()
+                .trim(from: 0.0, to: 0.8)
+                .stroke(Color.blue, lineWidth: 4)
+                .frame(width: 50, height: 50)
+                .rotationEffect(.degrees(isAnimating ? 360 : 0))
+                .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
+            
+            Text("正在初始化服務...")
+                .font(.caption)
+                .foregroundColor(.gray)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(UIColor.systemBackground))
+        .onAppear {
+            isAnimating = true
         }
     }
 }
@@ -117,7 +252,7 @@ struct SignalTabView: View {
                     Circle()
                         .fill(connectionStatusColor)
                         .frame(width: 8, height: 8)
-                    Text(signalViewModel.connectionStatus)
+                    Text(translatedConnectionStatus)
                         .font(.caption)
                         .foregroundColor(.black.opacity(0.8))
                 }
@@ -144,28 +279,42 @@ struct SignalTabView: View {
     
     // 連線狀態顏色
     private var connectionStatusColor: Color {
-        switch signalViewModel.connectionStatus {
-        case "已連線":
+        let status = signalViewModel.connectionStatus
+        if status.contains("已連線") || status.contains("Connected") {
             return .green
-        case "連線中":
+        } else if status.contains("連線中") || status.contains("Connecting") {
             return .orange
-        case "未連線":
+        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
             return .red
-        default:
+        } else {
             return .gray
         }
     }
     
+    // 翻譯後的連線狀態文字
+    private var translatedConnectionStatus: String {
+        let status = signalViewModel.connectionStatus
+        if status.contains("已連線") {
+            let deviceCount = status.components(separatedBy: " ").first { $0.contains("個") }?.replacingOccurrences(of: "個設備)", with: "") ?? "0"
+            return String(format: languageService.t("connected_devices"), deviceCount)
+        } else if status.contains("連線中") {
+            return languageService.t("connecting")
+        } else if status.contains("未連線") || status.contains("離線") {
+            return languageService.t("disconnected")
+        }
+        return status
+    }
+    
     // 連線圖標名稱
     private var connectionIconName: String {
-        switch signalViewModel.connectionStatus {
-        case "已連線":
+        let status = signalViewModel.connectionStatus
+        if status.contains("已連線") || status.contains("Connected") {
             return "wifi"
-        case "連線中":
+        } else if status.contains("連線中") || status.contains("Connecting") {
             return "wifi.exclamationmark"
-        case "未連線":
+        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
             return "wifi.slash"
-        default:
+        } else {
             return "wifi.slash"
         }
     }
@@ -192,10 +341,16 @@ struct GameTabView: View {
     @EnvironmentObject var purchaseService: PurchaseService
     @EnvironmentObject var languageService: LanguageService
     @State private var showingUpgradeSheet = false
+    @State private var localIsPremiumUser: Bool
+    
+    init(isPremiumUser: Bool) {
+        self.isPremiumUser = isPremiumUser
+        self._localIsPremiumUser = State(initialValue: isPremiumUser)
+    }
     
     var body: some View {
         NavigationView {
-            if isPremiumUser {
+            if localIsPremiumUser {
                 GameView()
                     .navigationBarHidden(true)
             } else {
@@ -205,6 +360,14 @@ struct GameTabView: View {
         }
         .sheet(isPresented: $showingUpgradeSheet) {
             PurchaseOptionsView(purchaseService: purchaseService)
+        }
+        .onReceive(purchaseService.$purchasedTiers) { _ in
+            // 監聽購買狀態變化，確保在主線程執行
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    localIsPremiumUser = purchaseService.isPremiumUser
+                }
+            }
         }
     }
 }
@@ -239,13 +402,13 @@ struct UpgradePromptView: View {
                         // 賓果遊戲室預覽
                         VStack(spacing: 12) {
                             HStack {
-                                Text("賓果遊戲室")
+                                Text(languageService.t("bingo_game_room"))
                                     .font(.headline)
                                     .foregroundColor(.black)
                                 
                                 Spacer()
                                 
-                                Text("準備就緒")
+                                Text(languageService.t("ready"))
                                     .font(.caption)
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
@@ -271,7 +434,7 @@ struct UpgradePromptView: View {
                         // 功能特色預覽
                         VStack(spacing: 16) {
                             HStack {
-                                Text("遊戲特色")
+                                Text(languageService.t("game_features"))
                                     .font(.headline)
                                     .foregroundColor(.black)
                                 Spacer()
@@ -280,20 +443,20 @@ struct UpgradePromptView: View {
                             VStack(spacing: 12) {
                                 FeatureRowView(
                                     icon: "person.3.fill",
-                                    title: "多人連線對戰",
-                                    description: "最多6人同時遊戲"
+                                    title: languageService.t("multiplayer_battle"),
+                                    description: languageService.t("max_6_players")
                                 )
                                 
                                 FeatureRowView(
                                     icon: "trophy.fill",
-                                    title: "每日排行榜",
-                                    description: "競爭每日最佳成績"
+                                    title: languageService.t("daily_leaderboard_title"),
+                                    description: languageService.t("daily_best_scores")
                                 )
                                 
                                 FeatureRowView(
                                     icon: "message.fill",
-                                    title: "即時聊天",
-                                    description: "與其他玩家互動交流"
+                                    title: languageService.t("realtime_chat"),
+                                    description: languageService.t("interact_with_players")
                                 )
                             }
                         }
@@ -318,7 +481,7 @@ struct UpgradePromptView: View {
                                             .font(.headline)
                                             .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79 黃色
                                         
-                                        Text("立即解鎖享受完整遊戲體驗")
+                                        Text(languageService.t("unlock_full_experience"))
                                             .font(.caption)
                                             .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475).opacity(0.8))
                                     }
