@@ -112,72 +112,71 @@ class BingoGameViewModel: ObservableObject {
     // MARK: - Published Properties - 現在由 BingoGameStateManager 管理
     var bingoCard: BingoCard? { 
         get { 
-            guard gameStateManager != nil else { return nil }
-            return gameStateManager.bingoCard 
+            // gameStateManager 已移除，使用本地狀態
+            return localBingoCard ?? generateBingoCard()
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.bingoCard = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localBingoCard = newValue
         }
     }
     var drawnNumbers: [Int] { 
         get { 
-            guard gameStateManager != nil else { return [] }
-            return gameStateManager.drawnNumbers 
+            // gameStateManager 已移除，使用本地狀態
+            return localDrawnNumbers
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.drawnNumbers = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localDrawnNumbers = newValue
         }
     }
     var completedLines: Int { 
         get { 
-            guard gameStateManager != nil else { return 0 }
-            return gameStateManager.completedLines 
+            // gameStateManager 已移除，使用本地狀態
+            return localCompletedLines
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.completedLines = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localCompletedLines = newValue
         }
     }
     var gameWon: Bool { 
         get { 
-            guard gameStateManager != nil else { return false }
-            return gameStateManager.gameWon 
+            // gameStateManager 已移除，使用本地狀態
+            return localGameWon
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.gameWon = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localGameWon = newValue
         }
     }
     var gameState: GameRoomState.GameState { 
         get { 
-            guard gameStateManager != nil else { return .waitingForPlayers }
-            return gameStateManager.gameState 
+            // gameStateManager 已移除，使用本地狀態
+            return localGameState
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.gameState = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localGameState = newValue
         }
     }
     var countdown: Int { 
         get { 
-            guard gameStateManager != nil else { return 0 }
-            return gameStateManager.countdown 
+            // gameStateManager 已移除，使用本地狀態
+            return localCountdown
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.countdown = newValue 
+            // gameStateManager 已移除，使用本地狀態
+            localCountdown = newValue
         }
     }
     var currentNumber: Int? { 
         get { 
-            guard gameStateManager != nil else { return nil }
-            return gameStateManager.currentNumber 
+            // gameStateManager 已移除，返回 nil
+            return nil
         }
         set { 
-            guard gameStateManager != nil else { return }
-            gameStateManager.currentNumber = newValue 
+            // gameStateManager?.currentNumber = newValue // 已移除
         }
     }
     @Published var roomPlayers: [PlayerState] = []
@@ -188,32 +187,30 @@ class BingoGameViewModel: ObservableObject {
     // 網絡狀態現在由 BingoNetworkManager 管理
     var connectionStatus: String { 
         get { 
-            guard networkManager != nil else { return "初始化中" }
-            return networkManager.connectionStatus 
+            // networkManager 已移除，返回默認狀態
+            // return networkManager.connectionStatus // 已移除
+            return "初始化中" // 默認狀態 
         }
         set { 
-            guard networkManager != nil else { return }
-            networkManager.connectionStatus = newValue 
+            // networkManager?.connectionStatus = newValue // 已移除 
         }
     }
     var syncStatus: String { 
         get { 
-            guard networkManager != nil else { return "未同步" }
-            return networkManager.syncStatus 
+            // networkManager 已移除，返回默認狀態
+            return "未同步" // 默認狀態 
         }
         set { 
-            guard networkManager != nil else { return }
-            networkManager.syncStatus = newValue 
+            // networkManager?.syncStatus = newValue // 已移除 
         }
     }
     var isNetworkActive: Bool { 
         get { 
-            guard networkManager != nil else { return false }
-            return networkManager.isNetworkActive 
+            // 檢查 MeshManager 的連接狀態
+            return !meshManager.getConnectedPeers().isEmpty
         }
         set { 
-            guard networkManager != nil else { return }
-            networkManager.isNetworkActive = newValue 
+            // 保留 setter 以維持介面相容性
         }
     }
     var roomID: String = ""
@@ -240,9 +237,9 @@ class BingoGameViewModel: ObservableObject {
     private let languageService: LanguageService
     
     // MARK: - 管理器
-    private var timerManager: TimerManager!
-    private var networkManager: BingoNetworkManager!
-    private var gameStateManager: BingoGameStateManager!
+    private var timerManager: TimerManager?
+    // private var networkManager: BingoNetworkManager? // 已移除
+    // private var gameStateManager: BingoGameStateManager? // 已移除
     
     // MARK: - 遊戲管理
     var deviceName: String
@@ -250,24 +247,32 @@ class BingoGameViewModel: ObservableObject {
     private var hostID: String = ""
     private var gameRoomState: GameRoomState?
     
+    // MARK: - 本地狀態屬性 (替代已移除的 gameStateManager)
+    private var localBingoCard: BingoCard? = nil
+    private var localDrawnNumbers: [Int] = []
+    private var localCompletedLines: Int = 0
+    private var localGameWon: Bool = false
+    private var localGameState: GameRoomState.GameState = .waitingForPlayers
+    private var localCountdown: Int = 0
+    
     // 定時器管理方法 - 委託給 TimerManager
     @MainActor
     private func scheduleTimer(id: String, interval: TimeInterval, repeats: Bool = true, action: @escaping () -> Void) {
-        timerManager.scheduleTimer(id: id, interval: interval, repeats: repeats, action: action)
+        timerManager?.scheduleTimer(id: id, interval: interval, repeats: repeats, action: action)
     }
     
     @MainActor
     private func cancelTimer(id: String) {
-        timerManager.cancelTimer(id: id)
+        timerManager?.cancelTimer(id: id)
     }
     
     @MainActor
     private func cancelAllTimers() {
-        timerManager.cancelAllTimers()
+        timerManager?.cancelAllTimers()
     }
     
     // Timer ID 常數 - 使用 TimerManager.TimerID
-    private typealias TimerID = TimerManager.TimerID
+    private typealias TimerID = String
     
     // MARK: - 網路狀態 - 現在由 BingoNetworkManager 管理
     private var lastSyncTime: Date = Date()
@@ -460,32 +465,16 @@ class BingoGameViewModel: ObservableObject {
             return
         }
         
-        // 初始化網絡管理器
-        if networkManager == nil {
-            print("🌐 BingoGameViewModel: 初始化網絡管理器...")
-            networkManager = BingoNetworkManager(
-                meshManager: meshManager,
-                timerManager: timerManager,
-                settingsViewModel: settingsViewModel,
-                languageService: languageService
-            )
-            print("✅ BingoGameViewModel: 網絡管理器初始化完成")
-        }
+        // 初始化網絡管理器 - 已移除
+        // if networkManager == nil { ... } // 已移除
         
-        // 初始化遊戲狀態管理器
-        if gameStateManager == nil {
-            print("🎮 BingoGameViewModel: 初始化遊戲狀態管理器...")
-            gameStateManager = BingoGameStateManager(
-                timerManager: timerManager,
-                networkManager: networkManager
-            )
-            print("✅ BingoGameViewModel: 遊戲狀態管理器初始化完成")
-        }
+        // 初始化遊戲狀態管理器 - 已移除
+        // if gameStateManager == nil { ... } // 已移除
         
-        // 設置回調
-        gameStateManager.onGameWon { [weak self] winnerID, lines in
-            self?.onGameWon?(winnerID, lines)
-        }
+        // 設置回調 - gameStateManager 已移除
+        // gameStateManager?.onGameWon { [weak self] winnerID, lines in
+        //     self?.onGameWon?(winnerID, lines)
+        // }
         
         // 設置觀察者
         setupNotificationObservers()
@@ -506,7 +495,7 @@ class BingoGameViewModel: ObservableObject {
             attempts += 1
         }
         
-        if timerManager.isInitialized {
+        if timerManager?.isInitialized == true {
             print("✅ TimerManager 初始化完成")
         } else {
             print("⚠️ TimerManager 初始化超時")
@@ -667,7 +656,7 @@ class BingoGameViewModel: ObservableObject {
     }
     
     private func checkTimerHealth() -> Bool {
-        let activeCount = timerManager.getActiveTimerIDs().count
+        let activeCount = timerManager?.getActiveTimerIDs().count ?? 0
         let maxExpected = 10 // 合理的最大定時器數量
         let healthy = activeCount <= maxExpected
         
@@ -728,7 +717,7 @@ class BingoGameViewModel: ObservableObject {
     /// 網路設置 - 現在使用 BingoNetworkManager
     private func setupMeshNetworking() {
         print("🎮 BingoGameViewModel: 使用 BingoNetworkManager 設置網路")
-        networkManager.setupMeshNetworking()
+        // networkManager?.setupMeshNetworking() // 已移除
         
         // 延遲驗證網路就緒狀態
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
@@ -739,7 +728,7 @@ class BingoGameViewModel: ObservableObject {
     /// 異步網路設置 - 現在使用 BingoNetworkManager
     private func setupMeshNetworkingAsync() async {
         print("🎮 BingoGameViewModel: 使用 BingoNetworkManager 異步設置網路")
-        await networkManager.setupMeshNetworkingAsync()
+        // await networkManager?.setupMeshNetworkingAsync() // 已移除
         
         // 驗證網路狀態
         Task {
@@ -750,7 +739,7 @@ class BingoGameViewModel: ObservableObject {
     /// 【CRITICAL FIX】專門為房間創建者設計的網路初始化
     private func setupMeshNetworkingForHost() async {
         print("🏠 BingoGameViewModel: 使用 BingoNetworkManager 設置主機網路")
-        await networkManager.setupMeshNetworkingForHost()
+        // await networkManager?.setupMeshNetworkingForHost() // 已移除
         
         // 驗證網路狀態
         Task {
@@ -761,7 +750,7 @@ class BingoGameViewModel: ObservableObject {
     /// 網路就緒驗證 - 現在使用 BingoNetworkManager
     @MainActor
     private func verifyNetworkReadinessAsync() async {
-        let isReady = meshManager.isNetworkReady()
+        let isReady = !meshManager.getConnectedPeers().isEmpty
         
         if isReady {
             self.reconnectAttempts = 0
@@ -826,7 +815,7 @@ class BingoGameViewModel: ObservableObject {
             return try await withThrowingTaskGroup(of: Bool.self) { group in
                 // 添加網路檢查任務
                 group.addTask { [weak self] in
-                    return await self?.meshManager.isNetworkReady() ?? false
+                    return !(await self?.meshManager.getConnectedPeers().isEmpty ?? true)
                 }
                 
                 // 添加超時任務
@@ -881,7 +870,7 @@ class BingoGameViewModel: ObservableObject {
     private func verifyNetworkReadiness() {
         guard isNetworkActive else { return }
         
-        let isReady = meshManager.isNetworkReady()
+        let isReady = !meshManager.getConnectedPeers().isEmpty
         print("🔍 BingoGameViewModel: 網路就緒狀態驗證 = \(isReady)")
         
         if isReady {
@@ -894,7 +883,7 @@ class BingoGameViewModel: ObservableObject {
             
             // 設置監控，如果持續不穩定則重新初始化
             DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) { [weak self] in
-                if let self = self, !self.meshManager.isNetworkReady() {
+                if let self = self, self.meshManager.getConnectedPeers().isEmpty {
                     self.isNetworkActive = false
                     self.setupMeshNetworking()
                 }
@@ -917,14 +906,14 @@ class BingoGameViewModel: ObservableObject {
         }
         
         // 3. 深度檢查網路就緒狀態
-        guard meshManager.isNetworkReady() else {
+        guard !meshManager.getConnectedPeers().isEmpty else {
             print("❌ BingoGameViewModel: MultipeerConnectivity 會話未就緒")
             throw NetworkError.sessionError("MCSession not ready")
         }
         
         // 4. 檢查通道穩定性（無阻塞檢查）
         // 移除阻塞性的 Thread.sleep，改為立即檢查
-        guard meshManager.isNetworkReady() else {
+        guard !meshManager.getConnectedPeers().isEmpty else {
             print("❌ BingoGameViewModel: 通道狀態不穩定，但允許繼續（離線模式）")
             // 不拋出錯誤，允許離線模式繼續
             return
@@ -946,8 +935,13 @@ class BingoGameViewModel: ObservableObject {
         isHost = true
         isInRoom = true
         
-        let initialPlayer = PlayerState(id: playerID, name: deviceName)
+        // 🔧 確保名稱一致性，避免 PlayerListView 匹配問題
+        let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+        let initialPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
         roomPlayers = [initialPlayer]
+        
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedDeviceName
         
         gameRoomState = GameRoomState(
             roomID: gameRoomID,
@@ -982,8 +976,13 @@ class BingoGameViewModel: ObservableObject {
         isHost = true
         isInRoom = true
         
-        let initialPlayer = PlayerState(id: playerID, name: deviceName)
+        // 【修復1】確保本機玩家正確加入房間列表，使用playerID作為唯一標識
+        let normalizedPlayerName = NicknameFormatter.cleanNickname(deviceName)
+        let initialPlayer = PlayerState(id: playerID, name: normalizedPlayerName)
         roomPlayers = [initialPlayer]
+        
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedPlayerName
         
         gameRoomState = GameRoomState(
             roomID: gameRoomID,
@@ -1013,11 +1012,15 @@ class BingoGameViewModel: ObservableObject {
         isHost = false
         isInRoom = true
         
-        // 添加本機玩家到玩家列表
-        let localPlayer = PlayerState(id: playerID, name: deviceName)
+        // 🔧 添加本機玩家到玩家列表，確保名稱一致性
+        let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+        let localPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
         roomPlayers = [localPlayer]
         
-        let requestData = "\(playerID)|\(deviceName)".data(using: .utf8) ?? Data()
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedDeviceName
+        
+        let requestData = "\(playerID)|\(normalizedDeviceName)".data(using: .utf8) ?? Data()
         broadcastGameMessage(.reconnectRequest, data: requestData)
         
         bingoCard = generateBingoCard()
@@ -1041,15 +1044,19 @@ class BingoGameViewModel: ObservableObject {
         isHost = false
         isInRoom = true
         
-        // 添加本機玩家到玩家列表
-        let localPlayer = PlayerState(id: playerID, name: deviceName)
+        // 🔧 添加本機玩家到玩家列表，確保名稱一致性
+        let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+        let localPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
         roomPlayers = [localPlayer]
         
-        let requestData = "\(playerID)|\(deviceName)".data(using: .utf8) ?? Data()
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedDeviceName
+        
+        let requestData = "\(playerID)|\(normalizedDeviceName)".data(using: .utf8) ?? Data()
         broadcastGameMessage(.reconnectRequest, data: requestData)
         
         bingoCard = generateBingoCard()
-        print("🚪 異步加入房間完成：\(roomID.prefix(8)) 玩家=\(deviceName)")
+        print("🚪 異步加入房間完成：\(roomID.prefix(8)) 玩家=\(normalizedDeviceName)")
         addSystemMessage("\(languageService.t("joining_room")) \(roomID.prefix(8))")
         
         startSyncTimer()
@@ -1085,11 +1092,15 @@ class BingoGameViewModel: ObservableObject {
         isInRoom = true
         self.gameRoomID = roomID
         
-        // 添加本機玩家到玩家列表
-        let localPlayer = PlayerState(id: playerID, name: deviceName)
+        // 🔧 添加本機玩家到玩家列表，確保名稱一致性
+        let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+        let localPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
         roomPlayers = [localPlayer]
         
-        print("🔄 嘗試加入或創建房間：\(roomID) 玩家=\(deviceName) ID=\(playerID)")
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedDeviceName
+        
+        print("🔄 嘗試加入或創建房間：\(roomID) 玩家=\(normalizedDeviceName) ID=\(playerID)")
         
         Task {
             await joinRoomSafely(roomID: roomID, meshManager: self.meshManager)
@@ -1102,7 +1113,7 @@ class BingoGameViewModel: ObservableObject {
     }
     
     private func scheduleRetryJoinRoom(_ roomID: String) {
-        scheduleTimer(id: TimerID.reconnect, interval: 1.0, repeats: false) { [weak self] in
+        scheduleTimer(id: "reconnect", interval: 1.0, repeats: false) { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 self.attemptToJoinOrCreateRoom(roomID: roomID)
@@ -1117,6 +1128,9 @@ class BingoGameViewModel: ObservableObject {
             // 有穩定網路連接時，嘗試加入現有房間
             print("📡 發現穩定網路連接 (\(connectedPeers.count) peers)，嘗試加入現有房間")
             
+            // 🔧 CRITICAL FIX: 立即同步連接的玩家作為潛在房間成員
+            await synchronizeConnectedPeersAsPlayers()
+            
             // 使用重試機制發送連接請求
             await sendConnectionRequestWithRetry(roomID: roomID)
             
@@ -1124,7 +1138,7 @@ class BingoGameViewModel: ObservableObject {
                 addSystemMessage("\(languageService.t("connecting_to_room")) \(roomID)...")
                 
                 // 設置主機推廣定時器，如果7秒內沒有收到房間同步，則成為主機
-                scheduleTimer(id: TimerID.hostPromotion, interval: 7.0, repeats: false) { [weak self] in
+                scheduleTimer(id: TimerManager.TimerID.hostPromotion, interval: 7.0, repeats: false) { [weak self] in
                     guard let self = self else { return }
                     
                     Task { @MainActor [weak self] in
@@ -1150,7 +1164,7 @@ class BingoGameViewModel: ObservableObject {
     
     private func becomeRoomHost() {
         // 取消主機推廣定時器
-        cancelTimer(id: TimerID.hostPromotion)
+        cancelTimer(id: TimerManager.TimerID.hostPromotion)
         
         isHost = true
         hostID = playerID
@@ -1228,10 +1242,6 @@ class BingoGameViewModel: ObservableObject {
             handleWinnerAnnouncement(message)
         case .gameRestart:
             handleGameRestart(message)
-        case .numberDraw:
-            handleNumberDrawn(message)
-        case .gameWin:
-            handleGameWin(message)
         }
     }
     
@@ -1272,7 +1282,7 @@ class BingoGameViewModel: ObservableObject {
     
     private func handleRoomSync(_ message: GameMessage) {
         // 取消主機推廣定時器（修復重複成為主機的問題）
-        cancelTimer(id: TimerID.hostPromotion)
+        cancelTimer(id: TimerManager.TimerID.hostPromotion)
         print("⏰ 取消主機推廣定時器 - 收到房間同步")
         
         // 使用標準格式解碼房間狀態
@@ -1290,14 +1300,15 @@ class BingoGameViewModel: ObservableObject {
         currentNumber = roomState.currentNumber
         countdown = roomState.countdown
         
-        // 確保本機玩家存在於玩家列表中
+        // 【修復2】確保本機玩家存在於玩家列表中，使用正確的ID匹配
         var updatedPlayers = roomState.players
         let localPlayerExists = updatedPlayers.contains { $0.id == playerID }
         
         if !localPlayerExists && isInRoom {
-            let localPlayer = PlayerState(id: playerID, name: deviceName)
+            let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+            let localPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
             updatedPlayers.append(localPlayer)
-            print("➕ 添加本機玩家到同步列表：\(deviceName) (\(playerID))")
+            print("➕ 添加本機玩家到同步列表：\(normalizedDeviceName) (\(playerID))")
         }
         
         roomPlayers = updatedPlayers
@@ -1312,12 +1323,20 @@ class BingoGameViewModel: ObservableObject {
     }
     
     private func handleReconnectRequest(_ message: GameMessage) {
+        let dataString = String(data: message.data, encoding: .utf8) ?? ""
+        
+        // 🔧 處理新的加入確認請求
+        if dataString == "join_confirmation_request" {
+            handleJoinConfirmationRequest(message)
+            return
+        }
+        
         guard isHost else { 
             print("🚫 非主機收到 reconnect_request，忽略")
             return 
         }
         
-        let components = String(data: message.data, encoding: .utf8)?.components(separatedBy: "|") ?? []
+        let components = dataString.components(separatedBy: "|")
         guard components.count >= 2 else { 
             print("❌ reconnect_request 數據格式錯誤")
             return 
@@ -1334,16 +1353,16 @@ class BingoGameViewModel: ObservableObject {
             return
         }
         
-        // 檢查玩家是否已在房間內
+        // 【修復2】檢查玩家是否已在房間內，使用正確的ID匹配機制
         DispatchQueue.main.async {
             if let existingIndex = self.roomPlayers.firstIndex(where: { $0.id == playerState.id }) {
                 // 更新現有玩家資訊
                 self.roomPlayers[existingIndex] = playerState
-                print("🔄 更新現有玩家：\(playerState.name) (\(playerState.id))")
+                print("🔄 更新現有玩家：\(playerState.name) (\(playerState.id.prefix(8)))")
             } else {
                 // 添加新玩家
                 self.roomPlayers.append(playerState)
-                print("✅ 新玩家加入房間：\(playerState.name) (\(playerState.id)) 房間人數：(\(self.roomPlayers.count)/\(self.maxPlayersPerRoom))")
+                print("✅ 新玩家加入房間：\(playerState.name) (\(playerState.id.prefix(8))) 房間人數：(\(self.roomPlayers.count)/\(self.maxPlayersPerRoom))")
                 
                 // 檢查是否達到開始遊戲條件
                 if self.gameState == .waitingForPlayers && self.roomPlayers.count >= self.minPlayersToStart {
@@ -1366,6 +1385,43 @@ class BingoGameViewModel: ObservableObject {
                 print("📡 主機重複廣播房間狀態")
                 self.broadcastGameMessage(.roomSync, data: self.encodeGameRoomState())
             }
+        }
+    }
+    
+    /// 🔧 處理加入確認請求（新增）
+    private func handleJoinConfirmationRequest(_ message: GameMessage) {
+        print("📞 收到加入確認請求，來自：\(message.senderID)")
+        
+        // 自動回應表示願意加入房間
+        let response = GameMessage(
+            type: .playerJoined,
+            senderID: playerID,
+            senderName: deviceName,
+            data: "\(deviceName)|\(NicknameFormatter.cleanNickname(deviceName))".data(using: .utf8) ?? Data(),
+            timestamp: Date(),
+            gameRoomID: gameRoomID
+        )
+        
+        do {
+            let encoder = JSONEncoder()
+            let responseData = try encoder.encode(response)
+            
+            // 使用廣播方式回應（因為協議中沒有直接發送方法）
+            meshManager.broadcastMessage(responseData, messageType: .game)
+            print("✅ 已回應加入確認：向 \(message.senderID) 發送 playerJoined")
+            
+            // 更新自己的房間狀態
+            DispatchQueue.main.async {
+                self.gameRoomID = message.gameRoomID
+                self.isInRoom = true
+                if !self.roomPlayers.contains(where: { $0.id == self.deviceName }) {
+                    let selfPlayer = PlayerState(id: self.deviceName, name: NicknameFormatter.cleanNickname(self.deviceName))
+                    self.roomPlayers.append(selfPlayer)
+                }
+                print("🏠 已加入房間：\(message.gameRoomID)")
+            }
+        } catch {
+            print("❌ 回應加入確認失敗：\(error)")
         }
     }
     
@@ -1479,8 +1535,12 @@ class BingoGameViewModel: ObservableObject {
             hasWon: hasWon
         )
         
+        // 【修復2】更新玩家狀態時確保使用正確的ID匹配
         if let index = roomPlayers.firstIndex(where: { $0.id == playerState.id }) {
             roomPlayers[index] = playerState
+            print("🔄 更新玩家狀態: \(playerState.name) (\(playerState.id.prefix(8)))")
+        } else {
+            print("⚠️ 嘗試更新未知玩家: \(playerState.name) (\(playerState.id.prefix(8)))")
         }
     }
     
@@ -1539,7 +1599,7 @@ class BingoGameViewModel: ObservableObject {
             addSystemMessage("遊戲即將開始...")
             
             // 非主機玩家也顯示倒數計時
-            scheduleTimer(id: TimerID.gameCountdown, interval: 1.0, repeats: true) { [weak self] in
+            scheduleTimer(id: TimerManager.TimerID.gameCountdown, interval: 1.0, repeats: true) { [weak self] in
                 guard let self = self else { return }
                 
                 Task { @MainActor [weak self] in
@@ -1552,7 +1612,7 @@ class BingoGameViewModel: ObservableObject {
                     self.countdown -= 1
                     
                     if self.countdown < 0 {
-                        self.cancelTimer(id: TimerID.gameCountdown)
+                        self.cancelTimer(id: TimerManager.TimerID.gameCountdown)
                         self.gameState = .playing
                         
                         // 清除之前的系統消息
@@ -1603,10 +1663,46 @@ class BingoGameViewModel: ObservableObject {
         }
         
         print("🎮 開始遊戲，房間人數：\(roomPlayers.count)/\(maxPlayersPerRoom)")
+        
+        // 廣播遊戲開始給其他玩家
+        broadcastGameMessage(.gameStart, data: Data())
+        
+        // 主機開始倒數計時
+        startCountdownToGame()
+    }
+    
+    private func startCountdownToGame() {
+        gameState = .countdown
+        countdown = 3
         addSystemMessage("遊戲即將開始...")
         
-        // 使用 gameStateManager 處理遊戲狀態
-        gameStateManager.startGame()
+        // 主機倒數計時器
+        scheduleTimer(id: TimerManager.TimerID.gameCountdown, interval: 1.0, repeats: true) { [weak self] in
+            guard let self = self else { return }
+            
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                if self.countdown > 0 {
+                    self.addSystemMessage("\(self.countdown)")
+                    print("⏰ 主機倒數計時: \(self.countdown)")
+                }
+                
+                self.countdown -= 1
+                
+                if self.countdown < 0 {
+                    self.cancelTimer(id: TimerManager.TimerID.gameCountdown)
+                    self.gameState = .playing
+                    
+                    // 清除系統消息
+                    self.clearSystemMessages()
+                    
+                    self.addSystemMessage("開始抽卡！")
+                    
+                    // 開始自動抽號
+                    self.startDrawing()
+                }
+            }
+        }
     }
     
     private func startDrawing() {
@@ -1618,7 +1714,7 @@ class BingoGameViewModel: ObservableObject {
         drawNextNumber()
         
         // 然後每3秒抽一張新卡
-        scheduleTimer(id: TimerID.gameDraw, interval: 3.0, repeats: true) { [weak self] in
+        scheduleTimer(id: TimerManager.TimerID.gameDraw, interval: 3.0, repeats: true) { [weak self] in
             guard let self = self else { return }
             
             Task { @MainActor [weak self] in
@@ -1651,7 +1747,7 @@ class BingoGameViewModel: ObservableObject {
     
     func endGame() {
         print("🎮 結束遊戲")
-        gameStateManager.endGame()
+        // gameStateManager.endGame() // 已移除
     }
     
     // MARK: - Bingo 卡片管理
@@ -1824,6 +1920,61 @@ class BingoGameViewModel: ObservableObject {
     
     // MARK: - 增強的連接管理
     
+    /// 🔧 同步連接的節點作為潛在玩家（修復玩家顯示問題）
+    @MainActor
+    private func synchronizeConnectedPeersAsPlayers() async {
+        let connectedPeers = meshManager.getConnectedPeers()
+        print("🔄 開始同步連接節點為潛在玩家：\(connectedPeers)")
+        
+        for peerName in connectedPeers {
+            // 檢查該節點是否已經是房間玩家
+            if !roomPlayers.contains(where: { $0.id == peerName || $0.name == peerName }) {
+                // 創建潛在玩家狀態（使用節點名稱作為臨時ID）
+                let potentialPlayer = PlayerState(
+                    id: peerName,
+                    name: NicknameFormatter.cleanNickname(peerName)
+                )
+                
+                roomPlayers.append(potentialPlayer)
+                print("✅ 添加潛在玩家：\(potentialPlayer.name) (\(potentialPlayer.id))")
+                
+                // 主動向該節點發送玩家加入請求，詢問是否要加入房間
+                await requestPlayerJoinConfirmation(peerName: peerName)
+            }
+        }
+        
+        print("📊 當前房間玩家數：\(roomPlayers.count)")
+        
+        // 檢查是否需要自動開始遊戲
+        if isHost && roomPlayers.count >= minPlayersToStart && gameState == .waitingForPlayers {
+            print("🎮 玩家列表更新後達到最少人數 (\(roomPlayers.count)/\(minPlayersToStart))，自動開始遊戲")
+            startGame()
+        }
+    }
+    
+    /// 向連接的節點發送加入確認請求
+    private func requestPlayerJoinConfirmation(peerName: String) async {
+        let message = GameMessage(
+            type: .reconnectRequest,
+            senderID: playerID,
+            senderName: deviceName,
+            data: "join_confirmation_request".data(using: .utf8) ?? Data(),
+            timestamp: Date(),
+            gameRoomID: gameRoomID
+        )
+        
+        do {
+            let encoder = JSONEncoder()
+            let messageData = try encoder.encode(message)
+            
+            // 使用廣播方式發送確認請求
+            meshManager.broadcastMessage(messageData, messageType: .game)
+            print("📤 向 \(peerName) 發送加入確認請求")
+        } catch {
+            print("❌ 發送加入確認請求失敗：\(error)")
+        }
+    }
+    
     /// 檢查可靠的連接狀態
     private func checkReliableConnectionState() async -> [String] {
         let initialPeers = meshManager.getConnectedPeers()
@@ -1957,8 +2108,10 @@ class BingoGameViewModel: ObservableObject {
     // MARK: - 網路通訊
     
     private func broadcastGameMessage(_ type: GameMessageType, data: Data) {
-        // 現在使用 BingoNetworkManager 處理所有廣播逻輯
-        networkManager.broadcastGameMessage(type, data: data, gameRoomID: gameRoomID, deviceName: deviceName)
+        // 使用異步廣播機制確保表情和其他訊息正確發送
+        Task {
+            await sendGameMessageSafely(type, data: data)
+        }
     }
     
     private func encodeGameRoomState() -> Data {
@@ -2008,6 +2161,13 @@ class BingoGameViewModel: ObservableObject {
                     }
                 }
             }
+        } else if !isHost && isInRoom {
+            // 非主機也廣播房間狀態（包含自己的玩家資訊）
+            Task {
+                let data = encodeGameRoomState()
+                await sendGameMessageSafely(.roomSync, data: data)
+                print("📡 非主機向新連接設備 \(peerID) 廣播房間狀態")
+            }
         }
     }
     
@@ -2042,7 +2202,7 @@ class BingoGameViewModel: ObservableObject {
     @MainActor
     private func considerHostPromotion() async {
         // 使用Timer代替阻塞性sleep
-        self.scheduleTimer(id: TimerID.hostPromotion, interval: 5.0, repeats: false) { [weak self] in
+        self.scheduleTimer(id: TimerManager.TimerID.hostPromotion, interval: 5.0, repeats: false) { [weak self] in
             Task { @MainActor [weak self] in
                 guard let self = self else { return }
                 await self.evaluateHostPromotionAsync()
@@ -2110,7 +2270,7 @@ class BingoGameViewModel: ObservableObject {
         stopHeartbeat()
         
         // 使用非阻塞定時器延遲啟動，避免 Task.sleep 阻塞主線程
-        scheduleTimer(id: TimerID.heartbeatStartup, interval: NetworkConstants.heartbeatStartupDelay, repeats: false) { [weak self] in
+        scheduleTimer(id: TimerManager.TimerID.heartbeatStartup, interval: NetworkConstants.heartbeatStartupDelay, repeats: false) { [weak self] in
             guard let self = self else { return }
             
             // 檢查是否仍需要心跳（避免在延遲期間狀態改變）
@@ -2120,7 +2280,7 @@ class BingoGameViewModel: ObservableObject {
             }
             
             // 啟動實際的心跳定時器
-            self.scheduleTimer(id: TimerID.heartbeat, interval: 5.0, repeats: true) { [weak self] in
+            self.scheduleTimer(id: TimerManager.TimerID.heartbeat, interval: 5.0, repeats: true) { [weak self] in
                 guard let self = self else { return }
                 self.sendHeartbeatSync()
             }
@@ -2133,8 +2293,8 @@ class BingoGameViewModel: ObservableObject {
     
     /// 停止心跳機制（新增方法）
     private func stopHeartbeat() {
-        cancelTimer(id: TimerID.heartbeat)
-        cancelTimer(id: TimerID.heartbeatStartup)
+        cancelTimer(id: TimerManager.TimerID.heartbeat)
+        cancelTimer(id: TimerManager.TimerID.heartbeatStartup)
         print("🛑 心跳機制已停止")
     }
     
@@ -2234,9 +2394,9 @@ class BingoGameViewModel: ObservableObject {
     
     
     private func startSyncTimer() {
-        cancelTimer(id: TimerID.gameSync)
+        cancelTimer(id: TimerManager.TimerID.gameSync)
         
-        scheduleTimer(id: TimerID.gameSync, interval: 15.0, repeats: true) { [weak self] in
+        scheduleTimer(id: TimerManager.TimerID.gameSync, interval: 15.0, repeats: true) { [weak self] in
             guard let self = self else { return }
             
             Task { @MainActor [weak self] in
@@ -2329,12 +2489,12 @@ class BingoGameViewModel: ObservableObject {
             var retryCount = 0
             let maxRetries = 3
             
-            while retryCount < maxRetries && !meshManager.isNetworkReady() {
+            while retryCount < maxRetries && meshManager.getConnectedPeers().isEmpty {
                 try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒
                 retryCount += 1
             }
             
-            if meshManager.isNetworkReady() {
+            if !meshManager.getConnectedPeers().isEmpty {
                 print("🔄 網路已恢復，重試房間切換")
                 updateRoom(Int(targetRoomID) ?? 1)
             } else {
@@ -2382,7 +2542,7 @@ class BingoGameViewModel: ObservableObject {
         print("🚪 安全加入新房間: \(roomID)")
         
         // 驗證網路狀態
-        guard meshManager.isNetworkReady() else {
+        guard !meshManager.getConnectedPeers().isEmpty else {
             throw NetworkError.notConnected
         }
         
@@ -2390,9 +2550,13 @@ class BingoGameViewModel: ObservableObject {
         gameRoomID = roomID
         isInRoom = true
         
-        // 添加本機玩家
-        let localPlayer = PlayerState(id: playerID, name: deviceName)
+        // 🔧 添加本機玩家，確保名稱一致性
+        let normalizedDeviceName = NicknameFormatter.cleanNickname(deviceName)
+        let localPlayer = PlayerState(id: playerID, name: normalizedDeviceName)
         roomPlayers = [localPlayer]
+        
+        // 同步更新 deviceName 以保持一致性
+        self.deviceName = normalizedDeviceName
         
         // 生成新的賓果卡
         bingoCard = generateBingoCard()
@@ -2426,13 +2590,13 @@ class BingoGameViewModel: ObservableObject {
     
     /// 【安全清理】安全清理定時器
     private func performTimerCleanupSafely() async {
-        cancelTimer(id: TimerID.gameDraw)
-        cancelTimer(id: TimerID.gameCountdown)
-        cancelTimer(id: TimerID.gameSync)
-        cancelTimer(id: TimerID.heartbeat)
-        cancelTimer(id: TimerID.reconnect)
-        cancelTimer(id: TimerID.hostPromotion)
-        cancelTimer(id: TimerID.gameRestart)
+        cancelTimer(id: TimerManager.TimerID.gameDraw)
+        cancelTimer(id: TimerManager.TimerID.gameCountdown)
+        cancelTimer(id: TimerManager.TimerID.gameSync)
+        cancelTimer(id: TimerManager.TimerID.heartbeat)
+        cancelTimer(id: TimerManager.TimerID.reconnect)
+        cancelTimer(id: TimerManager.TimerID.hostPromotion)
+        cancelTimer(id: TimerManager.TimerID.gameRestart)
         
         print("🧹 BingoGameViewModel: 所有Timer已安全清理")
     }
@@ -2500,7 +2664,41 @@ class BingoGameViewModel: ObservableObject {
     /// 標記賓果卡上的數字
     func markNumber(_ number: Int) {
         print("🎮 標記號碼 \(number)")
-        gameStateManager.markNumber(number)
+        
+        guard var card = localBingoCard else {
+            print("⚠️ 沒有賓果卡片")
+            return
+        }
+        
+        // 檢查號碼是否已經抽出
+        guard localDrawnNumbers.contains(number) else {
+            print("⚠️ 號碼 \(number) 尚未抽出")
+            return
+        }
+        
+        // 在卡片上標記號碼（用戶確認）
+        for row in 0..<5 {
+            for col in 0..<5 {
+                if card.numbers[row * 5 + col] == number {
+                    card.marked[row * 5 + col] = true
+                    print("✅ 用戶確認標記位置 (\(row),\(col))")
+                }
+            }
+        }
+        
+        // 更新卡片
+        localBingoCard = card
+        
+        // 檢查是否獲勝
+        let lines = calculateCompletedLines(card)
+        localCompletedLines = lines
+        
+        if lines >= 5 && !localGameWon {
+            localGameWon = true
+            print("🏆 玩家獲勝！完成 \(lines) 條線")
+            // 觸發獲勝邏輯
+            handlePlayerWin()
+        }
     }
     
     /// 發送房間聊天訊息
@@ -2883,7 +3081,7 @@ class BingoGameViewModel: ObservableObject {
     
     // MARK: - 表情功能
     
-    /// 發送表情
+    /// 【修復3】發送表情 - 增強廣播機制
     func sendEmote(_ emote: EmoteType) {
         // 檢查冷卻時間
         let now = Date()
@@ -2892,26 +3090,43 @@ class BingoGameViewModel: ObservableObject {
             return
         }
         
+        guard isInRoom else {
+            print("⚠️ 未在房間內，無法發送表情")
+            return
+        }
+        
         lastEmoteTime = now
         
-        // 編碼表情數據
-        let emoteData = "\(emote.rawValue)|\(playerID)|\(deviceName)".data(using: .utf8) ?? Data()
+        // 使用統一的玩家資訊格式
+        let normalizedName = NicknameFormatter.cleanNickname(deviceName)
+        let emoteData = "\(emote.rawValue)|\(playerID)|\(normalizedName)".data(using: .utf8) ?? Data()
+        
+        print("😄 發送表情廣播: \(emote.rawValue) 玩家=\(normalizedName) ID=\(playerID.prefix(8))")
         broadcastGameMessage(.emote, data: emoteData)
         
         // 本地也顯示表情
-        triggerEmoteDisplay(nickname: deviceName, emote: emote)
+        triggerEmoteDisplay(nickname: normalizedName, emote: emote)
     }
     
-    /// 處理收到的表情訊息
+    /// 【修復3】處理收到的表情訊息 - 增強容錯性和廣播支持
     private func handleEmote(_ message: GameMessage) {
         let components = String(data: message.data, encoding: .utf8)?.components(separatedBy: "|") ?? []
         guard components.count >= 3,
               let emoteType = EmoteType(rawValue: components[0]) else {
-            print("❌ 表情訊息格式錯誤")
+            print("❌ 表情訊息格式錯誤: \(String(data: message.data, encoding: .utf8) ?? "無法解析")")
             return
         }
         
+        let senderPlayerID = components[1]
         let senderName = components[2]
+        
+        // 驗證發送者是否在房間內
+        guard roomPlayers.contains(where: { $0.id == senderPlayerID }) else {
+            print("⚠️ 忽略來自未知玩家的表情: \(senderName) (\(senderPlayerID.prefix(8)))")
+            return
+        }
+        
+        print("😄 收到表情廣播: \(emoteType.rawValue) 來自 \(senderName) (\(senderPlayerID.prefix(8)))")
         triggerEmoteDisplay(nickname: senderName, emote: emoteType)
     }
     
@@ -3107,7 +3322,7 @@ class BingoGameViewModel: ObservableObject {
         }
         
         // 使用 gameStateManager 處理遊戲重啟
-        gameStateManager.restartGame()
+        // gameStateManager.restartGame() // 已移除
         
         print("✅ 遊戲已重新開始，房間人數: \(roomPlayers.count)")
     }
@@ -3157,11 +3372,11 @@ class BingoGameViewModel: ObservableObject {
         guard roomPlayers.count >= 2 else { return }
         
         // 取消現有的重啟計時器
-        cancelTimer(id: TimerID.gameRestart)
+        cancelTimer(id: TimerManager.TimerID.gameRestart)
         
         var remainingTime = countdown
         
-        scheduleTimer(id: TimerID.gameRestart, interval: 1.0, repeats: true) { [weak self] in
+        scheduleTimer(id: TimerManager.TimerID.gameRestart, interval: 1.0, repeats: true) { [weak self] in
             guard let self = self else { return }
             
             if remainingTime > 0 {
@@ -3173,7 +3388,7 @@ class BingoGameViewModel: ObservableObject {
                     guard let self = self else { return }
                     
                     // 取消計時器
-                    self.cancelTimer(id: TimerID.gameRestart)
+                    self.cancelTimer(id: TimerManager.TimerID.gameRestart)
                     
                     // 只有主機廣播重新開始
                     if self.isHost {
