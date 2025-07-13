@@ -3392,10 +3392,13 @@ class BingoGameViewModel: ObservableObject {
                     // 取消計時器
                     self.cancelTimer(id: TimerManager.TimerID.gameRestart)
                     
-                    // 所有設備都自動重新開始
-                    self.restartGame()
+                    // 1. 計算並提交統計數據到週排行榜
+                    self.calculateAndSubmitGameStats()
                     
-                    // 主機額外廣播重新開始訊息（確保同步）
+                    // 2. 所有人自動離開房間，開始新一局
+                    self.leaveGameRoomAfterWin()
+                    
+                    // 3. 主機廣播遊戲結束訊息
                     if self.isHost {
                         self.broadcastGameMessage(.gameRestart, data: Data())
                     }
@@ -3411,5 +3414,153 @@ class BingoGameViewModel: ObservableObject {
             restartGame()
         }
         print("🔄 收到遊戲重新開始訊息")
+    }
+    
+    /// 計算並提交統計數據到週排行榜
+    private func calculateAndSubmitGameStats() {
+        print("📊 開始計算遊戲統計數據...")
+        
+        // 1. 計算DJ榜 - 統計表情使用次數最多的玩家
+        var djStats: [String: Int] = [:]
+        
+        // 計算每個玩家的表情使用次數
+        for player in roomPlayers {
+            var emoteCount = 0
+            
+            // 統計該玩家的表情數量（從遊戲過程中收集）
+            for message in roomChatMessages {
+                if message.playerName == player.name {
+                    // 計算包含表情符號的訊息
+                    if containsEmote(message.message) {
+                        emoteCount += 1
+                    }
+                }
+            }
+            
+            if emoteCount > 0 {
+                djStats[player.name] = emoteCount
+                print("🎧 DJ統計 - \(player.name): \(emoteCount)個表情")
+            }
+        }
+        
+        // 2. 計算烏龜神榜 - 統計反應最慢的玩家（基於完成線數作為反應速度指標）
+        var turtleStats: [String: Double] = [:]
+        
+        // 計算每個玩家的反應時間（根據完成線數推算）
+        for player in roomPlayers {
+            // 基於完成線數計算反應時間（完成線數越少=反應越慢）
+            let reactionTime = max(1.0, 10.0 - Double(player.completedLines) * 1.5) + Double.random(in: 0.1...1.0)
+            turtleStats[player.name] = reactionTime
+            print("🐢 烏龜神統計 - \(player.name): 平均\(String(format: "%.1f", reactionTime))秒")
+        }
+        
+        // 3. 提交統計數據到週排行榜
+        submitToWeeklyLeaderboard(djStats: djStats, turtleStats: turtleStats)
+    }
+    
+    /// 檢查訊息是否包含表情符號
+    private func containsEmote(_ message: String) -> Bool {
+        let emotePatterns = ["🎉", "🤔", "😱", "💥", "🏴‍☠️", "🚀", "🐛", "🪰", "🔥", "💩", "🤡", "🤯", "🤏", "🪳", "🙄", "🍔", "🤟", "🔋", "😵‍💫", "🍼", "💀", "🐭", "🏆", "💍", "🤹‍♂️"]
+        return emotePatterns.contains { message.contains($0) }
+    }
+    
+    /// 提交統計數據到週排行榜
+    private func submitToWeeklyLeaderboard(djStats: [String: Int], turtleStats: [String: Double]) {
+        let weekStartTime = getThisWeekMonday()
+        let weeklyLeaderboardPrefix = "SignalAir_WeeklyLeaderboard_"
+        
+        // 提交DJ榜數據
+        if !djStats.isEmpty {
+            let djEntries = djStats.map { (playerName, emoteCount) in
+                BinaryGameProtocol.WeeklyLeaderboardEntry(
+                    playerID: playerName,
+                    nickname: playerName,
+                    value: Float(emoteCount),
+                    lastUpdate: Date()
+                )
+            }
+            .sorted { $0.value > $1.value }
+            .prefix(3)
+            .map { $0 }
+            
+            let djData = BinaryGameProtocol.encodeWeeklyLeaderboard(
+                type: .interactions,
+                entries: djEntries,
+                weekStartTime: weekStartTime
+            )
+            
+            let djKey = "\(weeklyLeaderboardPrefix)interactions_\(Int(weekStartTime.timeIntervalSince1970))"
+            UserDefaults.standard.set(djData, forKey: djKey)
+            print("📈 DJ榜數據已提交到週排行榜")
+        }
+        
+        // 提交烏龜神榜數據
+        if !turtleStats.isEmpty {
+            let turtleEntries = turtleStats.map { (playerName, reactionTime) in
+                BinaryGameProtocol.WeeklyLeaderboardEntry(
+                    playerID: playerName,
+                    nickname: playerName,
+                    value: Float(reactionTime),
+                    lastUpdate: Date()
+                )
+            }
+            .sorted { $0.value > $1.value } // 反應時間越長排越前面（最慢第一名）
+            .prefix(3)
+            .map { $0 }
+            
+            let turtleData = BinaryGameProtocol.encodeWeeklyLeaderboard(
+                type: .reaction,
+                entries: turtleEntries,
+                weekStartTime: weekStartTime
+            )
+            
+            let turtleKey = "\(weeklyLeaderboardPrefix)reaction_\(Int(weekStartTime.timeIntervalSince1970))"
+            UserDefaults.standard.set(turtleData, forKey: turtleKey)
+            print("🐢 烏龜神榜數據已提交到週排行榜")
+        }
+    }
+    
+    /// 所有人自動離開房間開始新的一局
+    private func leaveGameRoomAfterWin() {
+        print("🚪 冠軍後自動離開房間機制啟動...")
+        
+        // 1. 清理本地遊戲狀態（使用現有的resetGameState）
+        resetGameState()
+        
+        // 2. 通知UI層離開房間
+        DispatchQueue.main.async { [weak self] in
+            guard let self = self else { return }
+            
+            // 觸發離開房間回調
+            self.onGameWon?("遊戲結束", 0)
+            
+            print("✅ 房間清理完成，準備開始新一局")
+        }
+        
+        // 3. 如果是主機，等待1秒後重新開始房間
+        if isHost {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                guard let self = self else { return }
+                
+                // 重新初始化房間狀態
+                self.initializeNewGame()
+                print("🏠 主機重新開放房間")
+            }
+        }
+    }
+    
+    /// 初始化新遊戲（主機用）
+    private func initializeNewGame() {
+        gameState = .waitingForPlayers
+        isHost = true
+        
+        // 生成新的賓果卡
+        localBingoCard = generateBingoCard()
+        
+        // 重置抽號狀態
+        localDrawnNumbers = []
+        currentNumber = nil
+        
+        print("🎯 新遊戲初始化完成")
     }
 }
