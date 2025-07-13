@@ -898,25 +898,12 @@ class BingoGameViewModel: ObservableObject {
             throw NetworkError.notConnected
         }
         
-        // 2. 檢查對等節點連接
+        // 2. 允許單機模式和多人模式廣播 (移除過度嚴格檢查)
         let connectedPeers = meshManager.getConnectedPeers()
-        guard !connectedPeers.isEmpty else {
-            print("ℹ️ BingoGameViewModel: 無連接節點，跳過廣播")
-            return // 不拋出錯誤，因為單機模式是允許的
-        }
-        
-        // 3. 深度檢查網路就緒狀態
-        guard !meshManager.getConnectedPeers().isEmpty else {
-            print("❌ BingoGameViewModel: MultipeerConnectivity 會話未就緒")
-            throw NetworkError.sessionError("MCSession not ready")
-        }
-        
-        // 4. 檢查通道穩定性（無阻塞檢查）
-        // 移除阻塞性的 Thread.sleep，改為立即檢查
-        guard !meshManager.getConnectedPeers().isEmpty else {
-            print("❌ BingoGameViewModel: 通道狀態不穩定，但允許繼續（離線模式）")
-            // 不拋出錯誤，允許離線模式繼續
-            return
+        if connectedPeers.isEmpty {
+            print("ℹ️ BingoGameViewModel: 單機模式，允許本地廣播")
+        } else {
+            print("✅ BingoGameViewModel: 多人模式，連接節點數: \(connectedPeers.count)")
         }
         
         print("✅ BingoGameViewModel: 廣播通道狀態驗證通過")
@@ -1713,8 +1700,8 @@ class BingoGameViewModel: ObservableObject {
         // 立即抽第一張卡
         drawNextNumber()
         
-        // 然後每3秒抽一張新卡
-        scheduleTimer(id: TimerManager.TimerID.gameDraw, interval: 3.0, repeats: true) { [weak self] in
+        // 然後每5秒抽一張新卡 (優化：避免網路堵塞)
+        scheduleTimer(id: TimerManager.TimerID.gameDraw, interval: 5.0, repeats: true) { [weak self] in
             guard let self = self else { return }
             
             Task { @MainActor [weak self] in
@@ -2162,12 +2149,8 @@ class BingoGameViewModel: ObservableObject {
                 }
             }
         } else if !isHost && isInRoom {
-            // 非主機也廣播房間狀態（包含自己的玩家資訊）
-            Task {
-                let data = encodeGameRoomState()
-                await sendGameMessageSafely(.roomSync, data: data)
-                print("📡 非主機向新連接設備 \(peerID) 廣播房間狀態")
-            }
+            // 非主機不廣播，只發送自己的玩家狀態（修復廣播混亂問題）
+            print("📡 非主機不廣播房間狀態，避免與主機衝突")
         }
     }
     
@@ -2396,7 +2379,7 @@ class BingoGameViewModel: ObservableObject {
     private func startSyncTimer() {
         cancelTimer(id: TimerManager.TimerID.gameSync)
         
-        scheduleTimer(id: TimerManager.TimerID.gameSync, interval: 15.0, repeats: true) { [weak self] in
+        scheduleTimer(id: TimerManager.TimerID.gameSync, interval: 8.0, repeats: true) { [weak self] in
             guard let self = self else { return }
             
             Task { @MainActor [weak self] in
@@ -2704,11 +2687,17 @@ class BingoGameViewModel: ObservableObject {
         let lines = calculateCompletedLines(card)
         localCompletedLines = lines
         
+        // 立即更新玩家進度到房間狀態（修復線數不同步問題）
+        updatePlayerProgress()
+        
         if lines >= 5 && !localGameWon {
+            print("🎯 DEBUG: 觸發獲勝條件檢查 - lines: \(lines), gameWon: \(localGameWon)")
             localGameWon = true
             print("🏆 玩家獲勝！完成 \(lines) 條線")
+            print("📡 DEBUG: 準備廣播冠軍公告...")
             // 觸發獲勝邏輯
             broadcastWinnerAnnouncement(winnerID: playerID, winnerName: deviceName, lines: lines)
+            print("🎮 DEBUG: 觸發 onGameWon 回調...")
             onGameWon?(deviceName, lines)
         }
     }
@@ -3343,6 +3332,7 @@ class BingoGameViewModel: ObservableObject {
     
     /// 廣播冠軍公告到所有房間內的玩家
     private func broadcastWinnerAnnouncement(winnerID: String, winnerName: String, lines: Int) {
+        print("🎯 DEBUG: broadcastWinnerAnnouncement 被調用 - winnerID: \(winnerID), lines: \(lines)")
         let announcement = WinnerAnnouncement(
             winnerPlayerID: winnerID,
             winnerName: winnerName,
@@ -3402,9 +3392,11 @@ class BingoGameViewModel: ObservableObject {
                     // 取消計時器
                     self.cancelTimer(id: TimerManager.TimerID.gameRestart)
                     
-                    // 只有主機廣播重新開始
+                    // 所有設備都自動重新開始
+                    self.restartGame()
+                    
+                    // 主機額外廣播重新開始訊息（確保同步）
                     if self.isHost {
-                        self.restartGame()
                         self.broadcastGameMessage(.gameRestart, data: Data())
                     }
                 }

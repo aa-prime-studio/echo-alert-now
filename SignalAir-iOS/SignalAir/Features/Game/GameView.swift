@@ -690,7 +690,7 @@ struct BingoGameView: View {
                     .padding(24)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white)
+                            .fill(Color.clear)
                     )
                     .shadow(color: Color.gray.opacity(0.3), radius: 10, x: 0, y: 5)
                     .transition(.scale.combined(with: .opacity))
