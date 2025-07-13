@@ -138,6 +138,8 @@ public class BinaryMessageEncoder {
             return .game
         case .topology:
             return .topology
+        case .keyExchangeResponse:
+            return .keyExchange  // 使用相同的二進制類型
         }
     }
     

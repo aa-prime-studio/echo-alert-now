@@ -83,6 +83,7 @@ class TopologyManager: ObservableObject {
     // MARK: - 拓撲管理控制
     
     /// 開始拓撲管理
+    @MainActor
     func startTopologyManagement() {
         guard !isActive else { return }
         
@@ -109,17 +110,21 @@ class TopologyManager: ObservableObject {
     private func startPeriodicUpdates() {
         // 拓撲更新定時器
         topologyTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
-            self?.performTopologyUpdate()
+            Task { @MainActor [weak self] in
+                self?.performTopologyUpdate()
+            }
         }
     }
     
     /// 執行拓撲更新
+    @MainActor
     private func performTopologyUpdate() {
         updateNetworkStatistics()
         broadcastNodeInfo()
     }
     
     /// 更新網路統計
+    @MainActor
     private func updateNetworkStatistics() {
         guard let meshManager = meshManager else { return }
         
@@ -130,6 +135,7 @@ class TopologyManager: ObservableObject {
     // MARK: - 廣播方法
     
     /// 廣播節點資訊
+    @MainActor
     private func broadcastNodeInfo() {
         guard let meshManager = meshManager else { return }
         
@@ -167,7 +173,9 @@ class TopologyManager: ObservableObject {
         case .nodeInfo:
             handleReceivedNodeInfo(message, from: sender)
         case .peerDiscovery:
-            handleReceivedPeerDiscovery(message, from: sender)
+            Task { @MainActor in
+                handleReceivedPeerDiscovery(message, from: sender)
+            }
         case .routeUpdate:
             print("🛤️ 收到路由更新來自: \(sender)")
         case .healthCheck:
@@ -180,9 +188,12 @@ class TopologyManager: ObservableObject {
     private func handleReceivedNodeInfo(_ message: TopologyMessage, from sender: String) {
         print("🔍 處理節點資訊來自: \(sender)")
         // 簡化處理：只記錄收到的節點資訊
-        updateNetworkStatistics()
+        Task { @MainActor in
+            updateNetworkStatistics()
+        }
     }
     
+    @MainActor
     private func handleReceivedPeerDiscovery(_ message: TopologyMessage, from sender: String) {
         print("📡 收到節點發現來自: \(sender)")
         // 回應節點發現請求

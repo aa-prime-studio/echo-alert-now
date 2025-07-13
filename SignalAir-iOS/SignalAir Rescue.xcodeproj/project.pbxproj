@@ -35,12 +35,15 @@
 		E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */; };
 		EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61DCAC113E68FF9FF70983D /* ChatView.swift */; };
 		EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */; };
+		GAMEVM001234567890ABCD /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAMEVM001234567890ABCE /* GameViewModel.swift */; };
 		ED13BAC253664B8C9731BEFD /* BinaryMessageDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */; };
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
 		88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */; };
 		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
+		TIMER001234567890ABCDEF /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMER001234567890ABCDE0 /* TimerManager.swift */; };
+		E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E552B154598A42CEAAA0C551 /* EmoteGridView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -91,6 +94,7 @@
 		9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomChatView.swift; sourceTree = "<group>"; };
 		A0C593762D72DB0ECC701D91 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoGameViewModel.swift; sourceTree = "<group>"; };
+		GAMEVM001234567890ABCE /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		A405827F77F43F163DF5806F /* LanguageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageService.swift; sourceTree = "<group>"; };
 		A73D1ABC847E0D82253134E6 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		ADA9D8E49B9B481E9015E577 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -109,6 +113,8 @@
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
 		678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGameProtocol.swift; sourceTree = "<group>"; };
 		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
+		TIMER001234567890ABCDE0 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
+		E552B154598A42CEAAA0C551 /* EmoteGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmoteGridView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -154,6 +160,7 @@
 				E3072289CDECAC4232A444F1 /* PlayerListView.swift */,
 				9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */,
 				7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */,
+				E552B154598A42CEAAA0C551 /* EmoteGridView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -296,7 +303,11 @@
 			isa = PBXGroup;
 			children = (
 				A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */,
+				GAMEVM001234567890ABCE /* GameViewModel.swift */,
 				A73D1ABC847E0D82253134E6 /* GameView.swift */,
+				TIMER001234567890ABCDE0 /* TimerManager.swift */,
+				BNET001234567890ABCDEF0 /* BingoNetworkManager.swift */,
+				BSTATE001234567890ABCD0 /* BingoGameStateManager.swift */,
 				194D9D751FD8D5E4F70BC34F /* Components */,
 			);
 			path = Game;
@@ -435,6 +446,7 @@
 			files = (
 				0D9F8ADFC96E776680BED966 /* BingoCardView.swift in Sources */,
 				EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */,
+				GAMEVM001234567890ABCD /* GameViewModel.swift in Sources */,
 				EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */,
 				DB287F238A73E5AE57BB23F2 /* ChatViewModel.swift in Sources */,
 				DB564D502696770581700AF8 /* ContentView.swift in Sources */,
@@ -466,6 +478,8 @@
 				TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */,
 				88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */,
 				TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */,
+				TIMER001234567890ABCDEF /* TimerManager.swift in Sources */,
+				E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

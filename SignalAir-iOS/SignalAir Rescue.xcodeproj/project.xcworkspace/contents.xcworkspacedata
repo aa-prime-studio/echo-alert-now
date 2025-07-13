@@ -4,37 +4,4 @@
    <FileRef
       location = "self:">
    </FileRef>
-   <FileRef
-      location = "group:BinaryProtocolTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:cleanup_project.sh">
-   </FileRef>
-   <FileRef
-      location = "group:ErrorMonitoringTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:FuzzTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:MeshInteropTester.swift">
-   </FileRef>
-   <FileRef
-      location = "group:ProtocolSchemaTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:README.md">
-   </FileRef>
-   <FileRef
-      location = "group:RoundTripTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:run_tests.sh">
-   </FileRef>
-   <FileRef
-      location = "group:SecurityTests.swift">
-   </FileRef>
-   <FileRef
-      location = "group:standalone_test_runner.swift">
-   </FileRef>
 </Workspace>

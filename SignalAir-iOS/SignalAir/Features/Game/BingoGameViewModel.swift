@@ -2663,7 +2663,7 @@ class BingoGameViewModel: ObservableObject {
     
     /// 標記賓果卡上的數字
     func markNumber(_ number: Int) {
-        print("🎮 標記號碼 \(number)")
+        print("🎮 用戶點擊標記號碼 \(number)")
         
         guard var card = localBingoCard else {
             print("⚠️ 沒有賓果卡片")
@@ -2672,7 +2672,13 @@ class BingoGameViewModel: ObservableObject {
         
         // 檢查號碼是否已經抽出
         guard localDrawnNumbers.contains(number) else {
-            print("⚠️ 號碼 \(number) 尚未抽出")
+            print("⚠️ 號碼 \(number) 尚未抽出，無法標記")
+            return
+        }
+        
+        // 檢查號碼是否已經被標記（防止重複點擊）
+        if let index = card.numbers.firstIndex(of: number), card.marked[index] {
+            print("ℹ️ 號碼 \(number) 已經標記過，忽略重複點擊")
             return
         }
         
@@ -2689,6 +2695,11 @@ class BingoGameViewModel: ObservableObject {
         // 更新卡片
         localBingoCard = card
         
+        // 強制立即更新 UI
+        DispatchQueue.main.async { [weak self] in
+            self?.objectWillChange.send()
+        }
+        
         // 檢查是否獲勝
         let lines = calculateCompletedLines(card)
         localCompletedLines = lines
@@ -2697,7 +2708,8 @@ class BingoGameViewModel: ObservableObject {
             localGameWon = true
             print("🏆 玩家獲勝！完成 \(lines) 條線")
             // 觸發獲勝邏輯
-            handlePlayerWin()
+            broadcastWinnerAnnouncement(winnerID: playerID, winnerName: deviceName, lines: lines)
+            onGameWon?(deviceName, lines)
         }
     }
     

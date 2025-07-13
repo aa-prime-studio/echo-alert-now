@@ -549,15 +549,33 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
             
             print("🔑 開始與 \(peerDisplayName) 進行密鑰交換...")
             
-            // 延遲5秒後在背景線程進行密鑰交換，避免主線程阻塞
-            DispatchQueue.global(qos: .userInitiated).asyncAfter(deadline: .now() + 5.0) {
-                Task {
-                    // 先驗證連接穩定性
-                    if await self.verifyConnectionStability(with: peerDisplayName) {
-                        await self.initiateKeyExchange(with: peerDisplayName)
-                    } else {
-                        print("⚠️ 連接不穩定，跳過與 \(peerDisplayName) 的密鑰交換")
-                    }
+            // 立即進行密鑰交換，但先等待連接穩定信號
+            Task {
+                // 等待連接穩定信號（最多10秒）
+                let stabilityWaitTime: TimeInterval = 10.0
+                let startTime = Date()
+                var isStable = false
+                
+                // 使用 NotificationCenter 監聽連接穩定信號
+                let observer = NotificationCenter.default.addObserver(
+                    forName: NSNotification.Name("PeerConnectionStable"),
+                    object: peerDisplayName,
+                    queue: .main
+                ) { _ in
+                    isStable = true
+                }
+                
+                // 等待穩定信號或超時
+                while !isStable && Date().timeIntervalSince(startTime) < stabilityWaitTime {
+                    try? await Task.sleep(nanoseconds: 100_000_000) // 100ms
+                }
+                
+                NotificationCenter.default.removeObserver(observer)
+                
+                if isStable {
+                    await self.initiateKeyExchange(with: peerDisplayName)
+                } else {
+                    print("⚠️ 連接穩定性等待超時，跳過與 \(peerDisplayName) 的密鑰交換")
                 }
             }
         }
@@ -874,13 +892,17 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
             retryCount: UInt8(retryCount)
         )
         
-        // 查找對等設備，確保連接仍然有效
-        guard let peer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) else {
+        // 🔧 原子性連接檢查，移除多重檢查引起的競爭條件
+        guard let validPeer = networkService.connectedPeers.first(where: { $0.displayName == peerDisplayName }) else {
+            print("❌ 密鑰交換失敗：找不到對等設備 \(peerDisplayName)")
+            print("📊 當前連接的設備: \(networkService.connectedPeers.map(\.displayName))")
             throw NetworkError.peerNotFound
         }
         
+        // 🔧 原子性檢查：validPeer 已經通過上面的原子檢查，直接使用
+        
         // 發送密鑰交換請求
-        try await networkService.send(messageData, to: [peer])
+        try await networkService.send(messageData, to: [validPeer])
         
         // 記錄發送成功和延遲
         let latency = Date().timeIntervalSince(startTime)
@@ -892,26 +914,31 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
         try await waitForSessionKeyWithContinuation(peerDisplayName: peerDisplayName, timeout: 3.0)
     }
     
-    /// 非阻塞等待會話密鑰建立（簡化版本）
+    /// 非阻塞等待會話密鑰建立（優化版本）
     private func waitForSessionKeyWithContinuation(peerDisplayName: String, timeout: TimeInterval) async throws {
         let startTime = Date()
-        let intervals: [TimeInterval] = [0.05, 0.1, 0.2, 0.3, 0.5] // 50ms, 100ms, 200ms, 300ms, 500ms
-        var intervalIndex = 0
+        
+        // 使用更適合的輪詢間隔
+        let checkInterval: TimeInterval = 0.1 // 100ms 固定間隔
         
         while Date().timeIntervalSince(startTime) < timeout {
-            // 直接檢查會話密鑰，避免 TaskGroup 的複雜性
+            // 立即檢查會話密鑰
             if securityService.hasSessionKey(for: peerDisplayName) {
                 print("✅ 與 \(peerDisplayName) 的密鑰交換成功完成")
                 return
             }
             
-            let currentInterval = intervals[min(intervalIndex, intervals.count - 1)]
-            try await Task.sleep(nanoseconds: UInt64(currentInterval * 1_000_000_000))
+            // 同時檢查連接是否仍然有效
+            if !networkService.connectedPeers.contains(where: { $0.displayName == peerDisplayName }) {
+                print("❌ 連接在密鑰交換過程中斷開: \(peerDisplayName)")
+                throw NetworkError.peerNotFound
+            }
             
-            intervalIndex += 1
+            try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
         }
         
         // 超時後拋出錯誤
+        print("❌ 等待密鑰交換超時: \(peerDisplayName)")
         throw NetworkError.timeout
     }
     

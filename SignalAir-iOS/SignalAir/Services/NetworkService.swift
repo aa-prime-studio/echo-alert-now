@@ -154,6 +154,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
             encryptionPreference: .optional  // 可選加密，提高兼容性
         )
         
+        // 關鍵：設置 session 的錯誤處理和超時配置
+        self.session.delegate = nil  // 暫時設為 nil，稍後在 super.init() 後設置
+        
         // 快速初始化 advertiser 和 browser（不啟動）
         self.advertiser = MCNearbyServiceAdvertiser(
             peer: safePeerID, 
@@ -347,8 +350,17 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     }
     
     private func handlePeerDisconnection(_ peer: MCPeerID) {
-        DispatchQueue.main.async { @Sendable in
+        // 確保在主線程執行且防止重複處理
+        Task { @MainActor in
+            guard _connectedPeers.contains(peer) else {
+                print("⚠️ Peer \(peer.displayName) 已經不在連接列表中，跳過斷線處理")
+                return
+            }
+            
             print("❌ Peer disconnected: \(peer.displayName)")
+            
+            // 立即從連接列表移除，防止重複處理
+            _connectedPeers.removeAll { $0 == peer }
             
             // 清理該 peer 的所有待處理操作
             self.cleanupPendingOperations(for: peer)
@@ -374,10 +386,22 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
 extension NetworkService: @preconcurrency MCSessionDelegate {
     @MainActor
     func session(_ session: MCSession, peer peerID: MCPeerID, didChange state: MCSessionState) {
-        // 防禦性檢查：確保 session 仍然有效
+        // 防禦性檢查：確保 session 仍然有效且 peer 仍在追蹤中
         guard self.session == session else {
             print("⚠️ 收到來自舊 session 的狀態變更，忽略")
             return
+        }
+        
+        // 🔧 改進重複處理檢查，確保重要的清理工作不會被跳過
+        let peerName = peerID.displayName
+        if state == .notConnected {
+            // 檢查是否真的是重複事件
+            let isAlreadyDisconnected = !_connectedPeers.contains(peerID) && !session.connectedPeers.contains(peerID)
+            if isAlreadyDisconnected {
+                print("⚠️ 忽略重複的斷線事件: \(peerName)")
+                return
+            }
+            print("🔄 處理斷線事件: \(peerName) (session: \(session.connectedPeers.contains(peerID)), tracked: \(_connectedPeers.contains(peerID)))")
         }
         
         print("🔄 Session state changed for \(peerID.displayName): \(state)")
@@ -394,17 +418,21 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
                 await connectionStateManager.removeConnectionAttempt(peerID.displayName)
             }
             
-            // 立即更新連接狀態
+            // 🔧 同步處理連接，移除時序延遲
             updateConnectionStatus()
+            handlePeerConnection(peerID)
             
-            // 稍微延遲以確保連接穩定
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { @Sendable [weak self] in
-                guard let self = self else { return }
-                self.handlePeerConnection(peerID)
+            // 立即確認連接穩定性，無需延遲
+            if self.session.connectedPeers.contains(peerID) {
+                print("✅ 連接狀態立即確認穩定: \(peerID.displayName)")
+                // 立即通知外部系統連接已準備就緒
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("PeerConnectionStable"),
+                    object: peerID.displayName
+                )
             }
             
         case .notConnected:
-            print("❌ Peer disconnected: \(peerID.displayName)")
             // 立即更新連接狀態
             updateConnectionStatus()
             
@@ -413,7 +441,7 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
                 await connectionStateManager.removeConnectionAttempt(peerID.displayName)
             }
             
-            // 處理斷開連接
+            // 處理斷開連接（handlePeerDisconnection 內部會檢查重複）
             handlePeerDisconnection(peerID)
             
             // 離線環境重試機制（降低重試頻率避免衝突）
@@ -885,8 +913,35 @@ extension NetworkService {
         - Device ID: \(myPeerID.displayName)
         - Session 創建次數: \(sessionCreationCount)
         
+        🔧 連接詳細狀態:
+        - Session Peers: \(session.connectedPeers.map(\.displayName))
+        - Tracked Peers: \(connectedPeers.map(\.displayName))
+        - Nearby Peers: \(nearbyPeers.map(\.displayName))
+        - Connection Status: \(connectionStatus)
+        - Is Connected: \(isConnected)
+        
         """)
         print("===============================")
+    }
+    
+    /// 🔧 新增：連接狀態同步檢查
+    func validateConnectionConsistency() -> Bool {
+        let sessionConnected = Set(session.connectedPeers.map(\.displayName))
+        let trackedConnected = Set(connectedPeers.map(\.displayName))
+        
+        let isConsistent = sessionConnected == trackedConnected
+        
+        if !isConsistent {
+            print("⚠️ 連接狀態不一致檢測:")
+            print("   Session: \(sessionConnected)")
+            print("   Tracked: \(trackedConnected)")
+            print("   需要同步連接狀態")
+            
+            // 自動修復不一致狀態
+            updateConnectionStatus()
+        }
+        
+        return isConsistent
     }
     
 } 
