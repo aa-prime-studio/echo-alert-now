@@ -2,6 +2,8 @@ import Foundation
 import SwiftUI
 import Combine
 import MultipeerConnectivity
+import CryptoKit
+import Security
 
 // MARK: - 二進制協議支持
 // 直接使用全局 BinaryEncoder 和 BinaryDecoder
@@ -625,6 +627,7 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     var floodProtection = FloodProtection()
     var settingsViewModel = SettingsViewModel()
     var connectionOptimizer = ConnectionOptimizer()
+    var deviceFingerprintManager = DeviceFingerprintManager()
     // var connectionKeepAlive: ConnectionKeepAlive?
     // var autoReconnectManager: AutoReconnectManager?
     
