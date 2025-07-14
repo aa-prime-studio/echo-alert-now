@@ -74,20 +74,20 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSLocalNetworkUsageDescription</key>
-	<string>SignalAir Rescue 需要使用本地網絡來連接附近的設備進行緊急通訊，確保在沒有網際網路連線時也能與救援人員或其他用戶溝通。您的隱私受到保護，所有通訊均採用端到端加密。</string>
+	<string>SignalAir 需要使用本地網絡來連接附近的設備進行通訊，讓用戶在沒有網際網路連線時也能互相幫助和溝通。您的隱私受到保護，所有通訊均採用端到端加密。</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_signalair._tcp</string>
 		<string>_signalair._udp</string>
 	</array>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>SignalAir Rescue 需要使用藍牙來發現並連接附近的設備進行緊急通訊。藍牙僅用於建立安全的點對點連線，不會收集或傳送任何個人識別資訊。所有通訊均經過加密保護。</string>
+	<string>SignalAir 需要使用藍牙來發現並連接附近的設備進行通訊。藍牙僅用於建立安全的點對點連線，讓用戶能夠互相幫助，不會收集或傳送任何個人識別資訊。所有通訊均經過加密保護。</string>
 	<key>NSBluetoothPeripheralUsageDescription</key>
-	<string>SignalAir Rescue 需要使用藍牙來與附近的設備建立緊急通訊連接。此功能僅在緊急情況下使用，確保您能夠在沒有行動網路時與救援人員取得聯繫。</string>
+	<string>SignalAir 需要使用藍牙來與附近的設備建立通訊連接。此功能讓您能夠在沒有行動網路時與附近其他用戶建立聯繫，進行互助溝通。</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>SignalAir Rescue 需要使用位置信息來提供準確的緊急救援座標。位置資訊僅在您主動分享時傳送，且僅用於緊急救援目的。我們不會儲存或追蹤您的位置歷史。</string>
+	<string>SignalAir 需要使用位置信息來協助附近用戶互相幫助。位置資訊會進行網格模糊化處理以保護隱私，僅在您主動分享時傳送給附近的其他用戶。我們不會儲存或追蹤您的精確位置歷史。</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SignalAir Rescue 需要使用位置信息來在緊急情況下提供準確的救援座標。此權限確保在緊急狀況下能即時分享您的位置給救援人員。位置資訊經過加密保護，不會用於追蹤或商業用途。</string>
+	<string>SignalAir 需要使用位置信息來讓您與附近需要幫助的用戶建立聯繫。位置資訊經過網格模糊化和加密保護，僅用於用戶間互助目的，不會用於追蹤或商業用途。</string>
 	<key>NSUserTrackingUsageDescription</key>
 	<string>SignalAir Rescue 使用設備指紋識別技術來驗證用戶身份，防止機器人攻擊和惡意使用。我們收集的設備資訊（如設備型號、系統版本）僅用於安全驗證，不會與第三方分享或用於廣告目的。</string>
 	<key>UIBackgroundModes</key>

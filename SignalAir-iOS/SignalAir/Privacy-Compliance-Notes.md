@@ -1,7 +1,10 @@
-# SignalAir Rescue - Apple App Store 隱私合規性說明
+# SignalAir - Apple App Store 隱私合規性說明
 
 ## 文件目的
-此文件說明 SignalAir Rescue 應用程式如何符合 Apple App Store 的隱私準則，特別是關於設備指紋識別技術的使用。
+此文件說明 SignalAir 應用程式如何符合 Apple App Store 的隱私準則，特別是關於設備指紋識別技術的使用。
+
+## 應用程式性質說明
+**重要**：SignalAir 是一個用戶間互助通訊應用程式，不涉及專業救援人員。用戶透過點對點網路互相幫助，位置資訊經過網格模糊化處理以保護隱私。
 
 ## 設備指紋識別技術說明
 
