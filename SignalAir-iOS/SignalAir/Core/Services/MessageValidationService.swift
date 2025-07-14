@@ -190,16 +190,26 @@ class MessageValidationService {
             return .failure(reason: "聊天消息不能全為空格")
         }
         
-        // 檢查是否包含敏感詞（簡化版）
-        let bannedWords = ["spam", "hack", "cheat"]
-        let lowerMessage = message.lowercased()
-        for word in bannedWords {
-            if lowerMessage.contains(word) {
-                return .failure(reason: "聊天消息包含禁止詞語")
+        // 使用進階惡意內容檢測器
+        let contentDetector = ServiceContainer.shared.maliciousContentDetector
+        let analysisResult = contentDetector.analyzeContent(message)
+        
+        if !analysisResult.isClean {
+            // 記錄到信任分數系統（如果有設備ID）
+            if let deviceUUID = getCurrentDeviceUUID() {
+                let trustManager = ServiceContainer.shared.securityService.trustScoreManager
+                contentDetector.validateAndReport(message, from: deviceUUID, trustManager: trustManager)
             }
+            
+            return .failure(reason: "訊息包含不當內容: \(analysisResult.details)")
         }
         
         return .success
+    }
+    
+    /// 取得當前設備UUID（用於信任分數追蹤）
+    private func getCurrentDeviceUUID() -> String? {
+        return ServiceContainer.shared.deviceFingerprintManager.deviceUUID
     }
     
     /// 驗證遊戲消息類型

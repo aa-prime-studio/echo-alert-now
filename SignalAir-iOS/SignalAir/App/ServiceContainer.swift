@@ -628,6 +628,7 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     var settingsViewModel = SettingsViewModel()
     var connectionOptimizer = ConnectionOptimizer()
     var deviceFingerprintManager = DeviceFingerprintManager()
+    var maliciousContentDetector = MaliciousContentDetector()
     // var connectionKeepAlive: ConnectionKeepAlive?
     // var autoReconnectManager: AutoReconnectManager?
     
