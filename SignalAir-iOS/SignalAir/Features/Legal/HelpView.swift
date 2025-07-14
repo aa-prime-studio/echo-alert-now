@@ -5,8 +5,8 @@ struct HelpView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text("使用說明")
-                    .font(.system(size: 15))
-                    .fontWeight(.bold)
+                    .font(.subheadline.weight(.bold))
+                    .lineSpacing(16)
                     .padding(.bottom)
                 
                 VStack(alignment: .leading, spacing: 12) {
@@ -67,12 +67,13 @@ struct HelpSection: View {
                     .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
                     .frame(width: 24)
                 Text(title)
-                    .font(.system(size: 15))
-                    .fontWeight(.semibold)
+                    .font(.subheadline.weight(.bold))
+                    .lineSpacing(16)
             }
             
             Text(content)
-                .font(.system(size: 15))
+                .font(.subheadline.weight(.regular))
+                .lineSpacing(16)
                 .foregroundColor(.secondary)
         }
         .padding()

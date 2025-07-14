@@ -52,13 +52,13 @@ struct PrivacyTextView: View {
         VStack(alignment: .leading, spacing: 16) {
             // Last Updated
             Text(lastUpdated)
-                .font(.subheadline.weight(.thin))
+                .font(.subheadline.weight(.regular))
                 .foregroundColor(.black)
                 .lineSpacing(16)
             
             // Intro
             Text(intro)
-                .font(.subheadline.weight(.thin))
+                .font(.subheadline.weight(.regular))
                 .foregroundColor(.black)
                 .lineSpacing(16)
             
@@ -67,13 +67,13 @@ struct PrivacyTextView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     // Section Title
                     Text(cleanSectionTitle(section.0))
-                        .font(.subheadline.weight(.regular))
+                        .font(.subheadline.weight(.bold))
                         .foregroundColor(.black)
                         .lineSpacing(16)
                     
                     // Section Content
                     Text(section.1)
-                        .font(.subheadline.weight(.thin))
+                        .font(.subheadline.weight(.regular))
                         .foregroundColor(.black)
                         .lineSpacing(16)
                 }
