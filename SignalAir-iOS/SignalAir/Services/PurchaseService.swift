@@ -39,24 +39,29 @@ class PurchaseService: NSObject, ObservableObject {
     // 防止重複購買的標記
     private var isPurchasing = false
     
+    enum SubscriptionType {
+        case monthly
+        case yearly
+    }
+    
     enum PurchaseTier: String, CaseIterable {
-        case coffee = "com.signalair.coffee"
-        case bingoUnlock = "com.signalair.bingo"
-        case fullVersion = "com.signalair.full"
+        case basicVIP = "com.signalair.basic"
+        case vip = "com.signalair.vip"
+        case vvip = "com.signalair.vvip"
         
         func displayName(language: PurchaseService.Language) -> String {
             switch language {
             case .chinese:
                 switch self {
-                case .coffee: return "喝杯楊枝甘露"
-                case .bingoUnlock: return "成為play的一環版"
-                case .fullVersion: return "好想吃丹丹漢堡版"
+                case .basicVIP: return "喝杯楊枝甘露"
+                case .vip: return "成為play的一環版"
+                case .vvip: return "好想吃丹丹漢堡版"
                 }
             case .english:
                 switch self {
-                case .coffee: return "Buy a Drink"
-                case .bingoUnlock: return "Part of Play Edition"
-                case .fullVersion: return "Want Dan Dan Burger Edition"
+                case .basicVIP: return "Buy a Drink"
+                case .vip: return "Part of Play Edition"
+                case .vvip: return "Want Dan Dan Burger Edition"
                 }
             }
         }
@@ -65,25 +70,45 @@ class PurchaseService: NSObject, ObservableObject {
             switch language {
             case .chinese:
                 switch self {
-                case .coffee: return "純贊助，無解鎖功能"
-                case .bingoUnlock: return "購買解鎖賓果遊戲室"
-                case .fullVersion: return "購買解鎖賓果遊戲室 + 贊助未來擴充語言包，幫助更多地球人！"
+                case .basicVIP: return "解鎖聊天室每天上限30條訊息限制"
+                case .vip: return "購買解鎖賓果遊戲室"
+                case .vvip: return "全解鎖版本，贊助未來擴充語言包"
                 }
             case .english:
                 switch self {
-                case .coffee: return "Pure support, no unlock features"
-                case .bingoUnlock: return "Purchase to unlock Bingo Game Room"
-                case .fullVersion: return "Purchase to unlock Bingo Game Room + support future language packs, help more people!"
+                case .basicVIP: return "Unlock daily chat limit of 30 messages"
+                case .vip: return "Unlock Bingo Game Room"
+                case .vvip: return "Full unlock version, sponsor future language packs"
                 }
             }
         }
         
-        var price: String {
+        func monthlyPrice() -> String {
             switch self {
-            case .coffee: return "NT$90"
-            case .bingoUnlock: return "NT$330"
-            case .fullVersion: return "NT$1,680"
+            case .basicVIP: return "NT$60"
+            case .vip: return "NT$90"
+            case .vvip: return "NT$160"
             }
+        }
+        
+        func yearlyPrice() -> String {
+            switch self {
+            case .basicVIP: return "NT$612"   // NT$60 * 12 * 0.85 (85折)
+            case .vip: return "NT$918"       // NT$90 * 12 * 0.85 (85折)
+            case .vvip: return "NT$1632"     // NT$160 * 12 * 0.85 (85折)
+            }
+        }
+        
+        func priceForType(_ type: SubscriptionType) -> String {
+            switch type {
+            case .monthly: return monthlyPrice()
+            case .yearly: return yearlyPrice()
+            }
+        }
+        
+        // 保持向後相容性
+        var price: String {
+            return monthlyPrice()
         }
         
         // 保持向後相容性的屬性
@@ -113,17 +138,17 @@ class PurchaseService: NSObject, ObservableObject {
     }
     
     var isPremiumUser: Bool {
-        return purchasedTiers.contains(PurchaseTier.bingoUnlock.rawValue) || 
-               purchasedTiers.contains(PurchaseTier.fullVersion.rawValue)
+        return purchasedTiers.contains(PurchaseTier.vip.rawValue) || 
+               purchasedTiers.contains(PurchaseTier.vvip.rawValue)
     }
     
     func getPurchasedTierDisplayName(language: PurchaseService.Language) -> String? {
-        if purchasedTiers.contains(PurchaseTier.fullVersion.rawValue) {
-            return PurchaseTier.fullVersion.displayName(language: language)
-        } else if purchasedTiers.contains(PurchaseTier.bingoUnlock.rawValue) {
-            return PurchaseTier.bingoUnlock.displayName(language: language)
-        } else if purchasedTiers.contains(PurchaseTier.coffee.rawValue) {
-            return PurchaseTier.coffee.displayName(language: language)
+        if purchasedTiers.contains(PurchaseTier.vvip.rawValue) {
+            return PurchaseTier.vvip.displayName(language: language)
+        } else if purchasedTiers.contains(PurchaseTier.vip.rawValue) {
+            return PurchaseTier.vip.displayName(language: language)
+        } else if purchasedTiers.contains(PurchaseTier.basicVIP.rawValue) {
+            return PurchaseTier.basicVIP.displayName(language: language)
         }
         return nil
     }

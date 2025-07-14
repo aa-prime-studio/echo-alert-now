@@ -15,6 +15,21 @@ class ChatViewModel: ObservableObject {
     @Published var messagesSent: Int = 0
     @Published var messagesReceived: Int = 0
     
+    // MARK: - 每日訊息限制功能
+    @Published var dailyMessageCount: Int = 0
+    @Published var dailyLimit: Int = 30  // 免費用戶每日限制
+    @Published var isLimitReached: Bool = false
+    @Published var remainingMessages: Int = 30
+    private var lastResetDate: Date = Date()
+    @Published var showUpgradePrompt: Bool = false
+    
+    // 購買服務依賴
+    private var purchaseService: PurchaseService
+    
+    // 每日限制持久化鍵（本機離線存儲）
+    private let dailyCountKey = "SignalAir_DailyMessageCount_Offline"
+    private let lastResetDateKey = "SignalAir_LastResetDate_Offline"
+    
     // MARK: - Mesh 網路服務依賴
     private var meshManager: MeshManagerProtocol
     private let securityService: SecurityService
@@ -38,7 +53,8 @@ class ChatViewModel: ObservableObject {
         meshManager: MeshManagerProtocol? = nil,
         securityService: SecurityService? = nil,
         selfDestructManager: SelfDestructManager? = nil,
-        settingsViewModel: SettingsViewModel? = nil
+        settingsViewModel: SettingsViewModel? = nil,
+        purchaseService: PurchaseService? = nil
     ) {
         // 使用 ServiceContainer 中的正確初始化服務
         guard let resolvedMeshManager = meshManager ?? ServiceContainer.shared.meshManager else {
@@ -48,11 +64,13 @@ class ChatViewModel: ObservableObject {
         self.securityService = securityService ?? ServiceContainer.shared.securityService
         self.selfDestructManager = selfDestructManager ?? ServiceContainer.shared.selfDestructManager
         self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel
+        self.purchaseService = purchaseService ?? ServiceContainer.shared.purchaseService
         
         setupMeshNetworking()
         setupCleanupTimer()
         setupStatusUpdates()
         setupNotificationObservers()
+        setupDailyLimit()
         
         print("💬 ChatViewModel: Mesh 網路版本初始化完成")
     }
@@ -94,8 +112,8 @@ class ChatViewModel: ObservableObject {
             }
         }
         
-        // 更新裝置名稱
-        deviceName = settingsViewModel.userNickname
+        // 更新裝置名稱（統一使用 NicknameService）
+        deviceName = ServiceContainer.shared.nicknameService.userNickname
         meshNetworkActive = true
     }
     
@@ -106,6 +124,13 @@ class ChatViewModel: ObservableObject {
         guard !newMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         guard meshNetworkActive else {
             addSystemMessage("⚠️ 網路未連線，無法發送訊息")
+            return
+        }
+        
+        // 🚨 檢查每日訊息限制
+        guard canSendMessage() else {
+            showUpgradePrompt = true
+            addSystemMessage("🚫 今日免費訊息已達上限 (\(dailyLimit)則)，升級享受無限聊天！")
             return
         }
         
@@ -150,6 +175,10 @@ class ChatViewModel: ObservableObject {
         // 追蹤訊息以便自毀
         selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
         messagesSent += 1
+        
+        // 🚨 記錄訊息發送並更新限制計數
+        recordMessageSent()
+        
         print("💬 ChatViewModel: 已發送二進制聊天訊息: \(messageText) (\(binaryPacket.count) bytes)")
         newMessage = ""
     }
@@ -356,8 +385,8 @@ class ChatViewModel: ObservableObject {
             encryptionStatus = "端到端加密"
         }
         
-        // 更新裝置名稱
-        deviceName = settingsViewModel.userNickname
+        // 更新裝置名稱（統一使用 NicknameService）
+        deviceName = ServiceContainer.shared.nicknameService.userNickname
     }
     
     /// 重新連線 Mesh 網路
@@ -399,6 +428,25 @@ class ChatViewModel: ObservableObject {
     /// 取得網路統計
     func getNetworkStats() -> String {
         return "已發送: \(messagesSent) | 已接收: \(messagesReceived)"
+    }
+    
+    /// 取得訊息限制狀態文字
+    func getMessageLimitStatus() -> String {
+        if purchaseService.isPremiumUser {
+            return "✅ Premium 用戶 - 無限聊天"
+        } else {
+            return "📊 今日剩餘: \(remainingMessages)/\(dailyLimit) 則免費訊息"
+        }
+    }
+    
+    /// 關閉升級提示
+    func dismissUpgradePrompt() {
+        showUpgradePrompt = false
+    }
+    
+    /// 手動觸發升級提示（供 UI 調用）
+    func triggerUpgradePrompt() {
+        showUpgradePrompt = true
     }
     
     // MARK: - 私有方法
@@ -549,6 +597,87 @@ class ChatViewModel: ObservableObject {
     private func cleanupOldMessages() {
         // 此方法現在主要由午夜清理使用
         // 保留此方法以供未來可能的手動清理需求
+    }
+    
+    // MARK: - 每日訊息限制功能
+    
+    /// 設置每日限制相關功能
+    private func setupDailyLimit() {
+        loadDailyMessageCount()
+        resetDailyCountIfNeeded()
+        updateRemainingMessages()
+        print("📊 ChatViewModel: 每日限制設置完成 - 當前計數: \(dailyMessageCount)/\(dailyLimit)")
+    }
+    
+    /// 載入本機離線儲存的每日訊息計數（無網路依賴）
+    private func loadDailyMessageCount() {
+        dailyMessageCount = UserDefaults.standard.integer(forKey: dailyCountKey)
+        if let savedDate = UserDefaults.standard.object(forKey: lastResetDateKey) as? Date {
+            lastResetDate = savedDate
+        }
+        print("📱 ChatViewModel: 從本機載入計數 - \(dailyMessageCount)/\(dailyLimit)")
+    }
+    
+    /// 儲存每日訊息計數到本機（離線優先）
+    private func saveDailyMessageCount() {
+        UserDefaults.standard.set(dailyMessageCount, forKey: dailyCountKey)
+        UserDefaults.standard.set(lastResetDate, forKey: lastResetDateKey)
+        UserDefaults.standard.synchronize() // 強制同步到磁碟
+        print("💾 ChatViewModel: 本機儲存計數 - \(dailyMessageCount)/\(dailyLimit)")
+    }
+    
+    /// 檢查並重置每日計數（基於本機時間，離線可用）
+    private func resetDailyCountIfNeeded() {
+        let calendar = Calendar.current
+        let now = Date() // 使用設備本機時間，無需網路同步
+        
+        if !calendar.isDate(lastResetDate, inSameDayAs: now) {
+            // 新的一天，重置計數（本機計算）
+            dailyMessageCount = 0
+            lastResetDate = now
+            isLimitReached = false
+            showUpgradePrompt = false
+            saveDailyMessageCount()
+            updateRemainingMessages()
+            print("🆕 ChatViewModel: 本機偵測新的一天，重置訊息計數（離線模式）")
+        }
+    }
+    
+    /// 更新剩餘訊息數量
+    private func updateRemainingMessages() {
+        if purchaseService.isPremiumUser {
+            remainingMessages = -1 // 無限制
+            isLimitReached = false
+        } else {
+            remainingMessages = max(0, dailyLimit - dailyMessageCount)
+            isLimitReached = dailyMessageCount >= dailyLimit
+        }
+    }
+    
+    /// 檢查是否可以發送訊息
+    private func canSendMessage() -> Bool {
+        resetDailyCountIfNeeded()
+        return purchaseService.isPremiumUser || dailyMessageCount < dailyLimit
+    }
+    
+    /// 記錄訊息發送並更新計數
+    private func recordMessageSent() {
+        if !purchaseService.isPremiumUser {
+            dailyMessageCount += 1
+            saveDailyMessageCount()
+            updateRemainingMessages()
+            
+            // 接近限制時顯示警告
+            if dailyMessageCount >= dailyLimit - 5 && dailyMessageCount < dailyLimit {
+                addSystemMessage("⚠️ 您今天還剩 \(remainingMessages) 則免費訊息")
+            }
+            
+            // 達到限制時觸發升級提示
+            if isLimitReached {
+                showUpgradePrompt = true
+                addSystemMessage("🚫 今日免費訊息已用完，升級享受無限聊天！")
+            }
+        }
     }
 }
 

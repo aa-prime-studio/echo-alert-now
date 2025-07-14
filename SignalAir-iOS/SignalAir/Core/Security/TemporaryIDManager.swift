@@ -23,7 +23,7 @@ class TemporaryIDManager: ObservableObject {
     
     // Timer 管理
     private var autoUpdateTimer: Timer?
-    private let updateInterval: TimeInterval = 86400 // 24小時
+    // 移除固定間隔，改用每日 00:00 計算
     
     // UserDefaults 鍵值
     private let deviceIDKey = "SignalAir_DeviceID"
@@ -50,10 +50,10 @@ class TemporaryIDManager: ObservableObject {
     func forceUpdate() {
         deviceID = generateDeviceID()
         createdAt = Date()
-        nextUpdateTime = createdAt.addingTimeInterval(updateInterval)
+        nextUpdateTime = calculateNextMidnight()
         saveToUserDefaults()
         
-        print("📱 TemporaryIDManager: 強制更新裝置ID = \(deviceID)")
+        print("📱 TemporaryIDManager: 強制更新裝置ID = \(deviceID)，下次更新時間: \(nextUpdateTime)")
     }
     
     /// 取得裝置ID統計資訊
@@ -118,43 +118,60 @@ class TemporaryIDManager: ObservableObject {
         UserDefaults.standard.synchronize()
     }
     
-    /// 啟動自動更新 Timer
+    /// 啟動自動更新 Timer（每日 00:00）
     private func startAutoUpdate() {
         stopAutoUpdate() // 先停止現有的 timer
         
-        // 計算到下次更新的時間間隔
-        let timeToNextUpdate = nextUpdateTime.timeIntervalSince(Date())
+        // 重新計算到下次午夜的時間
+        let nextMidnight = calculateNextMidnight()
+        let timeToMidnight = nextMidnight.timeIntervalSince(Date())
         
-        if timeToNextUpdate <= 0 {
-            // 已經過期，立即更新
+        if timeToMidnight <= 0 {
+            // 已經過期（理論上不應該發生），立即更新
             forceUpdate()
             scheduleNextUpdate()
         } else {
-            // 安排在正確時間更新
-            autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeToNextUpdate, repeats: false) { [weak self] _ in
+            // 安排在午夜更新
+            autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeToMidnight, repeats: false) { [weak self] _ in
                 DispatchQueue.global(qos: .background).async {
                     self?.performScheduledUpdate()
+                    // 更新後安排下一次午夜更新
+                    DispatchQueue.main.async {
+                        self?.scheduleNextUpdate()
+                    }
                 }
             }
             
-            print("📱 TemporaryIDManager: 安排 \(Int(timeToNextUpdate/3600)) 小時後更新")
+            let hours = Int(timeToMidnight / 3600)
+            let minutes = Int((timeToMidnight.truncatingRemainder(dividingBy: 3600)) / 60)
+            print("📱 TemporaryIDManager: 啟動自動更新，\(hours)小時\(minutes)分鐘後在 00:00 更新")
         }
     }
     
-    /// 安排下次更新
+    /// 安排下次更新（每日 00:00）
     private func scheduleNextUpdate() {
-        autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: updateInterval, repeats: true) { [weak self] _ in
+        let timeToMidnight = calculateNextMidnight().timeIntervalSince(Date())
+        
+        autoUpdateTimer = Timer.scheduledTimer(withTimeInterval: timeToMidnight, repeats: false) { [weak self] _ in
             DispatchQueue.global(qos: .background).async {
                 self?.performScheduledUpdate()
+                // 更新後安排下一次午夜更新
+                DispatchQueue.main.async {
+                    self?.scheduleNextUpdate()
+                }
             }
         }
+        
+        let hours = Int(timeToMidnight / 3600)
+        let minutes = Int((timeToMidnight.truncatingRemainder(dividingBy: 3600)) / 60)
+        print("📱 TemporaryIDManager: 安排 \(hours)小時\(minutes)分鐘後在 00:00 更新")
     }
     
-    /// 執行排程更新
+    /// 執行排程更新（每日 00:00 觸發）
     private func performScheduledUpdate() {
         DispatchQueue.main.async {
             self.forceUpdate()
-            print("📱 TemporaryIDManager: 執行排程更新，新ID = \(self.deviceID)")
+            print("🕛 TemporaryIDManager: 執行午夜排程更新，新ID = \(self.deviceID)")
         }
     }
     
@@ -198,6 +215,26 @@ class TemporaryIDManager: ObservableObject {
     
     @objc private func applicationDidEnterBackground() {
         stopAutoUpdate() // 停止 timer 節省資源
+    }
+    
+    // MARK: - 時間計算方法
+    
+    /// 計算下一個午夜 00:00 的時間
+    private func calculateNextMidnight() -> Date {
+        let calendar = Calendar.current
+        let now = Date()
+        
+        // 取得明天的日期
+        guard let tomorrow = calendar.date(byAdding: .day, value: 1, to: now) else {
+            // 如果計算失敗，回退到 24 小時後
+            return now.addingTimeInterval(86400)
+        }
+        
+        // 取得明天的 00:00:00
+        let nextMidnight = calendar.startOfDay(for: tomorrow)
+        
+        print("📅 TemporaryIDManager: 計算下次午夜時間 - 現在: \(now), 下次午夜: \(nextMidnight)")
+        return nextMidnight
     }
 }
 
