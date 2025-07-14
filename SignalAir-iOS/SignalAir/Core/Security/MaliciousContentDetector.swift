@@ -9,44 +9,22 @@ import Foundation
 
 /// 惡意內容類型定義
 enum MaliciousContentType: String, CaseIterable {
-    case spam = "spam"
-    case harassment = "harassment"
-    case hateSpeech = "hate_speech"
-    case threats = "threats"
     case phishing = "phishing"
-    case adultContent = "adult_content"
-    case misinformation = "misinformation"
     case botGenerated = "bot_generated"
     
     var severity: MaliciousContentSeverity {
         switch self {
-        case .spam:
-            return .low
-        case .harassment, .misinformation:
-            return .medium
-        case .hateSpeech, .phishing, .adultContent:
+        case .phishing:
             return .high
-        case .threats, .botGenerated:
+        case .botGenerated:
             return .critical
         }
     }
     
     var description: String {
         switch self {
-        case .spam:
-            return "垃圾訊息"
-        case .harassment:
-            return "騷擾內容"
-        case .hateSpeech:
-            return "仇恨言論"
-        case .threats:
-            return "威脅恐嚇"
         case .phishing:
             return "網路釣魚"
-        case .adultContent:
-            return "成人內容"
-        case .misinformation:
-            return "錯誤訊息"
         case .botGenerated:
             return "機器人內容"
         }
@@ -65,7 +43,7 @@ enum MaliciousContentSeverity: Int, CaseIterable {
         case .low: return 5.0
         case .medium: return 10.0
         case .high: return 15.0
-        case .critical: return 25.0
+        case .critical: return 30.0
         }
     }
 }
@@ -85,37 +63,16 @@ struct ContentAnalysisResult {
 /// 惡意內容檢測器
 class MaliciousContentDetector {
     
-    // MARK: - 擴展的禁用詞彙庫
-    
-    private let spamKeywords = [
-        "spam", "垃圾", "廣告", "促銷", "優惠", "免費", "賺錢",
-        "投資", "理財", "貸款", "信用卡", "中獎", "抽獎"
-    ]
-    
-    private let harassmentKeywords = [
-        "死", "殺", "笨蛋", "白痴", "智障", "廢物", "垃圾人",
-        "get out", "stupid", "idiot", "loser", "freak"
-    ]
-    
-    private let hateSpeechKeywords = [
-        "種族", "歧視", "仇恨", "排斥", "劣等", "優等",
-        "racist", "discrimination", "hate", "inferior", "superior"
-    ]
-    
-    private let threatKeywords = [
-        "威脅", "恐嚇", "報復", "傷害", "殺害", "毀掉",
-        "threat", "kill", "destroy", "harm", "revenge", "attack"
-    ]
+    // MARK: - 惡意內容關鍵詞庫
     
     private let phishingKeywords = [
-        "點擊連結", "輸入密碼", "緊急驗證", "帳號異常", "立即處理",
-        "click here", "verify account", "urgent", "suspended", "login"
-    ]
-    
-    private let adultKeywords = [
-        // 基本成人內容關鍵字（可依需要擴展）
-        "色情", "性愛", "裸體", "成人", "18+",
-        "porn", "sex", "nude", "adult", "xxx"
+        // 中文釣魚詞彙
+        "點擊連結", "輸入密碼", "緊急驗證", "帳號異常", "立即處理", "帳戶凍結",
+        "安全驗證", "身份確認", "更新資料", "重設密碼", "驗證碼", "登入確認",
+        
+        // 英文釣魚詞彙
+        "click here", "verify account", "urgent", "suspended", "login",
+        "update payment", "confirm identity", "security alert", "expired"
     ]
     
     // MARK: - 主要檢測方法
@@ -126,46 +83,16 @@ class MaliciousContentDetector {
         var detectedTypes: [MaliciousContentType] = []
         var confidence: Double = 0.0
         
-        // 檢測垃圾訊息
-        if containsKeywords(cleanText, from: spamKeywords) {
-            detectedTypes.append(.spam)
-            confidence = max(confidence, 0.7)
-        }
-        
-        // 檢測騷擾內容
-        if containsKeywords(cleanText, from: harassmentKeywords) {
-            detectedTypes.append(.harassment)
-            confidence = max(confidence, 0.8)
-        }
-        
-        // 檢測仇恨言論
-        if containsKeywords(cleanText, from: hateSpeechKeywords) {
-            detectedTypes.append(.hateSpeech)
-            confidence = max(confidence, 0.9)
-        }
-        
-        // 檢測威脅內容
-        if containsKeywords(cleanText, from: threatKeywords) {
-            detectedTypes.append(.threats)
-            confidence = max(confidence, 0.95)
-        }
-        
-        // 檢測網路釣魚
-        if containsKeywords(cleanText, from: phishingKeywords) {
+        // 檢測網路釣魚（包含URL檢測）
+        if containsKeywords(cleanText, from: phishingKeywords) || containsURL(cleanText) {
             detectedTypes.append(.phishing)
-            confidence = max(confidence, 0.85)
-        }
-        
-        // 檢測成人內容
-        if containsKeywords(cleanText, from: adultKeywords) {
-            detectedTypes.append(.adultContent)
-            confidence = max(confidence, 0.8)
+            confidence = max(confidence, 0.9)
         }
         
         // 檢測機器人生成內容（基於模式）
         if detectBotPattern(cleanText) {
             detectedTypes.append(.botGenerated)
-            confidence = max(confidence, 0.75)
+            confidence = max(confidence, 0.95)
         }
         
         let details = detectedTypes.isEmpty ? "內容清潔" : "檢測到: \(detectedTypes.map { $0.description }.joined(separator: ", "))"
@@ -183,6 +110,17 @@ class MaliciousContentDetector {
     private func containsKeywords(_ text: String, from keywords: [String]) -> Bool {
         return keywords.contains { keyword in
             text.contains(keyword)
+        }
+    }
+    
+    private func containsURL(_ text: String) -> Bool {
+        // 檢測常見URL模式
+        let urlPatterns = [
+            "http://", "https://", "www.", ".com", ".net", ".org", ".tw", ".cn"
+        ]
+        
+        return urlPatterns.contains { pattern in
+            text.contains(pattern)
         }
     }
     
