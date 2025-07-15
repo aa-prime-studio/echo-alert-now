@@ -1,0 +1,112 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/PurchaseOptionsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "月費",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 93
+        }
+      },
+      {
+        "comment": "",
+        "key": "每月收費",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 96
+        }
+      },
+      {
+        "comment": "",
+        "key": "每年收費",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 127
+        }
+      },
+      {
+        "comment": "",
+        "key": "年費",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 116
+        }
+      },
+      {
+        "comment": "",
+        "key": "15% OFF",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 119
+        }
+      },
+      {
+        "comment": "",
+        "key": "處理中...",
+        "location": {
+          "startingColumn": 54,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "立即購買",
+        "location": {
+          "startingColumn": 71,
+          "startingLine": 217
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ 功能",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 訂閱將在當前期間結束時自動續費",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 可隨時在設定中取消訂閱",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 付款將在確認購買時從您的Apple ID帳戶收取",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 253
+        }
+      },
+      {
+        "comment": "",
+        "key": "重試載入",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 300
+        }
+      },
+      {
+        "comment": "",
+        "key": "🔓 測試解鎖 (開發模式)",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 320
+        }
+      }
+    ]
+  },
+  "version": 1
+}

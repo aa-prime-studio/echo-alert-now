@@ -169,11 +169,14 @@ class DeviceFingerprintManager: ObservableObject {
         installationSeed = try generateInstallationSeed()
         
         // 2. 基於種子生成 DeviceUUID
-        deviceUUID = generateDeviceUUID(from: installationSeed!)
+        guard let seed = installationSeed else {
+            throw FingerprintError.randomGenerationFailed
+        }
+        deviceUUID = generateDeviceUUID(from: seed)
         
         // 3. 儲存到 Keychain
         try saveDeviceUUIDToKeychain(deviceUUID)
-        try saveInstallationSeedToKeychain(installationSeed!)
+        try saveInstallationSeedToKeychain(seed)
         
         // 4. 設定初始可信度
         trustworthiness = .normal
@@ -323,7 +326,10 @@ class DeviceFingerprintManager: ObservableObject {
     private func generateSecureRandomData(length: Int) throws -> Data {
         var randomBytes = Data(count: length)
         let result = randomBytes.withUnsafeMutableBytes { bytes in
-            SecRandomCopyBytes(kSecRandomDefault, length, bytes.baseAddress!)
+            guard let baseAddress = bytes.baseAddress else {
+                return errSecParam
+            }
+            return SecRandomCopyBytes(kSecRandomDefault, length, baseAddress)
         }
         
         guard result == errSecSuccess else {

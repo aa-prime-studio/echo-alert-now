@@ -57,10 +57,14 @@ class ChatViewModel: ObservableObject {
         purchaseService: PurchaseService? = nil
     ) {
         // 使用 ServiceContainer 中的正確初始化服務
-        guard let resolvedMeshManager = meshManager ?? ServiceContainer.shared.meshManager else {
-            fatalError("❌ ChatViewModel: 無法獲取 meshManager")
+        if let resolvedMeshManager = meshManager ?? ServiceContainer.shared.meshManager {
+            self.meshManager = resolvedMeshManager
+        } else {
+            print("❌ ChatViewModel: 無法獲取 meshManager，使用預設值")
+            // 創建一個預設的 MeshManager
+            self.meshManager = MeshManager()
         }
-        self.meshManager = resolvedMeshManager
+        
         self.securityService = securityService ?? ServiceContainer.shared.securityService
         self.selfDestructManager = selfDestructManager ?? ServiceContainer.shared.selfDestructManager
         self.settingsViewModel = settingsViewModel ?? ServiceContainer.shared.settingsViewModel

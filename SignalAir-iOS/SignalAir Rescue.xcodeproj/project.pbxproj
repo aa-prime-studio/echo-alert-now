@@ -44,6 +44,15 @@
 		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
 		TIMER001234567890ABCDEF /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMER001234567890ABCDE0 /* TimerManager.swift */; };
 		E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E552B154598A42CEAAA0C551 /* EmoteGridView.swift */; };
+		5A8432A64E8F41219640ECC0 /* DeviceFingerprintManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8432A64E8F41219640ECC1 /* DeviceFingerprintManager.swift */; };
+		FF77BCA316EA4A52BE91A566 /* MaliciousContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF77BCA316EA4A52BE91A567 /* MaliciousContentDetector.swift */; };
+		6C2D6F709D2248F2AB1005EA /* TrustScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C2D6F709D2248F2AB1005EB /* TrustScoreManager.swift */; };
+		2D1E7C4A274F4AB79218FB88 /* SecurityEventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1E7C4A274F4AB79218FB89 /* SecurityEventTypes.swift */; };
+		508C09E1C1644D6089164F4B /* AutonomousSystemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508C09E1C1644D6089164F4C /* AutonomousSystemManager.swift */; };
+		294C88247EDC4111826AFA13 /* AutomaticSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294C88247EDC4111826AFA14 /* AutomaticSecurityMonitor.swift */; };
+		BE7C8B3FA8B844809E73D706 /* AutomaticBanSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7C8B3FA8B844809E73D707 /* AutomaticBanSystem.swift */; };
+		ED63C6F4E00C48EC88A2052B /* AutomaticSystemMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED63C6F4E00C48EC88A2052C /* AutomaticSystemMaintenance.swift */; };
+		BA7A9BE7F4814F1CA2516007 /* SystemHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7A9BE7F4814F1CA2516008 /* SystemHealthMonitor.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -115,6 +124,15 @@
 		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
 		TIMER001234567890ABCDE0 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		E552B154598A42CEAAA0C551 /* EmoteGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmoteGridView.swift; sourceTree = "<group>"; };
+		5A8432A64E8F41219640ECC1 /* DeviceFingerprintManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/DeviceFingerprintManager.swift"; sourceTree = "<group>"; };
+		FF77BCA316EA4A52BE91A567 /* MaliciousContentDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/MaliciousContentDetector.swift"; sourceTree = "<group>"; };
+		6C2D6F709D2248F2AB1005EB /* TrustScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/TrustScoreManager.swift"; sourceTree = "<group>"; };
+		2D1E7C4A274F4AB79218FB89 /* SecurityEventTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/SecurityEventTypes.swift"; sourceTree = "<group>"; };
+		508C09E1C1644D6089164F4C /* AutonomousSystemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/AutonomousSystemManager.swift"; sourceTree = "<group>"; };
+		294C88247EDC4111826AFA14 /* AutomaticSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/AutomaticSecurityMonitor.swift"; sourceTree = "<group>"; };
+		BE7C8B3FA8B844809E73D707 /* AutomaticBanSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/AutomaticBanSystem.swift"; sourceTree = "<group>"; };
+		ED63C6F4E00C48EC88A2052C /* AutomaticSystemMaintenance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/AutomaticSystemMaintenance.swift"; sourceTree = "<group>"; };
+		BA7A9BE7F4814F1CA2516008 /* SystemHealthMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/SystemHealthMonitor.swift"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -480,6 +498,15 @@
 				TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */,
 				TIMER001234567890ABCDEF /* TimerManager.swift in Sources */,
 				E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */,
+				5A8432A64E8F41219640ECC0 /* DeviceFingerprintManager.swift in Sources */,
+				FF77BCA316EA4A52BE91A566 /* MaliciousContentDetector.swift in Sources */,
+				6C2D6F709D2248F2AB1005EA /* TrustScoreManager.swift in Sources */,
+				2D1E7C4A274F4AB79218FB88 /* SecurityEventTypes.swift in Sources */,
+				508C09E1C1644D6089164F4B /* AutonomousSystemManager.swift in Sources */,
+				294C88247EDC4111826AFA13 /* AutomaticSecurityMonitor.swift in Sources */,
+				BE7C8B3FA8B844809E73D706 /* AutomaticBanSystem.swift in Sources */,
+				ED63C6F4E00C48EC88A2052B /* AutomaticSystemMaintenance.swift in Sources */,
+				BA7A9BE7F4814F1CA2516007 /* SystemHealthMonitor.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

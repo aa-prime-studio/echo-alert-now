@@ -34,19 +34,25 @@ class BingoManagerFactory {
         languageService: LanguageService
     ) -> (TimerManager, BingoNetworkManager, BingoGameStateManager) {
         
-        let timerManager = createManager(type: .timer) as! TimerManager
+        guard let timerManager = createManager(type: .timer) as? TimerManager else {
+            fatalError("Failed to create TimerManager")
+        }
         
-        let networkManager = createManager(type: .network(
+        guard let networkManager = createManager(type: .network(
             meshManager: meshManager,
             timerManager: timerManager,
             settings: settingsViewModel,
             language: languageService
-        )) as! BingoNetworkManager
+        )) as? BingoNetworkManager else {
+            fatalError("Failed to create BingoNetworkManager")
+        }
         
-        let gameStateManager = createManager(type: .gameState(
+        guard let gameStateManager = createManager(type: .gameState(
             timerManager: timerManager,
             networkManager: networkManager
-        )) as! BingoGameStateManager
+        )) as? BingoGameStateManager else {
+            fatalError("Failed to create BingoGameStateManager")
+        }
         
         return (timerManager, networkManager, gameStateManager)
     }

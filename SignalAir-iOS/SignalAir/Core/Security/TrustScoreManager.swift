@@ -18,6 +18,14 @@ class TrustScoreManager: ObservableObject {
     private let observationKey = "observation_list"
     private let bloomFilterKey = "bloom_filter"
     
+    // MARK: - Async Processing Configuration
+    @AppStorage("useAsyncTrustProcessing") private var useAsyncProcessing: Bool = false
+    private let asyncQueue = DispatchQueue(label: "com.signalair.trustscore.async", qos: .utility)
+    private let batchQueue = DispatchQueue(label: "com.signalair.trustscore.batch", qos: .background)
+    private var pendingUpdates: [String: PendingTrustUpdate] = [:]
+    private let batchProcessingInterval: TimeInterval = 0.5
+    private var batchTimer: Timer?
+    
     // MARK: - Trust Score Parameters
     private let initialTrustScore: Double = 50.0
     private let maxTrustScore: Double = 100.0
@@ -35,11 +43,13 @@ class TrustScoreManager: ObservableObject {
         loadStoredData()
         setupBloomFilter()
         startCleanupTimer()
-        print("📊 TrustScoreManager: 初始化完成")
+        startBatchProcessingTimer()
+        print("📊 TrustScoreManager: 初始化完成 (異步處理: \(useAsyncProcessing ? "啟用" : "停用"))")
     }
     
     deinit {
         cleanupTimer?.invalidate()
+        batchTimer?.invalidate()
     }
     
     // MARK: - Public Methods
@@ -60,19 +70,29 @@ class TrustScoreManager: ObservableObject {
     }
     
     /// 記錄正常通訊行為
-    func recordSuccessfulCommunication(for deviceUUID: String, messageType: MessageType = .general) {
+    func recordSuccessfulCommunication(for deviceUUID: String, messageType: TrustMessageType = .general) {
         let increment = calculateScoreIncrement(for: messageType)
-        updateTrustScore(for: deviceUUID, change: increment, reason: .successfulCommunication)
         
-        print("✅ TrustScoreManager: 記錄成功通訊 - \(deviceUUID) (+\(increment))")
+        if useAsyncProcessing {
+            updateTrustScoreAsync(for: deviceUUID, change: increment, reason: .successfulCommunication)
+        } else {
+            updateTrustScore(for: deviceUUID, change: increment, reason: .successfulCommunication)
+        }
+        
+        print("✅ TrustScoreManager: 記錄成功通訊 - \(deviceUUID) (+\(increment)) [\(useAsyncProcessing ? "異步" : "同步")]")
     }
     
     /// 記錄異常行為
     func recordSuspiciousBehavior(for deviceUUID: String, behavior: SuspiciousBehavior) {
         let decrement = calculateScoreDecrement(for: behavior)
-        updateTrustScore(for: deviceUUID, change: -decrement, reason: .suspiciousBehavior(behavior))
         
-        print("⚠️ TrustScoreManager: 記錄可疑行為 - \(deviceUUID) (-\(decrement)): \(behavior)")
+        if useAsyncProcessing {
+            updateTrustScoreAsync(for: deviceUUID, change: -decrement, reason: .suspiciousBehavior(behavior))
+        } else {
+            updateTrustScore(for: deviceUUID, change: -decrement, reason: .suspiciousBehavior(behavior))
+        }
+        
+        print("⚠️ TrustScoreManager: 記錄可疑行為 - \(deviceUUID) (-\(decrement)): \(behavior) [\(useAsyncProcessing ? "異步" : "同步")]")
     }
     
     /// 記錄過度廣播行為
@@ -80,17 +100,26 @@ class TrustScoreManager: ObservableObject {
         let severity = calculateBroadcastSeverity(messageCount: messageCount, timeWindow: timeWindow)
         let decrement = severity * 5.0 // 基礎懲罰分數
         
-        updateTrustScore(for: deviceUUID, change: -decrement, reason: .excessiveBroadcast)
+        if useAsyncProcessing {
+            updateTrustScoreAsync(for: deviceUUID, change: -decrement, reason: .excessiveBroadcast)
+        } else {
+            updateTrustScore(for: deviceUUID, change: -decrement, reason: .excessiveBroadcast)
+        }
         
-        print("📢 TrustScoreManager: 記錄過度廣播 - \(deviceUUID) (-\(decrement))")
+        print("📢 TrustScoreManager: 記錄過度廣播 - \(deviceUUID) (-\(decrement)) [\(useAsyncProcessing ? "異步" : "同步")]")
     }
     
     /// 記錄錯誤封包行為
     func recordMalformedPacket(for deviceUUID: String, errorType: PacketError) {
         let decrement = calculatePacketErrorDecrement(for: errorType)
-        updateTrustScore(for: deviceUUID, change: -decrement, reason: .malformedPacket(errorType))
         
-        print("🚫 TrustScoreManager: 記錄錯誤封包 - \(deviceUUID) (-\(decrement)): \(errorType)")
+        if useAsyncProcessing {
+            updateTrustScoreAsync(for: deviceUUID, change: -decrement, reason: .malformedPacket(errorType))
+        } else {
+            updateTrustScore(for: deviceUUID, change: -decrement, reason: .malformedPacket(errorType))
+        }
+        
+        print("🚫 TrustScoreManager: 記錄錯誤封包 - \(deviceUUID) (-\(decrement)): \(errorType) [\(useAsyncProcessing ? "異步" : "同步")]")
     }
     
     /// 檢查節點是否在本地黑名單中
@@ -154,6 +183,20 @@ class TrustScoreManager: ObservableObject {
         return bloomFilter?.getData()
     }
     
+    /// 切換異步處理模式
+    func toggleAsyncProcessing(_ enabled: Bool) {
+        useAsyncProcessing = enabled
+        print("🔄 TrustScoreManager: 異步處理 \(enabled ? "啟用" : "停用")")
+        
+        if enabled {
+            startBatchProcessingTimer()
+        } else {
+            batchTimer?.invalidate()
+            // 立即處理所有待處理的更新
+            processPendingUpdates()
+        }
+    }
+    
     /// 合併其他節點的 Bloom Filter
     func mergeBloomFilter(_ filterData: Data) {
         guard let otherFilter = BloomFilter(data: filterData) else {
@@ -195,7 +238,32 @@ class TrustScoreManager: ObservableObject {
     
     // MARK: - Private Methods
     
-    /// 更新信任評分
+    /// 異步更新信任評分
+    private func updateTrustScoreAsync(for deviceUUID: String, change: Double, reason: ScoreChangeReason) {
+        // 高優先級更新（黑名單相關）立即處理
+        if case .suspiciousBehavior(let behavior) = reason,
+           [.invalidSignature, .maliciousContent].contains(behavior) {
+            asyncQueue.async { [weak self] in
+                self?.updateTrustScore(for: deviceUUID, change: change, reason: reason)
+            }
+            return
+        }
+        
+        // 其他更新加入批次處理佇列
+        let update = PendingTrustUpdate(
+            deviceUUID: deviceUUID,
+            change: change,
+            reason: reason,
+            timestamp: Date(),
+            priority: determinePriority(for: reason)
+        )
+        
+        batchQueue.async { [weak self] in
+            self?.addToPendingUpdates(update)
+        }
+    }
+    
+    /// 同步更新信任評分（原有方法）
     private func updateTrustScore(for deviceUUID: String, change: Double, reason: ScoreChangeReason) {
         var trustScore = trustScores[deviceUUID] ?? TrustScore(
             deviceUUID: deviceUUID,
@@ -253,7 +321,7 @@ class TrustScoreManager: ObservableObject {
     }
     
     /// 計算分數增量
-    private func calculateScoreIncrement(for messageType: MessageType) -> Double {
+    private func calculateScoreIncrement(for messageType: TrustMessageType) -> Double {
         switch messageType {
         case .emergency:
             return 2.0
@@ -376,6 +444,105 @@ class TrustScoreManager: ObservableObject {
         
         UserDefaults.standard.synchronize()
     }
+    
+    /// 添加到待處理更新佇列
+    private func addToPendingUpdates(_ update: PendingTrustUpdate) {
+        let key = update.deviceUUID
+        
+        if let existing = pendingUpdates[key] {
+            // 合併相同裝置的更新
+            let mergedUpdate = PendingTrustUpdate(
+                deviceUUID: key,
+                change: existing.change + update.change,
+                reason: update.priority.rawValue > existing.priority.rawValue ? update.reason : existing.reason,
+                timestamp: max(existing.timestamp, update.timestamp),
+                priority: update.priority.rawValue > existing.priority.rawValue ? update.priority : existing.priority
+            )
+            pendingUpdates[key] = mergedUpdate
+        } else {
+            pendingUpdates[key] = update
+        }
+    }
+    
+    /// 處理待處理的更新
+    private func processPendingUpdates() {
+        guard !pendingUpdates.isEmpty else { return }
+        
+        let updates = Array(pendingUpdates.values).sorted { $0.priority.rawValue > $1.priority.rawValue }
+        pendingUpdates.removeAll()
+        
+        asyncQueue.async { [weak self] in
+            for update in updates {
+                self?.updateTrustScore(for: update.deviceUUID, change: update.change, reason: update.reason)
+            }
+            
+            DispatchQueue.main.async {
+                NotificationCenter.default.post(name: .trustScoreBatchUpdated, object: nil)
+            }
+        }
+    }
+    
+    /// 啟動批次處理定時器
+    private func startBatchProcessingTimer() {
+        guard useAsyncProcessing else { return }
+        
+        batchTimer?.invalidate()
+        batchTimer = Timer.scheduledTimer(withTimeInterval: batchProcessingInterval, repeats: true) { [weak self] _ in
+            self?.processPendingUpdates()
+        }
+    }
+    
+    /// 決定更新優先級
+    private func determinePriority(for reason: ScoreChangeReason) -> UpdatePriority {
+        switch reason {
+        case .suspiciousBehavior(let behavior):
+            switch behavior {
+            case .invalidSignature, .maliciousContent:
+                return .critical
+            case .protocolViolation, .timestampManipulation:
+                return .high
+            default:
+                return .medium
+            }
+        case .manualBlacklist, .manualWhitelist:
+            return .critical
+        case .excessiveBroadcast:
+            return .high
+        case .malformedPacket:
+            return .medium
+        case .successfulCommunication:
+            return .low
+        }
+    }
+}
+
+// MARK: - Async Processing Support Types
+
+/// 待處理的信任評分更新
+struct PendingTrustUpdate {
+    let deviceUUID: String
+    let change: Double
+    let reason: ScoreChangeReason
+    let timestamp: Date
+    let priority: UpdatePriority
+}
+
+/// 更新優先級
+enum UpdatePriority: Int, Comparable {
+    case low = 1
+    case medium = 2
+    case high = 3
+    case critical = 4
+    
+    static func < (lhs: UpdatePriority, rhs: UpdatePriority) -> Bool {
+        return lhs.rawValue < rhs.rawValue
+    }
+}
+
+// MARK: - Notification Extensions
+extension Notification.Name {
+    static let trustScoreUpdated = Notification.Name("trustScoreUpdated")
+    static let trustScoreBatchUpdated = Notification.Name("trustScoreBatchUpdated")
 }
 
 // MARK: - Supporting Types
@@ -442,8 +609,8 @@ enum PacketError: String, Codable, CaseIterable {
     case oversizedPacket = "OVERSIZED_PACKET"
 }
 
-/// 訊息類型
-enum MessageType: String, CaseIterable {
+/// 信任分數訊息類型
+enum TrustMessageType: String, CaseIterable {
     case emergency = "EMERGENCY"
     case general = "GENERAL"
     case heartbeat = "HEARTBEAT"

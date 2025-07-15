@@ -9,7 +9,7 @@ import Foundation
 
 /// 安全事件結構體
 struct SecurityEvent: Codable, Identifiable {
-    let id = UUID()
+    let id: UUID
     let timestamp: Date
     let peerID: String
     let type: SecurityEventType
@@ -24,6 +24,7 @@ struct SecurityEvent: Codable, Identifiable {
         details: String,
         sourceComponent: String = "Unknown"
     ) {
+        self.id = UUID()
         self.timestamp = Date()
         self.peerID = peerID
         self.type = type
@@ -132,7 +133,7 @@ extension SecurityEvent {
     static func from(scanResult: SecurityScanResult, peerID: String) -> SecurityEvent {
         let severity: SecuritySeverity
         switch scanResult.threatLevel {
-        case .low:
+        case .normal, .low:
             severity = .low
         case .medium:
             severity = .medium
@@ -144,13 +145,17 @@ extension SecurityEvent {
         
         let eventType: SecurityEventType
         switch scanResult.threats.first?.type {
-        case .suspiciousActivity:
+        case .suspiciousBehavior:
             eventType = .suspiciousActivity
         case .networkAnomaly:
             eventType = .networkAnomaly
         case .unauthorizedAccess:
             eventType = .unauthorizedAccess
-        default:
+        case .floodAttack:
+            eventType = .floodProtection
+        case .dataCorruption:
+            eventType = .dataAccess
+        case .none:
             eventType = .securityWarning
         }
         
@@ -158,7 +163,7 @@ extension SecurityEvent {
             peerID: peerID,
             type: eventType,
             severity: severity,
-            details: scanResult.threats.map { $0.description }.joined(separator: "; "),
+            details: scanResult.threats.map { $0.details }.joined(separator: "; "),
             sourceComponent: "SecurityScanner"
         )
     }

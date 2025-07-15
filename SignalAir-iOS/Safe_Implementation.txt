@@ -1,0 +1,53 @@
+✅ 方案4安全實施步驟
+
+階段1: 純異步化 (最安全)
+只將計算移到背景線程，其他不變:
+
+```swift
+// 原本: 同步計算阻塞UI
+func updateTrustScore(deviceId: String) {
+    let score = calculateScore(deviceId) // 耗時操作
+    trustScores[deviceId] = score
+}
+
+// 改為: 異步計算，結果一樣
+func updateTrustScore(deviceId: String) {
+    DispatchQueue.global(qos: .utility).async {
+        let score = self.calculateScore(deviceId)
+        
+        DispatchQueue.main.async {
+            self.trustScores[deviceId] = score
+        }
+    }
+}
+```
+
+階段2: 加入開關控制 (可隨時關閉)
+```swift
+class TrustManager {
+    @AppStorage("useAsyncProcessing") 
+    private var useAsync: Bool = false
+    
+    func updateTrustScore(deviceId: String) {
+        if useAsync {
+            // 新的異步方式
+            asyncUpdateTrustScore(deviceId)
+        } else {
+            // 原本的同步方式
+            syncUpdateTrustScore(deviceId)
+        }
+    }
+}
+```
+
+階段3: 漸進式優化
+- 先異步化最耗時的信任評分計算
+- 觀察效果和穩定性
+- 逐步加入批次處理
+- 最後加入優先級機制
+
+風險控制:
+- 設定開關可立即回滾
+- 保持原有同步邏輯作為備用
+- 小範圍測試後再全面推出
+- 監控異步執行的錯誤率

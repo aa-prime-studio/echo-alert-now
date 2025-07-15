@@ -55,9 +55,10 @@ class DIContainer {
     }
     
     /// 強制解析服務（會拋出錯誤）
-    func forceResolve<T>(_ type: T.Type) -> T {
+    func forceResolve<T>(_ type: T.Type) -> T? {
         guard let service = resolve(type) else {
-            fatalError("🔴 DIContainer: 無法解析服務 \(type)")
+            print("🔴 DIContainer: 無法解析服務 \(type)")
+            return nil
         }
         return service
     }

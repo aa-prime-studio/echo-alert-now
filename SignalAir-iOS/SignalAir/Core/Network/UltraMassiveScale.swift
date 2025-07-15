@@ -188,7 +188,19 @@ class UltraCompactBinaryProtocol {
         var compressed: UInt64 = 0
         for (i, char) in gridCode.enumerated() {
             if i >= 10 { break } // 最多10個字符
-            let value = char.isLetter ? (char.uppercased().first!.asciiValue! - 65 + 10) : (char.asciiValue! - 48)
+            let value: UInt8
+            if char.isLetter {
+                guard let upperChar = char.uppercased().first,
+                      let asciiValue = upperChar.asciiValue else {
+                    continue // 跳過無效字符
+                }
+                value = asciiValue - 65 + 10
+            } else {
+                guard let asciiValue = char.asciiValue else {
+                    continue // 跳過無效字符
+                }
+                value = asciiValue - 48
+            }
             compressed = (compressed << 6) | UInt64(value & 0x3F)
         }
         return withUnsafeBytes(of: compressed.littleEndian) { Data($0) }

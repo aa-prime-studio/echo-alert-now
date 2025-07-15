@@ -100,7 +100,7 @@ class AdminPermissionValidator {
             isActive: hasValidAdminSession(),
             sessionId: currentAdminSession?.prefix(8).description,
             remainingTime: getSessionRemainingTime(),
-            isLocked: lockoutUntil != nil && Date() < lockoutUntil!,
+            isLocked: lockoutUntil.map { Date() < $0 } ?? false,
             failedAttempts: failedAttempts
         )
     }

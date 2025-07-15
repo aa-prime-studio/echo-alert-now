@@ -1158,7 +1158,11 @@ class SignalViewModel: ObservableObject {
             return (0, nil)
         }
         
-        let xDiff = Int(peerLetter.asciiValue!) - Int(myLetter.asciiValue!)
+        guard let peerLetterValue = peerLetter.asciiValue,
+              let myLetterValue = myLetter.asciiValue else {
+            return (0, nil)
+        }
+        let xDiff = Int(peerLetterValue) - Int(myLetterValue)
         let yDiff = peerNumber - myNumber
         
         let gridDistance = sqrt(Double(xDiff * xDiff + yDiff * yDiff))

@@ -100,9 +100,9 @@ class TemporaryIDManager: ObservableObject {
     
     /// 生成裝置ID（格式：小吃名-Base32字符）
     private func generateDeviceID() -> String {
-        let snack = taiwanSnacks.randomElement()!
+        let snack = taiwanSnacks.randomElement() ?? "點心"
         let base32Chars = "ABCDEFGHJKMNPQRSTVWXYZ23456789"
-        let suffix = String((0..<4).map { _ in base32Chars.randomElement()! })
+        let suffix = String((0..<4).compactMap { _ in base32Chars.randomElement() })
         return "\(snack)-\(suffix)"
     }
     

@@ -217,9 +217,10 @@ extension BingoGameViewModel {
     }
     
     /// 從 MeshManager 獲取 MCSession（需要擴展 MeshManager）
-    private func getSessionFromMeshManager() -> MCSession {
+    private func getSessionFromMeshManager() -> MCSession? {
         // 這需要 MeshManager 提供對 MCSession 的訪問
         // 可能需要修改 MeshManagerProtocol
-        fatalError("需要實現 MCSession 訪問")
+        print("❌ SafeNetworkOperations: MCSession 訪問尚未實現")
+        return nil
     }
 }

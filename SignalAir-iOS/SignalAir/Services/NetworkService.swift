@@ -142,9 +142,16 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
         
         // 初始化空的connectedPeers數組（留到 super.init() 之後）
         
-        // 使用安全的可選值解包
-        guard let safePeerID = _myPeerID else {
-            fatalError("Unable to create MCPeerID")
+        // 使用安全的可選值解包，如果失敗則創建備用 PeerID
+        let safePeerID: MCPeerID
+        if let existingPeerID = _myPeerID {
+            safePeerID = existingPeerID
+        } else {
+            print("❌ NetworkService: 無法創建 MCPeerID，使用備用方案")
+            // 創建一個備用的 PeerID
+            let fallbackID = MCPeerID(displayName: "SignalAir-Fallback-\(UUID().uuidString.prefix(4))")
+            self._myPeerID = fallbackID
+            safePeerID = fallbackID
         }
         
         // 針對離線災難通信優化 MCSession 配置

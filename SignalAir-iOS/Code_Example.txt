@@ -1,0 +1,53 @@
+💻 最安全的實作代碼
+
+第一步: 最小改動的異步化
+
+```swift
+// 在現有的 TrustScoreManager.swift 中添加
+extension TrustScoreManager {
+    
+    // 新增異步版本，保留原有同步方法
+    func updateTrustScoreAsync(for deviceUUID: String, 
+                              messageType: TrustMessageType = .general) {
+        
+        // 在背景線程計算
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            guard let self = self else { return }
+            
+            // 使用原有的計算邏輯
+            let newScore = self.calculateNewScore(for: deviceUUID, 
+                                                type: messageType)
+            
+            // 回到主線程更新
+            DispatchQueue.main.async {
+                self.trustScores[deviceUUID] = newScore
+                self.saveScoresToStorage()
+                
+                // 通知UI更新
+                NotificationCenter.default.post(
+                    name: .trustScoreUpdated,
+                    object: deviceUUID
+                )
+            }
+        }
+    }
+    
+    // 原有方法保持不變，添加開關
+    func recordSuccessfulCommunication(for deviceUUID: String, 
+                                      messageType: TrustMessageType = .general) {
+        
+        if UserDefaults.standard.bool(forKey: "useAsyncTrustUpdate") {
+            updateTrustScoreAsync(for: deviceUUID, messageType: messageType)
+        } else {
+            // 原有的同步處理邏輯保持不變
+            updateTrustScoreSync(for: deviceUUID, messageType: messageType)
+        }
+    }
+}
+```
+
+優點:
+- 原有代碼99%不變
+- 可以隨時開關
+- 出問題立即回滾
+- 漸進式測試

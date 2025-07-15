@@ -1,0 +1,40 @@
+📱 如何查看本地統計數據
+
+1. 開發者專用入口
+在設定頁面加入隱藏入口:
+- 連續點擊版本號10次
+- 或者長按SignalAir Logo 3秒
+- 開啟開發者模式
+
+2. 統計數據位置
+完整的管理介面在:
+LocalAnalyticsDashboard.swift
+
+包含功能:
+✅ 即時查看所有統計數據
+✅ 匯出JSON格式數據  
+✅ 清除統計數據
+✅ 開啟/關閉數據收集
+✅ 可讀格式報告
+
+3. 使用方法
+```swift
+// 在現有設定頁面加入
+NavigationLink("統計數據 (開發者)") {
+    LocalAnalyticsDashboard()
+}
+.hidden(!isDeveloperMode)
+
+// 記錄數據範例
+LocalAnalyticsManager.shared.recordNetworkLatency(0.25)
+LocalAnalyticsManager.shared.recordMessageSent(isEmergency: true)
+LocalAnalyticsManager.shared.recordBingoGame()
+```
+
+4. 數據內容
+- 網路效能: 延遲、成功率、連接數
+- 訊息統計: 發送/接收、緊急訊息
+- 使用習慣: 遊戲次數、功能使用
+- 系統健康: 崩潰、電池、記憶體
+
+完全本地儲存，隨時可查看和匯出

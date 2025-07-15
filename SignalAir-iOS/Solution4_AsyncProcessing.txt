@@ -1,0 +1,102 @@
+🔄 方案4: 異步處理優化
+
+問題: 信任評分計算阻塞主線程
+解決: 異步 + 批次 + 增量處理
+
+1. 異步信任評分
+```swift
+class AsyncTrustManager {
+    private let trustQueue = DispatchQueue(label: "trust.calculation", 
+                                         qos: .utility, 
+                                         attributes: .concurrent)
+    private let updateQueue = DispatchQueue(label: "trust.update")
+    
+    func updateTrustScore(for deviceId: String, activity: Activity) {
+        trustQueue.async {
+            let newScore = self.calculateTrustScore(deviceId, activity)
+            
+            self.updateQueue.async {
+                self.trustScores[deviceId] = newScore
+                self.notifyTrustUpdate(deviceId, newScore)
+            }
+        }
+    }
+}
+```
+
+2. 批次處理機制
+```swift
+class BatchTrustProcessor {
+    private var pendingUpdates: [String: [Activity]] = [:]
+    private let batchSize = 100
+    private let batchInterval: TimeInterval = 5.0
+    
+    func addActivity(_ activity: Activity, for deviceId: String) {
+        pendingUpdates[deviceId, default: []].append(activity)
+        
+        if pendingUpdates.values.flatMap({$0}).count >= batchSize {
+            processBatch()
+        }
+    }
+    
+    private func processBatch() {
+        let batch = pendingUpdates
+        pendingUpdates.removeAll()
+        
+        // 批次處理所有累積的活動
+        for (deviceId, activities) in batch {
+            let aggregatedActivity = aggregateActivities(activities)
+            updateTrustScore(for: deviceId, activity: aggregatedActivity)
+        }
+    }
+}
+```
+
+3. 增量更新策略
+只更新真正需要更新的部分:
+```swift
+struct IncrementalTrustUpdate {
+    let deviceId: String
+    let deltaScore: Double // 只記錄變化量
+    let timestamp: Date
+    
+    func apply(to currentScore: Double) -> Double {
+        let decayFactor = calculateDecayFactor(since: timestamp)
+        return max(0, min(100, currentScore + deltaScore * decayFactor))
+    }
+}
+```
+
+4. 優先級處理
+```swift
+enum TrustUpdatePriority {
+    case emergency  // 惡意行為立即處理
+    case high      // 重要活動5秒內處理  
+    case normal    // 一般活動批次處理
+    case low       // 背景活動延遲處理
+}
+
+class PriorityTrustProcessor {
+    private var emergencyQueue: Queue<TrustUpdate> = Queue()
+    private var highQueue: Queue<TrustUpdate> = Queue()
+    private var normalQueue: Queue<TrustUpdate> = Queue()
+    private var lowQueue: Queue<TrustUpdate> = Queue()
+    
+    func processUpdates() {
+        // 依優先級順序處理
+        while !emergencyQueue.isEmpty {
+            processUpdate(emergencyQueue.dequeue()!)
+        }
+        
+        processHighPriorityBatch()
+        processNormalPriorityBatch()
+        processLowPriorityBatch()
+    }
+}
+```
+
+預期效果:
+- 信任評分計算不阻塞UI
+- 處理速度提升10-50倍
+- 系統響應性大幅改善
+- CPU使用更均勻

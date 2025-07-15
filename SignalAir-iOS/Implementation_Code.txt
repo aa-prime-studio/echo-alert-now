@@ -1,0 +1,45 @@
+💻 實作建議
+
+可以在現有代碼中加入:
+
+1. 本地統計收集器
+```swift
+class PrivacyFriendlyAnalytics {
+    private var localStats = LocalStatistics()
+    private var userConsent = false
+    
+    func recordNetworkMetric(_ metric: NetworkMetric) {
+        localStats.add(metric)
+    }
+    
+    func uploadStatsIfEnabled() {
+        guard userConsent else { return }
+        // 匿名上傳統計數據
+    }
+}
+```
+
+2. 設定頁面選項
+- "協助改進SignalAir" 開關
+- 詳細說明收集的數據類型  
+- 強調匿名和隱私保護
+
+3. 收集的關鍵指標
+- 網路效能: 延遲、成功率、連接數
+- 使用模式: 功能使用頻率
+- 系統健康: 崩潰、錯誤、電池
+- 地理分布: 匿名的區域統計
+
+4. 數據格式範例
+```json
+{
+  "deviceType": "iPhone13",
+  "osVersion": "iOS16",
+  "avgLatency": 250,
+  "successRate": 0.85,
+  "avgConnections": 5,
+  "batteryImpact": "medium"
+}
+```
+
+完全匿名且對優化有價值

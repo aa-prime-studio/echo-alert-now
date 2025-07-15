@@ -32,7 +32,7 @@ enum MaliciousContentType: String, CaseIterable {
 }
 
 /// 惡意內容嚴重性等級
-enum MaliciousContentSeverity: Int, CaseIterable {
+enum MaliciousContentSeverity: Int, CaseIterable, Comparable {
     case low = 1
     case medium = 2
     case high = 3
@@ -45,6 +45,10 @@ enum MaliciousContentSeverity: Int, CaseIterable {
         case .high: return 15.0
         case .critical: return 30.0
         }
+    }
+    
+    static func < (lhs: MaliciousContentSeverity, rhs: MaliciousContentSeverity) -> Bool {
+        return lhs.rawValue < rhs.rawValue
     }
 }
 
@@ -194,7 +198,7 @@ extension MaliciousContentDetector {
             trustManager.recordSuspiciousBehavior(for: deviceUUID, behavior: .maliciousContent)
             
             // 記錄安全事件
-            let event = SecurityEvent(
+            let _ = SecurityEvent(
                 peerID: deviceUUID,
                 type: .suspiciousActivity,
                 severity: mapToSecuritySeverity(result.maxSeverity),

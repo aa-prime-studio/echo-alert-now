@@ -41,7 +41,8 @@ class GridLocationSystem {
               let number = Int(gridCode.dropFirst()),
               letter.isLetter else { return nil }
         
-        let x = Int(letter.asciiValue! - 65)
+        guard let asciiValue = letter.asciiValue else { return nil }
+        let x = Int(asciiValue - 65)
         let y = number - 1
         
         // 返回網格中心點（已經是模糊化的位置）
@@ -58,7 +59,11 @@ class GridLocationSystem {
             return (0, nil)
         }
         
-        let xDiff = Int(peerLetter.asciiValue!) - Int(myLetter.asciiValue!)
+        guard let peerLetterValue = peerLetter.asciiValue,
+              let myLetterValue = myLetter.asciiValue else {
+            return (0, nil)
+        }
+        let xDiff = Int(peerLetterValue) - Int(myLetterValue)
         let yDiff = peerNumber - myNumber
         
         // 估算距離（每個網格約 500 米）

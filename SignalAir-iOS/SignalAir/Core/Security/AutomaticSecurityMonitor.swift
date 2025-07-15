@@ -227,16 +227,15 @@ class AutomaticSecurityMonitor {
         let threatCount = threats.count
         
         // 根據威脅數量和嚴重程度計算整體威脅等級
-        switch (maxSeverity, threatCount) {
-        case (4, _), (_, let count) where count >= 10:
+        if maxSeverity == 4 || threatCount >= 10 {
             return .critical
-        case (3, _), (_, let count) where count >= 5:
+        } else if maxSeverity == 3 || threatCount >= 5 {
             return .high
-        case (2, _), (_, let count) where count >= 2:
+        } else if maxSeverity == 2 || threatCount >= 2 {
             return .medium
-        case (1, _), (_, 1):
+        } else if maxSeverity == 1 || threatCount == 1 {
             return .low
-        default:
+        } else {
             return .normal
         }
     }
@@ -318,7 +317,7 @@ class AutomaticSecurityMonitor {
         print("\(logPrefix) AutomaticSecurityMonitor: [\(event.type.rawValue)] \(event.peerID) - \(event.details)")
     }
     
-    private func getLogPrefix(for severity: SecurityEvent.SecuritySeverity) -> String {
+    private func getLogPrefix(for severity: SecuritySeverity) -> String {
         switch severity {
         case .low: return "ℹ️"
         case .medium: return "⚠️"
@@ -456,7 +455,7 @@ enum AnomalyType {
 struct NetworkTrafficData {
     let sourceIP: String
     let destinationIP: String
-    let protocol: String
+    let networkProtocol: String
     let dataSize: Int
     let timestamp: Date
 }

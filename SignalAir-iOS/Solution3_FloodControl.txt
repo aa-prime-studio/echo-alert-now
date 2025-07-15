@@ -1,0 +1,82 @@
+🌊 方案3: 智能廣播控制
+
+問題: 密集網路訊息廣播風暴
+解決: 智能泛洪 + 區域廣播
+
+1. 概率性轉發
+```swift
+func shouldForwardMessage(_ message: Message, from sender: String) -> Bool {
+    let density = currentNetworkDensity // 8-15連接 = 高密度
+    let hopCount = message.hopCount
+    let priority = message.priority
+    
+    // 密集網路降低轉發概率
+    var forwardProbability: Double = 1.0
+    
+    if density > 10 { // 高密度
+        forwardProbability = 0.3 // 只有30%設備轉發
+    } else if density > 6 { // 中密度  
+        forwardProbability = 0.6
+    }
+    
+    // 緊急訊息提高概率
+    if priority == .emergency {
+        forwardProbability = min(1.0, forwardProbability * 2)
+    }
+    
+    // 跳數越多概率越低
+    forwardProbability *= pow(0.8, Double(hopCount))
+    
+    return Double.random(in: 0...1) < forwardProbability
+}
+```
+
+2. 區域廣播機制
+- 將1公里×1公里劃分為100個100米×100米小區域
+- 每區域選擇1-2個代表節點
+- 訊息先在區域內廣播，再由代表節點跨區域轉發
+
+3. 背壓控制
+```swift
+class BackpressureController {
+    private var messageQueue: PriorityQueue<Message> = PriorityQueue()
+    private var processingRate: Double = 1000 // 訊息/秒
+    
+    func addMessage(_ message: Message) {
+        if messageQueue.count > 1000 { // 隊列過滿
+            // 丟棄低優先級訊息
+            messageQueue.dropLowPriority()
+        }
+        messageQueue.enqueue(message)
+    }
+}
+```
+
+4. 重複檢測增強
+```swift
+class DuplicateDetector {
+    private var seenMessages: Set<String> = Set()
+    private var bloomFilter: BloomFilter = BloomFilter(capacity: 10000)
+    
+    func isDuplicate(_ messageId: String) -> Bool {
+        // 第一層: Bloom Filter快速檢查
+        if !bloomFilter.contains(messageId) {
+            bloomFilter.insert(messageId)
+            return false
+        }
+        
+        // 第二層: 精確檢查
+        if seenMessages.contains(messageId) {
+            return true
+        }
+        
+        seenMessages.insert(messageId)
+        return false
+    }
+}
+```
+
+預期效果:
+- 廣播流量減少70%
+- 訊息處理速度提升5倍
+- 避免網路堵塞

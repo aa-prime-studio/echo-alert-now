@@ -28,7 +28,11 @@ class SecureString {
         
         // 複製資料（優先完成）
         _ = utf8Data.withContiguousStorageIfAvailable { bytes in
-            data!.copyMemory(from: bytes.baseAddress!, byteCount: length)
+            guard let data = data, let baseAddress = bytes.baseAddress else {
+                print("❌ SecureString: 無法取得記憶體位址")
+                return
+            }
+            data.copyMemory(from: baseAddress, byteCount: length)
         }
         
         // 異步嘗試鎖定記憶體頁面，避免阻塞初始化
@@ -57,7 +61,11 @@ class SecureString {
         )
         
         // 初始化為零（優先完成）
-        data!.initializeMemory(as: UInt8.self, repeating: 0, count: capacity)
+        guard let data = data else {
+            print("❌ SecureString: 無法分配記憶體")
+            return
+        }
+        data.initializeMemory(as: UInt8.self, repeating: 0, count: capacity)
         
         // 異步鎖定記憶體
         DispatchQueue.global(qos: .utility).async { [weak self] in
@@ -96,7 +104,11 @@ class SecureString {
         let result = SecRandomCopyBytes(kSecRandomDefault, length, &randomBytes)
         if result == errSecSuccess {
             randomBytes.withUnsafeBytes { bytes in
-                data.copyMemory(from: bytes.baseAddress!, byteCount: length)
+                guard let baseAddress = bytes.baseAddress else {
+                    print("❌ SecureString: 無法取得隨機資料位址")
+                    return
+                }
+                data.copyMemory(from: baseAddress, byteCount: length)
             }
         }
         
@@ -184,7 +196,10 @@ class SecureMemoryManager {
     static func secureRandomData(length: Int) throws -> Data {
         var randomBytes = Data(count: length)
         let result = randomBytes.withUnsafeMutableBytes { bytes in
-            SecRandomCopyBytes(kSecRandomDefault, length, bytes.baseAddress!)
+            guard let baseAddress = bytes.baseAddress else {
+                return errSecParam
+            }
+            return SecRandomCopyBytes(kSecRandomDefault, length, baseAddress)
         }
         
         guard result == errSecSuccess else {
@@ -746,7 +761,10 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
                 print("🔑 Loaded existing private key from keychain")
             } else {
                 self.privateKey = Curve25519.KeyAgreement.PrivateKey()
-                try savePrivateKeyToKeychain(privateKey!)
+                guard let privateKey = privateKey else {
+                    throw CryptoError.noPrivateKey
+                }
+                try savePrivateKeyToKeychain(privateKey)
                 print("🆕 Generated new private key and saved to keychain")
             }
             
@@ -768,7 +786,7 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     private func ratchetKey(_ key: SessionKey) -> SessionKey {
         // 使用當前加密密鑰生成新密鑰
         let newKeyMaterial = HMAC<SHA256>.authenticationCode(
-            for: "ratchet-\(key.messageNumber)".data(using: .utf8)!,
+            for: "ratchet-\(key.messageNumber)".data(using: .utf8) ?? Data(),
             using: key.encryptionKey
         )
         
@@ -840,7 +858,7 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: keychainService,
             kSecAttrAccount as String: privateKeyTag,
-            kSecReturnData as String: kCFBooleanTrue!,
+            kSecReturnData as String: kCFBooleanTrue,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
         

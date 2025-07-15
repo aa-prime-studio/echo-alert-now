@@ -1,0 +1,66 @@
+⚡ 方案2: 分層路由快取
+
+問題: 路由計算重複且耗時
+解決: 多層快取 + 預計算
+
+1. 三層路由快取
+```swift
+class LayeredRoutingCache {
+    // L1: 最近100個目標的完整路徑
+    private var recentRoutes: LRUCache<String, [String]> = LRUCache(100)
+    
+    // L2: 按方向分組的下一跳快取
+    private var directionCache: [Direction: String] = [:]
+    
+    // L3: 2跳內鄰居的直接路徑
+    private var neighborCache: [String: String] = [:]
+}
+```
+
+2. 方向路由算法
+密集網路中不需要精確路徑，只需要正確方向:
+```swift
+enum Direction: CaseIterable {
+    case north, south, east, west
+    case northeast, northwest, southeast, southwest
+}
+
+func getDirectionToTarget(_ target: String) -> Direction {
+    // 根據目標位置計算大致方向
+    // 選擇該方向最佳的鄰居作為下一跳
+}
+```
+
+3. 預計算熱點路徑
+- 識別網路中的熱點區域
+- 預先計算到熱點的最佳路徑  
+- 定期更新熱點路徑表
+
+4. 路由決策優化
+```swift
+func findRoute(to target: String) -> [String]? {
+    // L1: 檢查最近路由快取
+    if let cached = recentRoutes[target] {
+        return cached
+    }
+    
+    // L2: 使用方向路由
+    let direction = getDirectionToTarget(target)
+    if let nextHop = directionCache[direction] {
+        return [nextHop] + findRoute(from: nextHop, to: target)
+    }
+    
+    // L3: 鄰居直達
+    if let neighbor = neighborCache[target] {
+        return [neighbor]
+    }
+    
+    // 最後才進行完整路由計算
+    return fullRouteCalculation(to: target)
+}
+```
+
+預期效果:
+- 90%路由查詢命中快取
+- 路由計算時間減少80%
+- 記憶體使用增加<5MB
