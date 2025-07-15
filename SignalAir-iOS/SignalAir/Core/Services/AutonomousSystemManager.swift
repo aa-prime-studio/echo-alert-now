@@ -181,7 +181,7 @@ class AutonomousSystemManager: ObservableObject {
         print("🔄 AutonomousSystemManager: 嘗試自動恢復")
         
         for issue in healthResult.issues {
-            await systemHealthMonitor.attemptAutoFix(issue)
+            let _ = await systemHealthMonitor.attemptAutoFix(issue)
         }
     }
     

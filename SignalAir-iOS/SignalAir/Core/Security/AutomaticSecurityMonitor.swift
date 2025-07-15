@@ -5,7 +5,7 @@ import CryptoKit
 // MARK: - Automatic Security Monitor
 /// 自動安全監控系統 - 取代管理員手動查看安全事件
 /// 實現完全自動化的安全威脅檢測、分析和處理
-class AutomaticSecurityMonitor {
+class AutomaticSecurityMonitor: @unchecked Sendable {
     
     // MARK: - Private Properties
     private var securityEvents: [SecurityEvent] = []
@@ -31,7 +31,11 @@ class AutomaticSecurityMonitor {
     /// 執行安全掃描
     func performSecurityScan() async -> SecurityScanResult {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            queue.async { [weak self] in
+                guard let self = self else {
+                    continuation.resume(returning: SecurityScanResult(threatLevel: .low, threats: [], scanTimestamp: Date()))
+                    return
+                }
                 let result = self.executeSecurityScan()
                 continuation.resume(returning: result)
             }

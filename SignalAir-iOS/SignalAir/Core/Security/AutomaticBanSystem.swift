@@ -4,7 +4,7 @@ import Combine
 // MARK: - Automatic Ban System
 /// 自動封禁系統 - 基於演算法自動管理用戶行為
 /// 實現完全自動化的用戶行為評估和封禁管理
-class AutomaticBanSystem {
+class AutomaticBanSystem: @unchecked Sendable {
     
     // MARK: - Private Properties
     private var bannedUsers: Set<String> = []
@@ -50,8 +50,8 @@ class AutomaticBanSystem {
     /// 評估威脅並執行封禁
     func evaluateAndExecuteBan(_ threat: SecurityThreat) async {
         await withCheckedContinuation { continuation in
-            queue.async {
-                self.processThreatForBan(threat)
+            queue.async { [weak self] in
+                self?.processThreatForBan(threat)
                 continuation.resume()
             }
         }

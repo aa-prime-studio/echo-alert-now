@@ -4,7 +4,7 @@ import Combine
 // MARK: - Automatic System Maintenance
 /// 自動系統維護 - 取代管理員手動維護操作
 /// 實現定期自動執行系統清理、優化和修復
-class AutomaticSystemMaintenance {
+class AutomaticSystemMaintenance: @unchecked Sendable {
     
     // MARK: - Private Properties
     private let queue = DispatchQueue(label: "AutomaticSystemMaintenance", qos: .utility)
@@ -37,20 +37,30 @@ class AutomaticSystemMaintenance {
     /// 檢查是否需要維護
     func checkMaintenanceNeeds() async -> MaintenanceAssessment {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self = self else {
+                    continuation.resume(returning: MaintenanceAssessment(needsMaintenance: false, urgency: .low, reasons: [], timestamp: Date()))
+                    return
+                }
                 let assessment = self.assessMaintenanceNeeds()
                 continuation.resume(returning: assessment)
             }
+            queue.async(execute: workItem)
         }
     }
     
     /// 執行系統維護
     func performMaintenance() async -> MaintenanceResult {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            let workItem = DispatchWorkItem { [weak self] in
+                guard let self = self else {
+                    continuation.resume(returning: MaintenanceResult(success: false, tasksCompleted: [], error: "System unavailable", timestamp: Date()))
+                    return
+                }
                 let result = self.executeMaintenanceTasks()
                 continuation.resume(returning: result)
             }
+            queue.async(execute: workItem)
         }
     }
     

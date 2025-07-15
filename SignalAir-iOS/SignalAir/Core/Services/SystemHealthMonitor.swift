@@ -4,7 +4,7 @@ import Combine
 // MARK: - System Health Monitor
 /// 系統健康監控器 - 實現自動健康檢查和修復
 /// 監控系統各個組件的健康狀態並自動執行修復操作
-class SystemHealthMonitor {
+class SystemHealthMonitor: @unchecked Sendable {
     
     // MARK: - Private Properties
     private let queue = DispatchQueue(label: "SystemHealthMonitor", qos: .utility)
@@ -37,7 +37,11 @@ class SystemHealthMonitor {
     /// 嘗試自動修復問題
     func attemptAutoFix(_ issue: SystemIssue) async -> AutoFixResult {
         return await withCheckedContinuation { continuation in
-            queue.async {
+            queue.async { [weak self] in
+                guard let self = self else {
+                    continuation.resume(returning: AutoFixResult(success: false, issue: issue, action: "System unavailable", error: "System unavailable"))
+                    return
+                }
                 let result = self.executeAutoFix(issue)
                 continuation.resume(returning: result)
             }
