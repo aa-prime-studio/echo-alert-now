@@ -135,6 +135,7 @@ struct ContentView: View {
 struct ErrorView: View {
     let errorMessage: String
     let onRetry: () -> Void
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 20) {
@@ -142,7 +143,7 @@ struct ErrorView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.orange)
             
-            Text("發生錯誤")
+            Text(languageService.t("error_occurred"))
                 .font(.title2)
                 .fontWeight(.semibold)
             
@@ -153,7 +154,7 @@ struct ErrorView: View {
                 .padding(.horizontal)
             
             Button(action: onRetry) {
-                Text("重試")
+                Text(languageService.t("retry"))
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding(.horizontal, 30)
@@ -170,6 +171,7 @@ struct ErrorView: View {
 // MARK: - Loading Indicator
 struct LoadingIndicatorView: View {
     @State private var isAnimating = false
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 20) {
@@ -180,7 +182,7 @@ struct LoadingIndicatorView: View {
                 .rotationEffect(.degrees(isAnimating ? 360 : 0))
                 .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
             
-            Text("正在初始化服務...")
+            Text(languageService.t("initializing_services"))
                 .font(.caption)
                 .foregroundColor(.gray)
         }
@@ -286,11 +288,11 @@ struct SignalTabView: View {
     // 連線狀態顏色
     private var connectionStatusColor: Color {
         let status = signalViewModel.connectionStatus
-        if status.contains("已連線") || status.contains("Connected") {
+        if status.contains(languageService.t("connected")) || status.contains("Connected") {
             return .green
-        } else if status.contains("連線中") || status.contains("Connecting") {
+        } else if status.contains(languageService.t("connecting")) || status.contains("Connecting") {
             return .orange
-        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
+        } else if status.contains(languageService.t("disconnected")) || status.contains("Disconnected") || status.contains(languageService.t("offline")) {
             return .red
         } else {
             return .gray
@@ -300,12 +302,12 @@ struct SignalTabView: View {
     // 翻譯後的連線狀態文字
     private var translatedConnectionStatus: String {
         let status = signalViewModel.connectionStatus
-        if status.contains("已連線") {
-            let deviceCount = status.components(separatedBy: " ").first { $0.contains("個") }?.replacingOccurrences(of: "個設備)", with: "") ?? "0"
+        if status.contains(languageService.t("connected")) {
+            let deviceCount = status.components(separatedBy: " ").first { $0.contains(languageService.t("count_unit")) }?.replacingOccurrences(of: languageService.t("count_unit") + languageService.t("device_name") + ")", with: "") ?? "0"
             return String(format: languageService.t("connected_devices"), deviceCount)
-        } else if status.contains("連線中") {
+        } else if status.contains(languageService.t("connecting")) {
             return languageService.t("connecting")
-        } else if status.contains("未連線") || status.contains("離線") {
+        } else if status.contains(languageService.t("disconnected")) || status.contains(languageService.t("offline")) {
             return languageService.t("disconnected")
         }
         return status
@@ -314,11 +316,11 @@ struct SignalTabView: View {
     // 連線圖標名稱
     private var connectionIconName: String {
         let status = signalViewModel.connectionStatus
-        if status.contains("已連線") || status.contains("Connected") {
+        if status.contains(languageService.t("connected")) || status.contains("Connected") {
             return "wifi"
-        } else if status.contains("連線中") || status.contains("Connecting") {
+        } else if status.contains(languageService.t("connecting")) || status.contains("Connecting") {
             return "wifi.exclamationmark"
-        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
+        } else if status.contains(languageService.t("disconnected")) || status.contains("Disconnected") || status.contains(languageService.t("offline")) {
             return "wifi.slash"
         } else {
             return "wifi.slash"
@@ -512,7 +514,7 @@ struct UpgradePromptView: View {
                             Button(action: {
                                 showingTermsOfService = true
                             }) {
-                                Text("服務條款")
+                                Text(languageService.t("terms_of_service"))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .underline()
@@ -521,7 +523,7 @@ struct UpgradePromptView: View {
                             Button(action: {
                                 showingPrivacyPolicy = true
                             }) {
-                                Text("隱私權條款")
+                                Text(languageService.t("privacy_policy"))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .underline()
@@ -538,7 +540,7 @@ struct UpgradePromptView: View {
             NavigationView {
                 TermsOfServiceView()
                     .environmentObject(languageService)
-                    .navigationBarItems(trailing: Button("完成") {
+                    .navigationBarItems(trailing: Button(languageService.t("done")) {
                         showingTermsOfService = false
                     })
             }
@@ -547,7 +549,7 @@ struct UpgradePromptView: View {
             NavigationView {
                 PrivacyPolicyView()
                     .environmentObject(languageService)
-                    .navigationBarItems(trailing: Button("完成") {
+                    .navigationBarItems(trailing: Button(languageService.t("done")) {
                         showingPrivacyPolicy = false
                     })
             }

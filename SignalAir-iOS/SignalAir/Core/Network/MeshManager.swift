@@ -1191,7 +1191,9 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     private func handleKeyExchange(_ message: MeshMessage, from peerID: String) {
         // 這裡可以實現密鑰交換邏輯
-        print("🔑 Received key exchange from \(peerID)")
+        #if DEBUG
+        print("🔑 Received key exchange")
+        #endif
     }
     
     private func handlePeerConnected(_ peerID: String) {

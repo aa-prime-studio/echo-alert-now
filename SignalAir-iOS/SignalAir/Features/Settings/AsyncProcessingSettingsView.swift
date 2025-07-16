@@ -4,16 +4,17 @@ struct AsyncProcessingSettingsView: View {
     @AppStorage("useAsyncTrustProcessing") private var useAsyncProcessing: Bool = false
     @ObservedObject private var trustManager = TrustScoreManager()
     @State private var showingExplanation = false
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 20) {
             // 標題
             VStack(alignment: .leading, spacing: 8) {
-                Text("性能優化設定")
+                Text(languageService.t("performance_optimization"))
                     .font(.title2)
                     .fontWeight(.bold)
                 
-                Text("優化密集網路環境下的信任評分處理")
+                Text(languageService.t("optimize_trust_scoring"))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -24,10 +25,10 @@ struct AsyncProcessingSettingsView: View {
                 // 異步處理開關
                 HStack {
                     VStack(alignment: .leading, spacing: 4) {
-                        Text("異步信任評分處理")
+                        Text(languageService.t("async_trust_processing"))
                             .font(.headline)
                         
-                        Text(useAsyncProcessing ? "已啟用 - 後台處理" : "已停用 - 即時處理")
+                        Text(useAsyncProcessing ? languageService.t("enabled_background") : languageService.t("disabled_realtime"))
                             .font(.caption)
                             .foregroundColor(useAsyncProcessing ? .green : .orange)
                     }
@@ -49,7 +50,7 @@ struct AsyncProcessingSettingsView: View {
                 }) {
                     HStack {
                         Image(systemName: "info.circle")
-                        Text("了解更多")
+                        Text(languageService.t("learn_more"))
                     }
                     .font(.caption)
                     .foregroundColor(.blue)
@@ -76,13 +77,13 @@ struct AsyncPerformanceIndicator: View {
     
     var body: some View {
         VStack(spacing: 12) {
-            Text("性能監控")
+            Text(languageService.t("performance_monitoring"))
                 .font(.headline)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             HStack {
                 VStack(alignment: .leading) {
-                    Text("批次更新")
+                    Text(languageService.t("batch_updates"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text("\(batchCount)")
@@ -94,7 +95,7 @@ struct AsyncPerformanceIndicator: View {
                 Spacer()
                 
                 VStack(alignment: .trailing) {
-                    Text("總更新數")
+                    Text(languageService.t("total_updates"))
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text("\(updateCount)")
@@ -104,7 +105,7 @@ struct AsyncPerformanceIndicator: View {
                 }
             }
             
-            Text("異步處理可減少 UI 阻塞並提升整體響應性")
+            Text(languageService.t("async_processing_description"))
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
@@ -130,18 +131,18 @@ struct AsyncProcessingExplanationView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // 標題說明
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("異步處理優化")
+                        Text(languageService.t("async_processing_optimization"))
                             .font(.title)
                             .fontWeight(.bold)
                         
-                        Text("在密集網路環境中優化信任評分計算")
+                        Text(languageService.t("optimization_description"))
                             .font(.headline)
                             .foregroundColor(.secondary)
                     }
                     
                     // 運作原理
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("運作原理")
+                        Text(languageService.t("how_it_works"))
                             .font(.title2)
                             .fontWeight(.semibold)
                         
@@ -174,7 +175,7 @@ struct AsyncProcessingExplanationView: View {
                     
                     // 效果說明
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("預期效果")
+                        Text(languageService.t("expected_benefits"))
                             .font(.title2)
                             .fontWeight(.semibold)
                         
@@ -198,7 +199,7 @@ struct AsyncProcessingExplanationView: View {
                     
                     // 安全說明
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("安全保證")
+                        Text(languageService.t("security_guarantees"))
                             .font(.title2)
                             .fontWeight(.semibold)
                         

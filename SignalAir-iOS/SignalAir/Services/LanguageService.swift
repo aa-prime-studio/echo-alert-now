@@ -117,7 +117,7 @@ class LanguageService: ObservableObject {
                 "players": "玩家",
                 "game_rules": "遊戲規則",
                 "number_range": "數字範圍",
-                "number_range_desc": "1-60的數字",
+                "number_range_desc": "1-99的數字",
                 "win_condition": "勝利條件",
                 "win_condition_desc": "完成5條線即獲勝",
                 "daily_leaderboard": "每日排行榜",
@@ -145,6 +145,47 @@ class LanguageService: ObservableObject {
                 "chat_cheer": "加油！",
                 "chat_almost_win": "我差一條線就贏了！",
                 "chat_good_luck": "好運氣！",
+                
+                // 安全警告 - 8種攻擊類型
+                "security_trust_anomaly_title": "可疑訊息檢測",
+                "security_trust_anomaly_content": "設備 %device% 發送了不安全的訊息，可能影響您的通訊。",
+                "security_trust_anomaly_action": "請停止與此設備通訊，並檢查設備安全。",
+                
+                "security_node_anomaly_title": "設備運行異常",
+                "security_node_anomaly_content": "設備 %device% 出現異常行為，可能影響網路穩定。",
+                "security_node_anomaly_action": "請檢查設備狀態並暫停其連線。",
+                
+                "security_apt_threat_title": "高級威脅檢測",
+                "security_apt_threat_content": "設備 %device% 試圖探測您的網路，可能危害通訊安全。",
+                "security_apt_threat_action": "請立即斷開與此設備的連線。",
+                
+                "security_connection_limit_title": "網路流量異常",
+                "security_connection_limit_content": "檢測到大量訊息試圖干擾您的通訊網路。",
+                "security_connection_limit_action": "請保持設備連線，系統正在自動處理。",
+                
+                "security_data_exfiltration_title": "數據洩露風險",
+                "security_data_exfiltration_content": "設備 %device% 試圖傳送敏感數據，可能危害您的資訊。",
+                "security_data_exfiltration_action": "請斷開設備連線並檢查數據安全。",
+                
+                "security_authentication_failure_title": "設備認證失敗",
+                "security_authentication_failure_content": "設備 %device% 無法通過安全認證，可能存在風險。",
+                "security_authentication_failure_action": "請檢查設備身份並重新連線。",
+                
+                "security_system_compromise_title": "多重安全威脅",
+                "security_system_compromise_content": "設備 %device% 發起多種可疑活動，可能影響您的通訊。",
+                "security_system_compromise_action": "請立即斷開連線並重新啟動應用程式。",
+                
+                "security_malware_detection_title": "可疑軟體檢測",
+                "security_malware_detection_content": "設備 %device% 可能運行惡意軟體，威脅網路安全。",
+                "security_malware_detection_action": "請立即斷開連線並掃描設備。",
+                
+                // 通用安全警告
+                "security_action_now": "立即處理",
+                "security_action_later": "稍後處理",
+                "security_demo_title": "安全警告演示",
+                "security_demo_description": "選擇攻擊類型來測試安全警告系統：",
+                "security_demo_trigger": "觸發安全警告",
+                "security_demo_status": "警告狀態",
                 
                 // 暱稱編輯
                 "set_nickname": "設定暱稱",
@@ -213,7 +254,57 @@ class LanguageService: ObservableObject {
                 "emote_battery": "%@ 需要充電",
                 "emote_dizzy": "%@ 頭暈了",
                 "emote_mouse": "%@ 説家裡有老鼠",
-                "emote_ring": "%@ 問你要不要嫁給他"
+                "emote_ring": "%@ 問你要不要嫁給他",
+                
+                // 錯誤處理和載入
+                "error_occurred": "發生錯誤",
+                "retry": "重試",
+                "initializing_services": "正在初始化服務...",
+                "terms_of_service": "服務條款",
+                "privacy_policy": "隱私權條款",
+                "network_diagnosis": "🔍 網路診斷",
+                
+                // 購買選項
+                "monthly": "月費",
+                "yearly": "年費",
+                "monthly_billing": "每月收費",
+                "yearly_billing": "每年收費",
+                "processing": "處理中...",
+                "purchase_now": "立即購買",
+                "retry_loading": "重試載入",
+                "test_unlock_dev": "🔓 測試解鎖 (開發模式)",
+                
+                // 異步處理設置
+                "performance_optimization": "性能優化設定",
+                "optimize_trust_scoring": "優化密集網路環境下的信任評分處理",
+                "async_trust_processing": "異步信任評分處理",
+                "enabled_background": "已啟用 - 後台處理",
+                "disabled_realtime": "已停用 - 即時處理",
+                "learn_more": "了解更多",
+                "performance_monitoring": "性能監控",
+                "batch_updates": "批次更新",
+                "total_updates": "總更新數",
+                "async_processing_description": "異步處理可減少 UI 阻塞並提升整體響應性",
+                "async_processing_optimization": "異步處理優化",
+                "optimization_description": "在密集網路環境中優化信任評分計算",
+                "how_it_works": "運作原理",
+                "expected_benefits": "預期效果",
+                "security_guarantees": "安全保證",
+                
+                // 其他View文件
+                "this_week_leaderboard": "本週排行榜",
+                "bingo_god": "Bingo神",
+                "are_you_dj": "你是DJ嗎",
+                "turtle_god": "烏龜神",
+                "no_leaderboard_data": "本週暫無排行榜數據",
+                "joining": "加入中...",
+                "emote_broadcast": "表情廣播",
+                "terms_agreement": "使用條款同意",
+                "welcome_signalair": "歡迎使用 SignalAir",
+                "read_terms_before": "在使用本應用程式之前，請仔細閱讀並同意以下使用條款：",
+                "agree_terms": "我已閱讀並同意上述使用條款",
+                "agree_continue": "同意並繼續",
+                "signalair_privacy_policy": "SignalAir Rescue 隱私權政策"
             ]
         case .english:
             return [
@@ -294,7 +385,7 @@ class LanguageService: ObservableObject {
                 "players": "Players",
                 "game_rules": "Game Rules",
                 "number_range": "Number Range",
-                "number_range_desc": "Numbers 1-60",
+                "number_range_desc": "Numbers 1-99",
                 "win_condition": "Win Condition",
                 "win_condition_desc": "Complete 5 lines to win",
                 "daily_leaderboard": "Daily Leaderboard",
@@ -339,6 +430,47 @@ class LanguageService: ObservableObject {
                 "chat_cheer": "Good luck!",
                 "chat_almost_win": "Almost got a line!",
                 "chat_good_luck": "Great job!",
+                
+                // Security Alerts - 8 Attack Types
+                "security_trust_anomaly_title": "Suspicious Message Detection",
+                "security_trust_anomaly_content": "Device %device% sent unsafe messages that may affect your communication.",
+                "security_trust_anomaly_action": "Please stop communicating with this device and check device security.",
+                
+                "security_node_anomaly_title": "Device Operation Anomaly",
+                "security_node_anomaly_content": "Device %device% shows abnormal behavior that may affect network stability.",
+                "security_node_anomaly_action": "Please check device status and suspend its connection.",
+                
+                "security_apt_threat_title": "Advanced Threat Detection",
+                "security_apt_threat_content": "Device %device% attempted to probe your network, potentially compromising communication security.",
+                "security_apt_threat_action": "Please disconnect from this device immediately.",
+                
+                "security_connection_limit_title": "Network Traffic Anomaly",
+                "security_connection_limit_content": "Detected massive messages attempting to disrupt your communication network.",
+                "security_connection_limit_action": "Please keep device connected, system is handling automatically.",
+                
+                "security_data_exfiltration_title": "Data Leak Risk",
+                "security_data_exfiltration_content": "Device %device% attempted to transmit sensitive data, potentially compromising your information.",
+                "security_data_exfiltration_action": "Please disconnect device and check data security.",
+                
+                "security_authentication_failure_title": "Device Authentication Failed",
+                "security_authentication_failure_content": "Device %device% failed security authentication and may pose risks.",
+                "security_authentication_failure_action": "Please verify device identity and reconnect.",
+                
+                "security_system_compromise_title": "Multiple Security Threats",
+                "security_system_compromise_content": "Device %device% initiated various suspicious activities that may affect your communication.",
+                "security_system_compromise_action": "Please disconnect immediately and restart the application.",
+                
+                "security_malware_detection_title": "Suspicious Software Detection",
+                "security_malware_detection_content": "Device %device% may be running malicious software, threatening network security.",
+                "security_malware_detection_action": "Please disconnect immediately and scan the device.",
+                
+                // Common Security Alerts
+                "security_action_now": "Handle Now",
+                "security_action_later": "Handle Later",
+                "security_demo_title": "Security Alert Demo",
+                "security_demo_description": "Select attack type to test security alert system:",
+                "security_demo_trigger": "Trigger Security Alert",
+                "security_demo_status": "Alert Status",
                 
                 // Bingo game unlock
                 "bingo_locked_title": "Bingo Game Room Locked",
@@ -390,7 +522,57 @@ class LanguageService: ObservableObject {
                 "emote_battery": "%@ needs charging",
                 "emote_dizzy": "%@ is dizzy",
                 "emote_mouse": "%@ says there's a mouse at home",
-                "emote_ring": "%@ asks if you want to marry them"
+                "emote_ring": "%@ asks if you want to marry them",
+                
+                // 錯誤處理和載入
+                "error_occurred": "An Error Occurred",
+                "retry": "Retry",
+                "initializing_services": "Initializing services...",
+                "terms_of_service": "Terms of Service",
+                "privacy_policy": "Privacy Policy",
+                "network_diagnosis": "🔍 Network Diagnosis",
+                
+                // 購買選項
+                "monthly": "Monthly",
+                "yearly": "Yearly",
+                "monthly_billing": "Monthly billing",
+                "yearly_billing": "Yearly billing",
+                "processing": "Processing...",
+                "purchase_now": "Purchase Now",
+                "retry_loading": "Retry Loading",
+                "test_unlock_dev": "🔓 Test Unlock (Dev Mode)",
+                
+                // 異步處理設置
+                "performance_optimization": "Performance Optimization Settings",
+                "optimize_trust_scoring": "Optimize trust scoring in dense network environments",
+                "async_trust_processing": "Async Trust Processing",
+                "enabled_background": "Enabled - Background Processing",
+                "disabled_realtime": "Disabled - Real-time Processing",
+                "learn_more": "Learn More",
+                "performance_monitoring": "Performance Monitoring",
+                "batch_updates": "Batch Updates",
+                "total_updates": "Total Updates",
+                "async_processing_description": "Async processing reduces UI blocking and improves overall responsiveness",
+                "async_processing_optimization": "Async Processing Optimization",
+                "optimization_description": "Optimize trust scoring calculations in dense network environments",
+                "how_it_works": "How It Works",
+                "expected_benefits": "Expected Benefits",
+                "security_guarantees": "Security Guarantees",
+                
+                // 其他View文件
+                "this_week_leaderboard": "This Week's Leaderboard",
+                "bingo_god": "Bingo God",
+                "are_you_dj": "Are You a DJ?",
+                "turtle_god": "Turtle God",
+                "no_leaderboard_data": "No leaderboard data this week",
+                "joining": "Joining...",
+                "emote_broadcast": "Emote Broadcast",
+                "terms_agreement": "Terms Agreement",
+                "welcome_signalair": "Welcome to SignalAir",
+                "read_terms_before": "Before using this application, please read and agree to the following terms:",
+                "agree_terms": "I have read and agree to the above terms",
+                "agree_continue": "Agree and Continue",
+                "signalair_privacy_policy": "SignalAir Rescue Privacy Policy"
             ]
         }
     }

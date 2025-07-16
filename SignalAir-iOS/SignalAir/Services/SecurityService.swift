@@ -424,7 +424,8 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     private var sessionKeys: [String: SessionKey] = [:]
     private var deviceToNetworkMapping: [String: String] = [:] // DeviceID -> NetworkPeerID
     private var networkToDeviceMapping: [String: String] = [:] // NetworkPeerID -> DeviceID
-    private let keyRotationInterval: TimeInterval = 3600 // 1 hour
+    private let keyRotationInterval: TimeInterval = 300 // 5 minutes
+    private let maxMessagesPerKey = 500 // 500 條訊息後強制重新協商
     private var keyRotationTimer: Timer?
     
     // MARK: - Published State
@@ -498,17 +499,23 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             if let deviceID = deviceID {
                 deviceToNetworkMapping[deviceID] = peerID
                 networkToDeviceMapping[peerID] = deviceID
-                print("🗺️ 建立映射：\(deviceID) -> \(peerID)")
+                #if DEBUG
+                print("🗺️ 建立裝置映射")
+                #endif
             }
             
             DispatchQueue.main.async {
                 self.activeConnections = self.sessionKeys.count
             }
             
-            print("✅ Key exchange completed with: \(peerID)")
+            #if DEBUG
+            print("✅ Key exchange completed")
+            #endif
             
         } catch {
-            print("❌ Key exchange failed: \(error)")
+            #if DEBUG
+            print("❌ Key exchange failed")
+            #endif
             throw CryptoError.keyExchangeFailed
         }
     }
@@ -549,7 +556,16 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             
             // 更新密鑰（Forward Secrecy）
             sessionKey = ratchetKey(sessionKey)
-            sessionKeys[peerID] = sessionKey
+            
+            // 檢查是否需要因訊息數量過多而移除密鑰
+            if sessionKey.messageNumber >= maxMessagesPerKey {
+                #if DEBUG
+                print("🔄 Removing session key due to message count limit for peer: \(peerID)")
+                #endif
+                sessionKeys.removeValue(forKey: peerID)
+            } else {
+                sessionKeys[peerID] = sessionKey
+            }
             
             print("🔒 Encrypted message for: \(peerID), size: \(data.count) bytes")
             return encryptedMessage
@@ -570,12 +586,15 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         if sessionKey == nil, let networkPeerID = deviceToNetworkMapping[peerID] {
             actualPeerID = networkPeerID
             sessionKey = sessionKeys[networkPeerID]
-            print("🗺️ 通過映射找到會話密鑰：\(peerID) -> \(networkPeerID)")
+            #if DEBUG
+            print("🗺️ 通過映射找到會話密鑰")
+            #endif
         }
         
         guard var sessionKey = sessionKey else {
-            print("❌ 找不到會話密鑰：\(peerID)，已有密鑰：\(sessionKeys.keys.sorted())")
-            print("❌ 設備映射：\(deviceToNetworkMapping)")
+            #if DEBUG
+            print("❌ 找不到會話密鑰")
+            #endif
             throw CryptoError.noSessionKey
         }
         
@@ -597,7 +616,9 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             // 允許一定的訊息編號容錯，處理網路延遲和亂序
             let expectedMinNumber = max(0, sessionKey.messageNumber - 10) // 允許10個訊息的回退
             guard encryptedMessage.messageNumber >= expectedMinNumber else {
-                print("❌ 訊息編號異常：收到 \(encryptedMessage.messageNumber)，期望 >= \(expectedMinNumber)（當前：\(sessionKey.messageNumber)）")
+                #if DEBUG
+                print("❌ 訊息編號異常：可能的重放攻擊")
+                #endif
                 throw CryptoError.messageNumberMismatch
             }
             
@@ -617,8 +638,16 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             
             // 更新密鑰（Forward Secrecy）
             sessionKey = ratchetKey(sessionKey)
-            sessionKey.messageNumber = encryptedMessage.messageNumber + 1
-            sessionKeys[actualPeerID] = sessionKey
+            
+            // 檢查是否需要因訊息數量過多而移除密鑰
+            if sessionKey.messageNumber >= maxMessagesPerKey {
+                #if DEBUG
+                print("🔄 Removing session key due to message count limit for peer: \(actualPeerID)")
+                #endif
+                sessionKeys.removeValue(forKey: actualPeerID)
+            } else {
+                sessionKeys[actualPeerID] = sessionKey
+            }
             
             print("🔓 Decrypted message from: \(peerID), size: \(plaintext.count) bytes")
             return plaintext
@@ -697,22 +726,28 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         DispatchQueue.main.async {
             self.activeConnections = self.sessionKeys.count
         }
-        print("🗑️ Removed and securely wiped session key for: \(peerID)")
+        #if DEBUG
+        print("🗑️ Removed and securely wiped session key")
+        #endif
     }
     
     /// 清除所有會話密鑰（帶安全清理）
     func clearAllSessionKeys() {
         // 安全清理所有會話密鑰
-        for (peerID, sessionKey) in sessionKeys {
+        for (_, sessionKey) in sessionKeys {
             secureWipeSessionKey(sessionKey)
-            print("🧹 Securely wiped session key for: \(peerID)")
+            #if DEBUG
+            print("🧹 Securely wiped session key")
+            #endif
         }
         
         sessionKeys.removeAll()
         DispatchQueue.main.async {
             self.activeConnections = 0
         }
+        #if DEBUG
         print("🧹 Cleared all session keys with secure wipe")
+        #endif
     }
     
     /// 安全清理會話密鑰
@@ -758,14 +793,18 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         do {
             if let savedKey = try loadPrivateKeyFromKeychain() {
                 self.privateKey = savedKey
-                print("🔑 Loaded existing private key from keychain")
+                #if DEBUG
+                print("🔑 Loaded existing private key")
+                #endif
             } else {
                 self.privateKey = Curve25519.KeyAgreement.PrivateKey()
                 guard let privateKey = privateKey else {
                     throw CryptoError.noPrivateKey
                 }
                 try savePrivateKeyToKeychain(privateKey)
-                print("🆕 Generated new private key and saved to keychain")
+                #if DEBUG
+                print("🆕 Generated new private key")
+                #endif
             }
             
             DispatchQueue.main.async {
@@ -784,17 +823,23 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
     
     /// 密鑰輪轉（Forward Secrecy）
     private func ratchetKey(_ key: SessionKey) -> SessionKey {
-        // 使用當前加密密鑰生成新密鑰
-        let newKeyMaterial = HMAC<SHA256>.authenticationCode(
-            for: "ratchet-\(key.messageNumber)".data(using: .utf8) ?? Data(),
+        // 使用不同的衍生路徑為加密密鑰和 HMAC 密鑰生成新密鑰
+        let encKeyMaterial = HMAC<SHA256>.authenticationCode(
+            for: "enc-ratchet-\(key.messageNumber)".data(using: .utf8) ?? Data(),
             using: key.encryptionKey
         )
         
-        let newEncryptionKey = SymmetricKey(data: Data(newKeyMaterial.prefix(32)))
+        let hmacKeyMaterial = HMAC<SHA256>.authenticationCode(
+            for: "mac-ratchet-\(key.messageNumber)".data(using: .utf8) ?? Data(),
+            using: key.hmacKey
+        )
+        
+        let newEncryptionKey = SymmetricKey(data: Data(encKeyMaterial.prefix(32)))
+        let newHmacKey = SymmetricKey(data: Data(hmacKeyMaterial.prefix(32)))
         
         return SessionKey(
             encryptionKey: newEncryptionKey,
-            hmacKey: key.hmacKey, // HMAC 密鑰保持不變
+            hmacKey: newHmacKey,
             messageNumber: key.messageNumber + 1
         )
     }
@@ -812,15 +857,28 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         var rotatedCount = 0
         
         for (peerID, key) in sessionKeys {
-            if now.timeIntervalSince(key.createdAt) > keyRotationInterval {
+            let timeExpired = now.timeIntervalSince(key.createdAt) > keyRotationInterval
+            let messageCountExceeded = key.messageNumber >= maxMessagesPerKey
+            
+            if timeExpired || messageCountExceeded {
                 // 生成新的會話密鑰（需要重新密鑰交換）
                 sessionKeys.removeValue(forKey: peerID)
                 rotatedCount += 1
+                
+                #if DEBUG
+                if timeExpired {
+                    print("🔄 Key expired by time for peer: \(peerID)")
+                } else if messageCountExceeded {
+                    print("🔄 Key expired by message count (\(key.messageNumber)) for peer: \(peerID)")
+                }
+                #endif
             }
         }
         
         if rotatedCount > 0 {
+            #if DEBUG
             print("🔄 Rotated \(rotatedCount) expired session keys")
+            #endif
             DispatchQueue.main.async {
                 self.activeConnections = self.sessionKeys.count
             }

@@ -58,7 +58,9 @@ extension NetworkServiceProtocol {
 
 extension SecurityServiceProtocol {
     func generateSessionKey() -> Data? {
+        #if DEBUG
         print("🔐 SecurityService: 預設產生會話密鑰")
+        #endif
         return Data()
     }
 }

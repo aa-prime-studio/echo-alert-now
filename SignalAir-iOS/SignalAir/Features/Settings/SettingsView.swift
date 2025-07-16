@@ -315,7 +315,7 @@ struct SettingsView: View {
                         .foregroundColor(.orange)
                         .frame(width: 24)
                     
-                    Text("🔍 網路診斷")
+                    Text(languageService.t("network_diagnosis"))
                         .font(.headline)
                         .foregroundColor(.black)
                     

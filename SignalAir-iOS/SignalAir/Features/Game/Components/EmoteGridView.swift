@@ -17,7 +17,7 @@ struct EmoteGridView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("表情廣播")
+            Text(languageService.t("emote_broadcast"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)

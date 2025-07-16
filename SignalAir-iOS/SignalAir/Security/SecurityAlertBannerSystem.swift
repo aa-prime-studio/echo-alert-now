@@ -18,6 +18,7 @@ class SecurityAlertBannerSystem: ObservableObject {
     // MARK: - Properties
     private var alertTimer: Timer?
     private var cancellables = Set<AnyCancellable>()
+    private let languageService = LanguageService.shared
     
     // MARK: - Configuration
     private let alertDisplayDuration: TimeInterval = 8.0
@@ -68,9 +69,9 @@ class SecurityAlertBannerSystem: ObservableObject {
         switch attackType {
         case .trustAnomaly:
             return AlertConfiguration(
-                title: "可疑訊息檢測",
-                body: "設備 %device% 發送了不安全的訊息，可能影響您的通訊。",
-                action: "請停止與此設備通訊，並檢查設備安全。",
+                title: languageService.t("security_trust_anomaly_title"),
+                body: languageService.t("security_trust_anomaly_content"),
+                action: languageService.t("security_trust_anomaly_action"),
                 severity: .high,
                 iconName: "exclamationmark.triangle.fill",
                 primaryColor: Color.yellow,
@@ -79,9 +80,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .nodeAnomaly:
             return AlertConfiguration(
-                title: "設備運行異常",
-                body: "設備 %device% 出現異常行為，可能影響網路穩定。",
-                action: "請檢查設備狀態並暫停其連線。",
+                title: languageService.t("security_node_anomaly_title"),
+                body: languageService.t("security_node_anomaly_content"),
+                action: languageService.t("security_node_anomaly_action"),
                 severity: .medium,
                 iconName: "wifi.exclamationmark",
                 primaryColor: Color.yellow,
@@ -90,9 +91,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .aptThreat:
             return AlertConfiguration(
-                title: "高級威脅檢測",
-                body: "設備 %device% 試圖探測您的網路，可能危害通訊安全。",
-                action: "請立即斷開與此設備的連線。",
+                title: languageService.t("security_apt_threat_title"),
+                body: languageService.t("security_apt_threat_content"),
+                action: languageService.t("security_apt_threat_action"),
                 severity: .critical,
                 iconName: "shield.slash.fill",
                 primaryColor: Color.yellow,
@@ -101,9 +102,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .connectionLimit:
             return AlertConfiguration(
-                title: "網路流量異常",
-                body: "檢測到大量訊息試圖干擾您的通訊網路。",
-                action: "請保持設備連線，系統正在自動處理。",
+                title: languageService.t("security_connection_limit_title"),
+                body: languageService.t("security_connection_limit_content"),
+                action: languageService.t("security_connection_limit_action"),
                 severity: .high,
                 iconName: "network.badge.shield.half.filled",
                 primaryColor: Color.yellow,
@@ -112,9 +113,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .dataExfiltration:
             return AlertConfiguration(
-                title: "數據洩露風險",
-                body: "設備 %device% 試圖傳送敏感數據，可能危害您的資訊。",
-                action: "請斷開設備連線並檢查數據安全。",
+                title: languageService.t("security_data_exfiltration_title"),
+                body: languageService.t("security_data_exfiltration_content"),
+                action: languageService.t("security_data_exfiltration_action"),
                 severity: .critical,
                 iconName: "lock.slash.fill",
                 primaryColor: Color.yellow,
@@ -123,9 +124,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .authenticationFailure:
             return AlertConfiguration(
-                title: "設備認證失敗",
-                body: "設備 %device% 無法通過安全認證，可能存在風險。",
-                action: "請檢查設備身份並重新連線。",
+                title: languageService.t("security_authentication_failure_title"),
+                body: languageService.t("security_authentication_failure_content"),
+                action: languageService.t("security_authentication_failure_action"),
                 severity: .medium,
                 iconName: "person.badge.minus.fill",
                 primaryColor: Color.yellow,
@@ -134,9 +135,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .systemCompromise:
             return AlertConfiguration(
-                title: "多重安全威脅",
-                body: "設備 %device% 發起多種可疑活動，可能影響您的通訊。",
-                action: "請立即斷開連線並重新啟動應用程式。",
+                title: languageService.t("security_system_compromise_title"),
+                body: languageService.t("security_system_compromise_content"),
+                action: languageService.t("security_system_compromise_action"),
                 severity: .critical,
                 iconName: "exclamationmark.octagon.fill",
                 primaryColor: Color.yellow,
@@ -145,9 +146,9 @@ class SecurityAlertBannerSystem: ObservableObject {
             
         case .malwareDetection:
             return AlertConfiguration(
-                title: "可疑軟體檢測",
-                body: "設備 %device% 可能運行惡意軟體，威脅網路安全。",
-                action: "請立即斷開連線並掃描設備。",
+                title: languageService.t("security_malware_detection_title"),
+                body: languageService.t("security_malware_detection_content"),
+                action: languageService.t("security_malware_detection_action"),
                 severity: .critical,
                 iconName: "ant.fill",
                 primaryColor: Color.yellow,

@@ -8,16 +8,16 @@ struct LeaderboardView: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text("本週排行榜") // 從"今日排行榜"改為"本週排行榜"
+            Text(languageService.t("this_week_leaderboard"))
                 .font(.headline)
                 .fontWeight(.semibold)
                 .frame(maxWidth: .infinity, alignment: .leading)
             
             // 排行榜類型選擇器
             Picker("排行榜類型", selection: $selectedBoard) {
-                Text("Bingo神").tag(0)
-                Text("你是DJ嗎").tag(1)
-                Text("烏龜神").tag(2)
+                Text(languageService.t("bingo_god")).tag(0)
+                Text(languageService.t("are_you_dj")).tag(1)
+                Text(languageService.t("turtle_god")).tag(2)
             }
             .pickerStyle(SegmentedPickerStyle())
             .padding(.bottom, 8)
@@ -29,7 +29,7 @@ struct LeaderboardView: View {
                     let (currentBoard, unitText) = getCurrentBoardData(for: selectedBoard, from: weekly)
                     
                     if currentBoard.isEmpty {
-                        Text("本週暫無排行榜數據")
+                        Text(languageService.t("no_leaderboard_data"))
                             .font(.subheadline)
                             .foregroundColor(.secondary)
                             .frame(maxWidth: .infinity, alignment: .center)
