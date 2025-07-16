@@ -96,5 +96,16 @@
 		<string>bluetooth-peripheral</string>
 		<string>background-processing</string>
 	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		<key>NSRequiresCertificateTransparency</key>
+		<true/>
+	</dict>
+	<key>UIApplicationSupportsScreenshots</key>
+	<false/>
 </dict>
 </plist>

@@ -83,38 +83,44 @@ struct ContentView: View {
                     viewModelContainer.isReady = true
                 }
             } else if viewModelContainer.isReady {
-                TabView(selection: $selectedTab) {
-                    SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
-                        .tabItem {
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                            Text(languageService.t("signals"))
-                        }
-                        .tag(0)
+                ZStack {
+                    TabView(selection: $selectedTab) {
+                        SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
+                            .tabItem {
+                                Image(systemName: "antenna.radiowaves.left.and.right")
+                                Text(languageService.t("signals"))
+                            }
+                            .tag(0)
+                        
+                        ChatTabView()
+                            .tabItem {
+                                Image(systemName: "message")
+                                Text(languageService.t("chat"))
+                            }
+                            .tag(1)
+                        
+                        GameTabView(isPremiumUser: purchaseService.isPremiumUser)
+                            .tabItem {
+                                Image(systemName: "gamecontroller")
+                                Text(languageService.t("games"))
+                            }
+                            .tag(2)
+                        
+                        SettingsView()
+                            .tabItem {
+                                Image(systemName: "gear")
+                                Text(languageService.t("settings"))
+                            }
+                            .tag(3)
+                    }
+                    .accentColor(.blue)
+                    .transaction { transaction in
+                        transaction.disablesAnimations = true
+                    }
                     
-                    ChatTabView()
-                        .tabItem {
-                            Image(systemName: "message")
-                            Text(languageService.t("chat"))
-                        }
-                        .tag(1)
-                    
-                    GameTabView(isPremiumUser: purchaseService.isPremiumUser)
-                        .tabItem {
-                            Image(systemName: "gamecontroller")
-                            Text(languageService.t("games"))
-                        }
-                        .tag(2)
-                    
-                    SettingsView()
-                        .tabItem {
-                            Image(systemName: "gear")
-                            Text(languageService.t("settings"))
-                        }
-                        .tag(3)
-                }
-                .accentColor(.blue)
-                .transaction { transaction in
-                    transaction.disablesAnimations = true
+                    // 🛡️ 安全警報橫幅（顯示在最上層）
+                    SecurityAlertBannerView()
+                        .zIndex(1000)
                 }
             } else {
                 // 顯示輕量級載入指示器，不阻塞UI
@@ -254,12 +260,12 @@ struct SignalTabView: View {
                         .frame(width: 8, height: 8)
                     Text(translatedConnectionStatus)
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
                 Text("Broadcast\nSignal")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
             Spacer()
             Button(action: {
@@ -267,11 +273,11 @@ struct SignalTabView: View {
             }) {
                 Image(systemName: connectionIconName)
                     .font(.title2)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
         }
         .padding()
-        .background(Color(red: 0.898, green: 0.847, blue: 0.016)) // #e5d804
+        .background(Color(red: 0.957, green: 0.957, blue: 0.957)) // #f4f4f4
         .onAppear {
             // 連線狀態會自動更新，不需要手動呼叫
         }

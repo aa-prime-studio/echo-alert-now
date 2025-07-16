@@ -1,5 +1,6 @@
 import Foundation
 @preconcurrency import MultipeerConnectivity
+import SwiftUI
 
 // MARK: - Connection State Manager Actor
 actor ConnectionStateManager {
@@ -158,7 +159,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
         self.session = MCSession(
             peer: safePeerID, 
             securityIdentity: nil, 
-            encryptionPreference: .optional  // 可選加密，提高兼容性
+            encryptionPreference: .required  // 必需加密，確保安全性
         )
         
         // 關鍵：設置 session 的錯誤處理和超時配置
@@ -488,11 +489,33 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         print("📥 Received \(data.count) bytes from: \(peerID.displayName)")
         
+        // 🛡️ 安全檢查：檢測攻擊數據
+        checkForSecurityThreats(data: data, fromPeer: peerID)
+        
         // 調用新的協議回調
         self.onDataReceived?(data, peerID.displayName)
         
         // 保持向後兼容性
         self.onReceiveData?(data, peerID)
+    }
+    
+    // MARK: - 安全威脅檢測
+    private func checkForSecurityThreats(data: Data, fromPeer peerID: MCPeerID) {
+        // 解析 JSON 數據
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let attackType = jsonObject["type"] as? String else {
+            return // 不是攻擊數據，正常處理
+        }
+        
+        // 記錄安全威脅檢測，但移除攻擊模擬代碼
+        #if DEBUG
+        print("🚨 檢測到可疑數據類型: \(attackType)")
+        #endif
+        
+        // 觸發通用安全警報
+        DispatchQueue.main.async {
+            SecurityAlertBannerSystem.shared.showSecurityAlert(for: .systemCompromise, deviceName: peerID.displayName)
+        }
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

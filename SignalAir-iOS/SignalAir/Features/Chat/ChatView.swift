@@ -40,30 +40,30 @@ struct ChatView: View {
                 Text("Live Support\nChatroom")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                     Text(languageService.t("auto_delete_24h"))
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
             }
             Spacer()
             HStack(spacing: 12) {
             Text("(\(viewModel.messages.count))")
                 .font(.subheadline)
-                    .foregroundColor(.black.opacity(0.8))
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
             Button(action: { viewModel.clearMessages() }) {
                 Image(systemName: "trash")
                     .font(.title3)
-                        .foregroundColor(.black)
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                 }
             }
         }
         .padding()
-        .background(Color(red: 0.671, green: 0.576, blue: 0.898)) // #ab93e5
+        .background(.white)
     }
     
     private var messagesSection: some View {

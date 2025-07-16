@@ -123,12 +123,12 @@ struct GameView: View {
                 Text("Bingo\nGame Room")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                 
                 if currentRoomID > 0 {
                     Text("\(languageService.t("playing_in")) room \(currentRoomID)")
                         .font(.caption)
-                        .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475).opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
             }
             Spacer()
@@ -138,11 +138,11 @@ struct GameView: View {
                     currentRoomID = -1
                 }
                 .font(.headline)
-                .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
+                .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
         }
         .padding()
-        .background(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
+        .background(.white)
     }
     
     private func setupLeaderboard() {
