@@ -7,15 +7,23 @@
         "key": "Settings",
         "location": {
           "startingColumn": 18,
-          "startingLine": 58
+          "startingLine": 59
         }
       },
       {
         "comment": "",
-        "key": "🔍 網路診斷",
+        "key": "黑名單管理",
         "location": {
           "startingColumn": 26,
-          "startingLine": 318
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 259
         }
       }
     ]

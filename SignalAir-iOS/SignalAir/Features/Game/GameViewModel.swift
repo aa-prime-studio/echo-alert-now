@@ -95,10 +95,8 @@ class GameViewModel: ObservableObject {
     
     // MARK: - Room Management
     func joinRoom(_ room: BingoRoom) {
-        print("🚨🚨🚨 ROOM SELECTED: id=\(room.id) name=\(room.name) 🚨🚨🚨")
         currentRoomID = room.id
         bingoViewModel.updateRoom(room.id)
-        print("🚨🚨🚨 CURRENT ROOM SET: \(room.id) 🚨🚨🚨")
     }
     
     func leaveRoom() {

@@ -1,16 +1,5 @@
 {
   "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/EmoteGridView.swift",
-  "tables": {
-    "Localizable": [
-      {
-        "comment": "",
-        "key": "表情廣播",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 20
-        }
-      }
-    ]
-  },
+  "tables": {},
   "version": 1
 }

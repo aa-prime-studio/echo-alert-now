@@ -116,11 +116,14 @@ class TopologyManager: ObservableObject {
         }
     }
     
-    /// 執行拓撲更新
+    /// 執行拓撲更新（集成 Eclipse 防禦）
     @MainActor
     private func performTopologyUpdate() {
         updateNetworkStatistics()
         broadcastNodeInfo()
+        
+        // Eclipse 攻擊防禦 - 多樣性檢查
+        performEclipseDiversityCheck()
     }
     
     /// 更新網路統計
@@ -206,5 +209,199 @@ class TopologyManager: ObservableObject {
             connectedNodes: connectedNodesCount,
             health: networkHealth
         )
+    }
+    
+    // MARK: - Eclipse Attack Defense - Passive Topology Diversity Detection
+    
+    private struct DiversityMetrics {
+        let connectionPattern: ConnectionPattern
+        let deviceFingerprints: Set<String>
+        let networkDistribution: NetworkDistribution
+        let temporalPattern: TemporalPattern
+        let timestamp: Date
+        
+        init(connectedPeers: [MCPeerID], deviceFingerprintManager: DeviceFingerprintManager?) {
+            self.connectionPattern = ConnectionPattern(peerCount: connectedPeers.count)
+            self.deviceFingerprints = Set(connectedPeers.map { $0.displayName })
+            self.networkDistribution = NetworkDistribution(peerDistribution: connectedPeers.map { $0.displayName })
+            self.temporalPattern = TemporalPattern()
+            self.timestamp = Date()
+        }
+        
+        var concentrationRatio: Double {
+            return connectionPattern.concentrationRatio
+        }
+        
+        var diversityScore: Double {
+            let fingerprintDiversity = min(1.0, Double(deviceFingerprints.count) / 5.0)
+            let distributionScore = networkDistribution.diversityScore
+            return (fingerprintDiversity + distributionScore) / 2.0
+        }
+    }
+    
+    private struct ConnectionPattern {
+        let peerCount: Int
+        let timestamp: Date = Date()
+        
+        var concentrationRatio: Double {
+            if peerCount <= 1 { return 1.0 }
+            if peerCount <= 3 { return 0.8 }
+            if peerCount <= 5 { return 0.6 }
+            return 0.4
+        }
+    }
+    
+    private struct NetworkDistribution {
+        let peerDistribution: [String]
+        
+        var diversityScore: Double {
+            let uniquePeers = Set(peerDistribution).count
+            if uniquePeers <= 1 { return 0.2 }
+            if uniquePeers <= 3 { return 0.6 }
+            return 1.0
+        }
+    }
+    
+    private struct TemporalPattern {
+        let timestamp: Date = Date()
+    }
+    
+    private enum EclipseIndicator {
+        case highConcentration
+        case lowDeviceDiversity
+        case suspiciousPattern
+        case normalDiversity
+    }
+    
+    private struct DiversityAnalysisResult {
+        let indicators: [EclipseIndicator]
+        let overallScore: Double
+        let recommendation: String
+        
+        var isEclipseRiskDetected: Bool {
+            return indicators.contains(.highConcentration) || indicators.contains(.lowDeviceDiversity)
+        }
+    }
+    
+    private let expectedMinimumDiversity = 3
+    private var lastDiversityCheck: Date = Date.distantPast
+    private let diversityCheckInterval: TimeInterval = 60.0
+    
+    /// Eclipse 攻擊防禦 - 分析拓撲多樣性
+    @MainActor
+    private func analyzeDiversity() -> DiversityAnalysisResult {
+        guard let meshManager = meshManager else {
+            return DiversityAnalysisResult(
+                indicators: [.suspiciousPattern],
+                overallScore: 0.0,
+                recommendation: "無法獲取網路管理器"
+            )
+        }
+        
+        let connectedPeerStrings = meshManager.getConnectedPeers()
+        let connectedPeers = connectedPeerStrings.compactMap { peerName -> MCPeerID? in
+            return MCPeerID(displayName: peerName)
+        }
+        let metrics = DiversityMetrics(connectedPeers: connectedPeers, deviceFingerprintManager: nil)
+        
+        return evaluateConnectionDiversity(metrics)
+    }
+    
+    /// 評估連接多樣性
+    private func evaluateConnectionDiversity(_ metrics: DiversityMetrics) -> DiversityAnalysisResult {
+        var indicators: [EclipseIndicator] = []
+        
+        // 檢測連接集中化
+        if metrics.concentrationRatio > 0.8 {
+            indicators.append(.highConcentration)
+        }
+        
+        // 檢測設備指紋異常
+        if metrics.deviceFingerprints.count < expectedMinimumDiversity {
+            indicators.append(.lowDeviceDiversity)
+        }
+        
+        // 如果沒有檢測到問題
+        if indicators.isEmpty {
+            indicators.append(.normalDiversity)
+        }
+        
+        let overallScore = calculateOverallDiversityScore(metrics, indicators: indicators)
+        let recommendation = generateDiversityRecommendation(indicators, score: overallScore)
+        
+        return DiversityAnalysisResult(
+            indicators: indicators,
+            overallScore: overallScore,
+            recommendation: recommendation
+        )
+    }
+    
+    /// 計算整體多樣性評分
+    private func calculateOverallDiversityScore(_ metrics: DiversityMetrics, indicators: [EclipseIndicator]) -> Double {
+        var score = metrics.diversityScore
+        
+        // 根據指標調整評分
+        for indicator in indicators {
+            switch indicator {
+            case .highConcentration:
+                score *= 0.5
+            case .lowDeviceDiversity:
+                score *= 0.6
+            case .suspiciousPattern:
+                score *= 0.3
+            case .normalDiversity:
+                break
+            }
+        }
+        
+        return max(0.0, min(1.0, score))
+    }
+    
+    /// 生成多樣性建議
+    private func generateDiversityRecommendation(_ indicators: [EclipseIndicator], score: Double) -> String {
+        if indicators.contains(.highConcentration) {
+            return "檢測到高度連接集中化，建議增加連接多樣性"
+        }
+        
+        if indicators.contains(.lowDeviceDiversity) {
+            return "設備多樣性不足，可能存在 Eclipse 攻擊風險"
+        }
+        
+        if score < 0.5 {
+            return "網路多樣性偏低，建議監控連接模式"
+        }
+        
+        return "網路拓撲多樣性正常"
+    }
+    
+    /// 執行 Eclipse 防禦多樣性檢查
+    @MainActor
+    func performEclipseDiversityCheck() {
+        let timeSinceLastCheck = Date().timeIntervalSince(lastDiversityCheck)
+        guard timeSinceLastCheck >= diversityCheckInterval else { return }
+        
+        lastDiversityCheck = Date()
+        
+        let result = analyzeDiversity()
+        
+        #if DEBUG
+        print("🌐 Eclipse 防禦多樣性檢查結果：")
+        print("   評分: \(String(format: "%.2f", result.overallScore))")
+        print("   指標: \(result.indicators)")
+        print("   建議: \(result.recommendation)")
+        #endif
+        
+        if result.isEclipseRiskDetected {
+            #if DEBUG
+            print("⚠️ 檢測到潛在 Eclipse 攻擊風險")
+            #endif
+            
+            // 通知安全監控系統
+            // 暫時禁用通知，避免在正常遊戲中誤報
+            // NotificationCenter.default.post(
+            //     name: NSNotification.Name("EclipseRiskDetected"),
+            //     object: result
+            // )
+        }
     }
 }

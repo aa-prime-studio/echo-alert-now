@@ -90,10 +90,10 @@ struct PurchaseOptionsView: View {
                     }
                 }) {
                     VStack(spacing: 4) {
-                        Text("月費")
+                        Text(languageService.t("monthly"))
                             .font(.subheadline)
                             .fontWeight(.medium)
-                        Text("每月收費")
+                        Text(languageService.t("monthly_billing"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -113,7 +113,7 @@ struct PurchaseOptionsView: View {
                 }) {
                     VStack(spacing: 4) {
                         HStack {
-                            Text("年費")
+                            Text(languageService.t("yearly"))
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                             Text("15% OFF")
@@ -124,7 +124,7 @@ struct PurchaseOptionsView: View {
                                 .background(Color.orange.opacity(0.2))
                                 .cornerRadius(4)
                         }
-                        Text("每年收費")
+                        Text(languageService.t("yearly_billing"))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -214,7 +214,7 @@ struct PurchaseOptionsView: View {
                             .scaleEffect(0.8)
                     }
                     
-                    Text(purchaseService.isLoading ? "處理中..." : "立即購買")
+                    Text(purchaseService.isLoading ? languageService.t("processing") : languageService.t("purchase_now"))
                         .font(.system(size: 16, weight: .medium))
                         .fontWeight(.semibold)
                 }
@@ -297,7 +297,7 @@ struct PurchaseOptionsView: View {
             }) {
                 HStack {
                     Image(systemName: "arrow.clockwise")
-                    Text("重試載入")
+                    Text(languageService.t("retry_loading"))
                 }
                 .font(.caption)
                 .foregroundColor(.blue)
@@ -317,7 +317,7 @@ struct PurchaseOptionsView: View {
             purchaseService.unlockForTesting(.vip)
             dismiss()
         }) {
-            Text("🔓 測試解鎖 (開發模式)")
+            Text(languageService.t("test_unlock_dev"))
                 .font(.caption)
                 .foregroundColor(.orange)
                 .padding(.horizontal, 12)

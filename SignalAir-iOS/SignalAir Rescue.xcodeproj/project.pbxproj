@@ -15,44 +15,52 @@
 		13502A4C13EAD04A326A48FF /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */; };
 		146C3918755515AE8D89926B /* SharedTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 043D3BB2D63EB6A7CAC28681 /* SharedTypes.swift */; };
 		2697875E9CB3723D8822198D /* LeaderboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F79A8B99132792ECBB45F81E /* LeaderboardView.swift */; };
+		294C88247EDC4111826AFA13 /* SignalAir/Core/Security/AutomaticSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294C88247EDC4111826AFA14 /* SignalAir/Core/Security/AutomaticSecurityMonitor.swift */; };
+		2D1E7C4A274F4AB79218FB88 /* SignalAir/Core/Security/SecurityEventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1E7C4A274F4AB79218FB89 /* SignalAir/Core/Security/SecurityEventTypes.swift */; };
 		3C43304BF9A142428557E675 /* BinaryMessageEncoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17B4234B699044BFAB39EDF5 /* BinaryMessageEncoder.swift */; };
 		4836117A73E2E3AD6073F544 /* TermsOfServiceView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D633E8DF7577872B38031B72 /* TermsOfServiceView.swift */; };
 		4C1E9F6A67400ABFAE2054DB /* LanguageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A405827F77F43F163DF5806F /* LanguageService.swift */; };
+		508C09E1C1644D6089164F4B /* SignalAir/Core/Services/AutonomousSystemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508C09E1C1644D6089164F4C /* SignalAir/Core/Services/AutonomousSystemManager.swift */; };
+		5A8432A64E8F41219640ECC0 /* SignalAir/Core/Security/DeviceFingerprintManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8432A64E8F41219640ECC1 /* SignalAir/Core/Security/DeviceFingerprintManager.swift */; };
 		5F9A8B7C12E43D5F6A8E9014 /* NetworkService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2D4E8F91A7B6C3E54B02758 /* NetworkService.swift */; };
+		6C2D6F709D2248F2AB1005EA /* SignalAir/Core/Security/TrustScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C2D6F709D2248F2AB1005EB /* SignalAir/Core/Security/TrustScoreManager.swift */; };
 		6CA07FE33D9B7FB255AAB657 /* RoomSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */; };
 		7E2641270816505417034FE3 /* NicknameService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF2290F315B0BF1025CBE9B /* NicknameService.swift */; };
 		800078A6B0F8D3C2CA0298D5 /* PurchaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E117FB89370E8E7E8C05434 /* PurchaseService.swift */; };
 		83232FB79B9CC0BAB46EDF25 /* PlayerListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3072289CDECAC4232A444F1 /* PlayerListView.swift */; };
+		88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */; };
 		8E7F2A6D34B95C1F7D3A8E42 /* SecurityService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D8F6A3E25C9B4D7E8F1A5B69 /* SecurityService.swift */; };
 		9BF11577DA1B4C96894B8919 /* SignalViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 41887481BE4A89489FF6D968 /* SignalViewModel.swift */; };
 		9F3A8D5E47B2C6A8E1D7F924 /* ServiceContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E5B9C7F83A4D1E2B5F8C960 /* ServiceContainer.swift */; };
 		A7F3F26BC95CC15F3C401CD8 /* SignalAirApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */; };
 		ADFA42D772FD6BE714C68327 /* PrivacyPolicyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7FFEFE7869FB9357F45681B /* PrivacyPolicyView.swift */; };
 		B52C444AE867E00D138D3147 /* RoomChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */; };
+		BA7A9BE7F4814F1CA2516007 /* SignalAir/Core/Services/SystemHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7A9BE7F4814F1CA2516008 /* SignalAir/Core/Services/SystemHealthMonitor.swift */; };
+		BE7C8B3FA8B844809E73D706 /* SignalAir/Core/Security/AutomaticBanSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7C8B3FA8B844809E73D707 /* SignalAir/Core/Security/AutomaticBanSystem.swift */; };
 		DB287F238A73E5AE57BB23F2 /* ChatViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B5C097EAB9070EA06F6FCE3A /* ChatViewModel.swift */; };
 		DB564D502696770581700AF8 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 50B7F60AC7D85D4B367859BB /* ContentView.swift */; };
 		DB85D0AA91F19320D952EB8A /* HelpView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C593762D72DB0ECC701D91 /* HelpView.swift */; };
+		E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E552B154598A42CEAAA0C551 /* EmoteGridView.swift */; };
 		E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */; };
 		EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61DCAC113E68FF9FF70983D /* ChatView.swift */; };
 		EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */; };
-		GAMEVM001234567890ABCD /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAMEVM001234567890ABCE /* GameViewModel.swift */; };
 		ED13BAC253664B8C9731BEFD /* BinaryMessageDecoder.swift in Sources */ = {isa = PBXBuildFile; fileRef = F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */; };
+		ED63C6F4E00C48EC88A2052B /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED63C6F4E00C48EC88A2052C /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift */; };
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
+		FF77BCA316EA4A52BE91A566 /* SignalAir/Core/Security/MaliciousContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */; };
+		E449823484FF887D696C9401 /* SignalAir/Core/Security/AdvancedThreatDefense.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */; };
+		B35E062BB4FDF3F23F5F7E77 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */; };
+		9F76594E7DB27B53DB073F1B /* SignalAir/Core/Network/RobustNetworkLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */; };
+		ADVCH001234567890ABCDEF /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */; };
+		EDGE001234567890ABCDEF /* SignalAir/Core/Network/EdgeCaseHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */; };
+		GAMEVM001234567890ABCD /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAMEVM001234567890ABCE /* GameViewModel.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
-		88779FA3FC28455D8037D633 /* BinaryGameProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */; };
-		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
 		TIMER001234567890ABCDEF /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMER001234567890ABCDE0 /* TimerManager.swift */; };
-		E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E552B154598A42CEAAA0C551 /* EmoteGridView.swift */; };
-		5A8432A64E8F41219640ECC0 /* DeviceFingerprintManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A8432A64E8F41219640ECC1 /* DeviceFingerprintManager.swift */; };
-		FF77BCA316EA4A52BE91A566 /* MaliciousContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF77BCA316EA4A52BE91A567 /* MaliciousContentDetector.swift */; };
-		6C2D6F709D2248F2AB1005EA /* TrustScoreManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C2D6F709D2248F2AB1005EB /* TrustScoreManager.swift */; };
-		2D1E7C4A274F4AB79218FB88 /* SecurityEventTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D1E7C4A274F4AB79218FB89 /* SecurityEventTypes.swift */; };
-		508C09E1C1644D6089164F4B /* AutonomousSystemManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 508C09E1C1644D6089164F4C /* AutonomousSystemManager.swift */; };
-		294C88247EDC4111826AFA13 /* AutomaticSecurityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 294C88247EDC4111826AFA14 /* AutomaticSecurityMonitor.swift */; };
-		BE7C8B3FA8B844809E73D706 /* AutomaticBanSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7C8B3FA8B844809E73D707 /* AutomaticBanSystem.swift */; };
-		ED63C6F4E00C48EC88A2052B /* AutomaticSystemMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED63C6F4E00C48EC88A2052C /* AutomaticSystemMaintenance.swift */; };
-		BA7A9BE7F4814F1CA2516007 /* SystemHealthMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA7A9BE7F4814F1CA2516008 /* SystemHealthMonitor.swift */; };
+		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
+		SECURITY_DEMO_001234567890 /* SecurityAlertBannerDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = SECURITY_DEMO_001234567891 /* SecurityAlertBannerDemo.swift */; };
+		LOCAL_BLACKLIST_001234567890 /* LocalBlacklistManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */; };
+		BLACKLIST_VIEW_001234567890 /* BlacklistManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,15 +79,22 @@
 		14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DrawnNumbersView.swift; sourceTree = "<group>"; };
 		17B4234B699044BFAB39EDF5 /* BinaryMessageEncoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageEncoder.swift; sourceTree = "<group>"; };
 		1E117FB89370E8E7E8C05434 /* PurchaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseService.swift; sourceTree = "<group>"; };
+		294C88247EDC4111826AFA14 /* SignalAir/Core/Security/AutomaticSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/AutomaticSecurityMonitor.swift; sourceTree = "<group>"; };
+		2D1E7C4A274F4AB79218FB89 /* SignalAir/Core/Security/SecurityEventTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/SecurityEventTypes.swift; sourceTree = "<group>"; };
 		3A918DE39A56052433134489 /* BingoCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoCardView.swift; sourceTree = "<group>"; };
 		41887481BE4A89489FF6D968 /* SignalViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalViewModel.swift; sourceTree = "<group>"; };
 		4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		508C09E1C1644D6089164F4C /* SignalAir/Core/Services/AutonomousSystemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Services/AutonomousSystemManager.swift; sourceTree = "<group>"; };
 		50B7F60AC7D85D4B367859BB /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		5192F2009B446E7217B88B40 /* GameRulesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameRulesView.swift; sourceTree = "<group>"; };
 		59C00C8FC4181AC6810C2275 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		5A8432A64E8F41219640ECC1 /* SignalAir/Core/Security/DeviceFingerprintManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/DeviceFingerprintManager.swift; sourceTree = "<group>"; };
+		678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGameProtocol.swift; sourceTree = "<group>"; };
+		6C2D6F709D2248F2AB1005EB /* SignalAir/Core/Security/TrustScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/TrustScoreManager.swift; sourceTree = "<group>"; };
 		6E5B9C7F83A4D1E2B5F8C960 /* ServiceContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ServiceContainer.swift; sourceTree = "<group>"; };
 		71231F5D38B178E38EFDBDB4 /* SignalViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalViews.swift; sourceTree = "<group>"; };
 		7B7E3D0178BB251CBBCCBF19 /* RoomSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomSelectorView.swift; sourceTree = "<group>"; };
+		7F371E122E2674E0002F8212 /* SignalAirTests-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SignalAirTests-Bridging-Header.h"; sourceTree = "<group>"; };
 		7F56997A2E1278F9008B3E1C /* SignalAirTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SignalAirTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7FFD325B2E09750F00CCD5B8 /* logo_20x20.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_20x20.png; sourceTree = "<group>"; };
 		7FFD325C2E09750F00CCD5B8 /* logo_29x29.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = logo_29x29.png; sourceTree = "<group>"; };
@@ -103,36 +118,38 @@
 		9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomChatView.swift; sourceTree = "<group>"; };
 		A0C593762D72DB0ECC701D91 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoGameViewModel.swift; sourceTree = "<group>"; };
-		GAMEVM001234567890ABCE /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		A405827F77F43F163DF5806F /* LanguageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageService.swift; sourceTree = "<group>"; };
 		A73D1ABC847E0D82253134E6 /* GameView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameView.swift; sourceTree = "<group>"; };
 		ADA9D8E49B9B481E9015E577 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B5C097EAB9070EA06F6FCE3A /* ChatViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatViewModel.swift; sourceTree = "<group>"; };
 		B61DCAC113E68FF9FF70983D /* ChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChatView.swift; sourceTree = "<group>"; };
 		B7FFEFE7869FB9357F45681B /* PrivacyPolicyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyView.swift; sourceTree = "<group>"; };
+		BA7A9BE7F4814F1CA2516008 /* SignalAir/Core/Services/SystemHealthMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Services/SystemHealthMonitor.swift; sourceTree = "<group>"; };
+		BE7C8B3FA8B844809E73D707 /* SignalAir/Core/Security/AutomaticBanSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/AutomaticBanSystem.swift; sourceTree = "<group>"; };
 		C2D4E8F91A7B6C3E54B02758 /* NetworkService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkService.swift; sourceTree = "<group>"; };
 		D633E8DF7577872B38031B72 /* TermsOfServiceView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceView.swift; sourceTree = "<group>"; };
 		D8F6A3E25C9B4D7E8F1A5B69 /* SecurityService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityService.swift; sourceTree = "<group>"; };
 		DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurchaseOptionsView.swift; sourceTree = "<group>"; };
 		E3072289CDECAC4232A444F1 /* PlayerListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerListView.swift; sourceTree = "<group>"; };
+		E552B154598A42CEAAA0C551 /* EmoteGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmoteGridView.swift; sourceTree = "<group>"; };
+		ED63C6F4E00C48EC88A2052C /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Services/AutomaticSystemMaintenance.swift; sourceTree = "<group>"; };
 		F79A8B99132792ECBB45F81E /* LeaderboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LeaderboardView.swift; sourceTree = "<group>"; };
 		F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAirApp.swift; sourceTree = "<group>"; };
 		F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageDecoder.swift; sourceTree = "<group>"; };
+		FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/MaliciousContentDetector.swift; sourceTree = "<group>"; };
+		B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/AdvancedThreatDefense.swift; sourceTree = "<group>"; };
+		E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/EclipseDefenseCoordinator.swift; sourceTree = "<group>"; };
+		F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/RobustNetworkLayer.swift; sourceTree = "<group>"; };
+		ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/AdvancedChannelPoolManager.swift; sourceTree = "<group>"; };
+		EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/EdgeCaseHandlers.swift; sourceTree = "<group>"; };
+		GAMEVM001234567890ABCE /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
-		678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGameProtocol.swift; sourceTree = "<group>"; };
-		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
 		TIMER001234567890ABCDE0 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
-		E552B154598A42CEAAA0C551 /* EmoteGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EmoteGridView.swift; sourceTree = "<group>"; };
-		5A8432A64E8F41219640ECC1 /* DeviceFingerprintManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/DeviceFingerprintManager.swift"; sourceTree = "<group>"; };
-		FF77BCA316EA4A52BE91A567 /* MaliciousContentDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/MaliciousContentDetector.swift"; sourceTree = "<group>"; };
-		6C2D6F709D2248F2AB1005EB /* TrustScoreManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/TrustScoreManager.swift"; sourceTree = "<group>"; };
-		2D1E7C4A274F4AB79218FB89 /* SecurityEventTypes.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/SecurityEventTypes.swift"; sourceTree = "<group>"; };
-		508C09E1C1644D6089164F4C /* AutonomousSystemManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/AutonomousSystemManager.swift"; sourceTree = "<group>"; };
-		294C88247EDC4111826AFA14 /* AutomaticSecurityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/AutomaticSecurityMonitor.swift"; sourceTree = "<group>"; };
-		BE7C8B3FA8B844809E73D707 /* AutomaticBanSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Security/AutomaticBanSystem.swift"; sourceTree = "<group>"; };
-		ED63C6F4E00C48EC88A2052C /* AutomaticSystemMaintenance.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/AutomaticSystemMaintenance.swift"; sourceTree = "<group>"; };
-		BA7A9BE7F4814F1CA2516008 /* SystemHealthMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "SignalAir/Core/Services/SystemHealthMonitor.swift"; sourceTree = "<group>"; };
+		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
+		SECURITY_DEMO_001234567891 /* SecurityAlertBannerDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Security/SecurityAlertBannerDemo.swift; sourceTree = "<group>"; };
+		LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBlacklistManager.swift; sourceTree = "<group>"; };
+		BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlacklistManagementView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -164,6 +181,7 @@
 				0BF2290F315B0BF1025CBE9B /* NicknameService.swift */,
 				1E117FB89370E8E7E8C05434 /* PurchaseService.swift */,
 				D8F6A3E25C9B4D7E8F1A5B69 /* SecurityService.swift */,
+			LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -235,6 +253,28 @@
 			path = Chat;
 			sourceTree = "<group>";
 		};
+		7F371E112E2629AE002F8212 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				5A8432A64E8F41219640ECC1 /* SignalAir/Core/Security/DeviceFingerprintManager.swift */,
+				FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */,
+				B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */,
+				E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */,
+				F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */,
+				ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */,
+				EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */,
+				6C2D6F709D2248F2AB1005EB /* SignalAir/Core/Security/TrustScoreManager.swift */,
+				2D1E7C4A274F4AB79218FB89 /* SignalAir/Core/Security/SecurityEventTypes.swift */,
+				508C09E1C1644D6089164F4C /* SignalAir/Core/Services/AutonomousSystemManager.swift */,
+				294C88247EDC4111826AFA14 /* SignalAir/Core/Security/AutomaticSecurityMonitor.swift */,
+				BE7C8B3FA8B844809E73D707 /* SignalAir/Core/Security/AutomaticBanSystem.swift */,
+				ED63C6F4E00C48EC88A2052C /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift */,
+				BA7A9BE7F4814F1CA2516008 /* SignalAir/Core/Services/SystemHealthMonitor.swift */,
+				SECURITY_DEMO_001234567891 /* SecurityAlertBannerDemo.swift */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		7FFD326D2E09750F00CCD5B8 /* logo */ = {
 			isa = PBXGroup;
 			children = (
@@ -273,6 +313,7 @@
 			children = (
 				DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */,
 				4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */,
+			BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -309,12 +350,30 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		CORENET1234567890ABCDEF /* Network */ = {
+			isa = PBXGroup;
+			children = (
+				TOPO001234567890ABCDE0 /* TopologyManager.swift */,
+			);
+			path = Network;
+			sourceTree = "<group>";
+		};
 		E113A158D5629FE6C82D3808 = {
 			isa = PBXGroup;
 			children = (
 				8A700E1B34E49A552B1904FF /* SignalAir */,
 				A19689ABB38D3863FAEC13B0 /* Products */,
+				7F371E112E2629AE002F8212 /* Recovered References */,
+				7F371E122E2674E0002F8212 /* SignalAirTests-Bridging-Header.h */,
 			);
+			sourceTree = "<group>";
+		};
+		EEB377D8A5A04D5FA9093D65 /* Protocol */ = {
+			isa = PBXGroup;
+			children = (
+				678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */,
+			);
+			path = Protocol;
 			sourceTree = "<group>";
 		};
 		F544AC94A273CF809C5DB890 /* Game */ = {
@@ -324,8 +383,6 @@
 				GAMEVM001234567890ABCE /* GameViewModel.swift */,
 				A73D1ABC847E0D82253134E6 /* GameView.swift */,
 				TIMER001234567890ABCDE0 /* TimerManager.swift */,
-				BNET001234567890ABCDEF0 /* BingoNetworkManager.swift */,
-				BSTATE001234567890ABCD0 /* BingoGameStateManager.swift */,
 				194D9D751FD8D5E4F70BC34F /* Components */,
 			);
 			path = Game;
@@ -338,22 +395,6 @@
 				CORENET1234567890ABCDEF /* Network */,
 			);
 			path = Core;
-			sourceTree = "<group>";
-		};
-		CORENET1234567890ABCDEF /* Network */ = {
-			isa = PBXGroup;
-			children = (
-				TOPO001234567890ABCDE0 /* TopologyManager.swift */,
-			);
-			path = Network;
-			sourceTree = "<group>";
-		};
-		EEB377D8A5A04D5FA9093D65 /* Protocol */ = {
-			isa = PBXGroup;
-			children = (
-				678C72F671F248B09B950C8E /* BinaryGameProtocol.swift */,
-			);
-			path = Protocol;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -409,6 +450,7 @@
 				TargetAttributes = {
 					7F6A1CAF2E1276680057CDED = {
 						CreatedOnToolsVersion = 16.4;
+						LastSwiftMigration = 1640;
 						TestTargetID = 2554C829535DBABF04EF8CCF;
 					};
 				};
@@ -498,15 +540,23 @@
 				TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */,
 				TIMER001234567890ABCDEF /* TimerManager.swift in Sources */,
 				E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */,
-				5A8432A64E8F41219640ECC0 /* DeviceFingerprintManager.swift in Sources */,
-				FF77BCA316EA4A52BE91A566 /* MaliciousContentDetector.swift in Sources */,
-				6C2D6F709D2248F2AB1005EA /* TrustScoreManager.swift in Sources */,
-				2D1E7C4A274F4AB79218FB88 /* SecurityEventTypes.swift in Sources */,
-				508C09E1C1644D6089164F4B /* AutonomousSystemManager.swift in Sources */,
-				294C88247EDC4111826AFA13 /* AutomaticSecurityMonitor.swift in Sources */,
-				BE7C8B3FA8B844809E73D706 /* AutomaticBanSystem.swift in Sources */,
-				ED63C6F4E00C48EC88A2052B /* AutomaticSystemMaintenance.swift in Sources */,
-				BA7A9BE7F4814F1CA2516007 /* SystemHealthMonitor.swift in Sources */,
+				5A8432A64E8F41219640ECC0 /* SignalAir/Core/Security/DeviceFingerprintManager.swift in Sources */,
+				FF77BCA316EA4A52BE91A566 /* SignalAir/Core/Security/MaliciousContentDetector.swift in Sources */,
+				E449823484FF887D696C9401 /* SignalAir/Core/Security/AdvancedThreatDefense.swift in Sources */,
+				B35E062BB4FDF3F23F5F7E77 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift in Sources */,
+				9F76594E7DB27B53DB073F1B /* SignalAir/Core/Network/RobustNetworkLayer.swift in Sources */,
+				ADVCH001234567890ABCDEF /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift in Sources */,
+				EDGE001234567890ABCDEF /* SignalAir/Core/Network/EdgeCaseHandlers.swift in Sources */,
+				6C2D6F709D2248F2AB1005EA /* SignalAir/Core/Security/TrustScoreManager.swift in Sources */,
+				2D1E7C4A274F4AB79218FB88 /* SignalAir/Core/Security/SecurityEventTypes.swift in Sources */,
+				508C09E1C1644D6089164F4B /* SignalAir/Core/Services/AutonomousSystemManager.swift in Sources */,
+				294C88247EDC4111826AFA13 /* SignalAir/Core/Security/AutomaticSecurityMonitor.swift in Sources */,
+				BE7C8B3FA8B844809E73D706 /* SignalAir/Core/Security/AutomaticBanSystem.swift in Sources */,
+				ED63C6F4E00C48EC88A2052B /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift in Sources */,
+				BA7A9BE7F4814F1CA2516007 /* SignalAir/Core/Services/SystemHealthMonitor.swift in Sources */,
+			SECURITY_DEMO_001234567890 /* SecurityAlertBannerDemo.swift in Sources */,
+			LOCAL_BLACKLIST_001234567890 /* LocalBlacklistManager.swift in Sources */,
+			BLACKLIST_VIEW_001234567890 /* BlacklistManagementView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -649,6 +699,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JD64Y6G733;
@@ -665,6 +716,8 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "SignalAirTests-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SignalAir.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SignalAir";
@@ -676,6 +729,7 @@
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = JD64Y6G733;
@@ -687,6 +741,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = gmail.signalair.SignalAirTests.SignalAirTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OBJC_BRIDGING_HEADER = "SignalAirTests-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SignalAir.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SignalAir";

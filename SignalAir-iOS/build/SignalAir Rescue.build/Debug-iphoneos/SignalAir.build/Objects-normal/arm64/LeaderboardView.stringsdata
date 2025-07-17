@@ -4,50 +4,10 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "本週排行榜",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 11
-        }
-      },
-      {
-        "comment": "",
         "key": "排行榜類型",
         "location": {
           "startingColumn": 20,
           "startingLine": 17
-        }
-      },
-      {
-        "comment": "",
-        "key": "Bingo神",
-        "location": {
-          "startingColumn": 22,
-          "startingLine": 18
-        }
-      },
-      {
-        "comment": "",
-        "key": "你是DJ嗎",
-        "location": {
-          "startingColumn": 22,
-          "startingLine": 19
-        }
-      },
-      {
-        "comment": "",
-        "key": "烏龜神",
-        "location": {
-          "startingColumn": 22,
-          "startingLine": 20
-        }
-      },
-      {
-        "comment": "",
-        "key": "本週暫無排行榜數據",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 32
         }
       },
       {

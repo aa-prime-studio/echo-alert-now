@@ -41,7 +41,7 @@ struct RoomSelectorView: View {
                                 HStack(spacing: 4) {
                                     ProgressView()
                                         .scaleEffect(0.7)
-                                    Text("加入中...")
+                                    Text(languageService.t("joining"))
                                         .font(.caption)
                                         .opacity(0.8)
                                 }

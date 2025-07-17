@@ -95,7 +95,7 @@ struct SignalMessage: Identifiable, Codable {
 }
 
 // 聊天訊息
-struct ChatMessage: Identifiable, Codable {
+struct ChatMessage: Identifiable {
     let id: String
     let message: String
     let deviceName: String
@@ -103,20 +103,85 @@ struct ChatMessage: Identifiable, Codable {
     let isOwn: Bool
     let isEncrypted: Bool
     let messageHash: String // 用於去重
+    let mentions: [String] // 被提及的使用者列表
+    let mentionsMe: Bool // 是否提及了我
     
-    init(id: String = UUID().uuidString, message: String, deviceName: String, timestamp: TimeInterval = Date().timeIntervalSince1970, isOwn: Bool = false, isEncrypted: Bool = false) {
+    init(id: String = UUID().uuidString, message: String, deviceName: String, timestamp: TimeInterval = Date().timeIntervalSince1970, isOwn: Bool = false, isEncrypted: Bool = false, mentions: [String] = [], mentionsMe: Bool = false) {
         self.id = id
         self.message = message
         self.deviceName = deviceName
         self.timestamp = timestamp
         self.isOwn = isOwn
         self.isEncrypted = isEncrypted
+        self.mentions = mentions
+        self.mentionsMe = mentionsMe
         self.messageHash = ChatMessage.generateHash(message: message, deviceName: deviceName, timestamp: timestamp)
     }
     
     static func generateHash(message: String, deviceName: String, timestamp: TimeInterval) -> String {
         let combined = "\(message)_\(deviceName)_\(Int(timestamp))"
         return String(combined.hashValue)
+    }
+    
+    // 解析訊息中的@提及
+    static func extractMentions(from message: String) -> [String] {
+        let pattern = "@([\\w\\u4e00-\\u9fff]+)"
+        let regex = try? NSRegularExpression(pattern: pattern, options: [])
+        let matches = regex?.matches(in: message, options: [], range: NSRange(location: 0, length: message.count)) ?? []
+        
+        return matches.compactMap { match in
+            guard let range = Range(match.range(at: 1), in: message) else { return nil }
+            return String(message[range])
+        }
+    }
+    
+    // 檢查是否提及了指定使用者
+    static func checkMentionsUser(_ userNickname: String, in message: String) -> Bool {
+        let cleanUserNickname = NicknameFormatter.cleanNickname(userNickname)
+        let mentions = extractMentions(from: message)
+        return mentions.contains { mention in
+            NicknameFormatter.cleanNickname(mention) == cleanUserNickname
+        }
+    }
+}
+
+// MARK: - ChatMessage 向後兼容的 Codable 實現
+extension ChatMessage {
+    private enum CodingKeys: String, CodingKey {
+        case id, message, deviceName, timestamp, isOwn, isEncrypted, messageHash
+        case mentions, mentionsMe
+    }
+    
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        
+        // 必需的舊版本欄位
+        id = try container.decode(String.self, forKey: .id)
+        message = try container.decode(String.self, forKey: .message)
+        deviceName = try container.decode(String.self, forKey: .deviceName)
+        timestamp = try container.decode(TimeInterval.self, forKey: .timestamp)
+        isOwn = try container.decode(Bool.self, forKey: .isOwn)
+        isEncrypted = try container.decode(Bool.self, forKey: .isEncrypted)
+        messageHash = try container.decode(String.self, forKey: .messageHash)
+        
+        // 新版本欄位（提供默認值以支援向後兼容）
+        mentions = try container.decodeIfPresent([String].self, forKey: .mentions) ?? []
+        mentionsMe = try container.decodeIfPresent(Bool.self, forKey: .mentionsMe) ?? false
+    }
+    
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // 編碼所有欄位
+        try container.encode(id, forKey: .id)
+        try container.encode(message, forKey: .message)
+        try container.encode(deviceName, forKey: .deviceName)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(isOwn, forKey: .isOwn)
+        try container.encode(isEncrypted, forKey: .isEncrypted)
+        try container.encode(messageHash, forKey: .messageHash)
+        try container.encode(mentions, forKey: .mentions)
+        try container.encode(mentionsMe, forKey: .mentionsMe)
     }
 }
 

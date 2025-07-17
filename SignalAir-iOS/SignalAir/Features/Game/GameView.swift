@@ -83,10 +83,8 @@ struct GameView: View {
                     rooms: rooms,
                     leaderboard: leaderboard,
                     onJoinRoom: { room in
-                        print("🚨🚨🚨 ROOM SELECTED: id=\(room.id) name=\(room.name) 🚨🚨🚨")
                         DispatchQueue.main.async {
                             currentRoomID = room.id
-                            print("🚨🚨🚨 CURRENT ROOM SET ON MAIN THREAD: \(room.id) 🚨🚨🚨")
                         }
                     }
                 )
@@ -95,7 +93,6 @@ struct GameView: View {
         }
         .background(Color.gray.opacity(0.05))
         .onAppear {
-            print("🚨🚨🚨 GAME VIEW APPEARED, currentRoomID: \(currentRoomID) 🚨🚨🚨")
             setupLeaderboard()
             startRoomMonitoring()
         }
@@ -106,13 +103,10 @@ struct GameView: View {
             print("🧹 GameView: 已清理房間監控 Timer")
         }
         .onChange(of: currentRoomID) { newRoomID in
-            print("🚨🚨🚨 CURRENT ROOM CHANGED TO: \(newRoomID) 🚨🚨🚨")
             if newRoomID > 0 {
-                print("🚨🚨🚨 SHOULD SHOW BINGO GAME VIEW NOW 🚨🚨🚨")
                 // 更新現有 ViewModel 的房間
                 bingoViewModel.updateRoom(newRoomID)
             } else {
-                print("🚨🚨🚨 SHOULD SHOW ROOM LIST NOW 🚨🚨🚨")
             }
         }
     }
@@ -123,12 +117,12 @@ struct GameView: View {
                 Text("Bingo\nGame Room")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                 
                 if currentRoomID > 0 {
                     Text("\(languageService.t("playing_in")) room \(currentRoomID)")
                         .font(.caption)
-                        .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475).opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
             }
             Spacer()
@@ -138,11 +132,11 @@ struct GameView: View {
                     currentRoomID = -1
                 }
                 .font(.headline)
-                .foregroundColor(Color(red: 1.0, green: 0.925, blue: 0.475)) // #ffec79
+                .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
         }
         .padding()
-        .background(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
+        .background(.white)
     }
     
     private func setupLeaderboard() {
@@ -495,11 +489,6 @@ struct BingoGameView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 20) {
-                // Debug view to ensure this view is being rendered
-                Text("🚨 BINGO GAME VIEW BODY RENDERED: room=\(currentRoomID) 🚨")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.top)
                 
                 // Game Status Info
                 VStack(spacing: 8) {
@@ -601,13 +590,10 @@ struct BingoGameView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            print("🚨🚨🚨 BINGO GAME VIEW APPEARED: room=\(currentRoomID) 🚨🚨🚨")
-            print("🚨🚨🚨 BINGO GAME VIEW BODY WAS RENDERED 🚨🚨🚨")
             // 只在第一次出現時加入房間
             if viewModel.gameRoomID != String(currentRoomID) {
                 viewModel.attemptToJoinOrCreateRoom(roomID: String(currentRoomID))
             }
-            print("🚨🚨🚨 AFTER CALLING attemptToJoinOrCreateRoom 🚨🚨🚨")
             
             // 設置遊戲獲勝回調
             viewModel.onGameWon = { deviceName, score in
@@ -794,8 +780,8 @@ struct EmoteButtonsView: View {
     // 所有可用的表情
     private let allEmotes: [EmoteType] = [
         .bingo, .nen, .wow, .boom, .pirate, .rocket, .bug, .fly, .fire, .poop,
-        .clown, .mindBlown, .pinch, .cockroach, .eyeRoll, .burger, .rockOn, .battery,
-        .dizzy, .bottle, .skull, .mouse, .trophy, .ring, .juggler
+        .clown, .mindBlown, .pinch, .eyeRoll, .burger, .rockOn, .battery,
+        .dizzy, .bottle, .skull, .mouse, .ring, .juggler, .pray, .love
     ]
     
     // 網格佈局配置：每行5個按鈕

@@ -1,5 +1,6 @@
 import Foundation
 @preconcurrency import MultipeerConnectivity
+import SwiftUI
 
 // MARK: - Connection State Manager Actor
 actor ConnectionStateManager {
@@ -97,6 +98,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     private var streamChannelUsageCount = 0
     private var lastChannelError: (operation: String, error: Error, timestamp: Date)?
     
+    // MARK: - Eclipse Attack Defense
+    private var eclipseProbe = EclipseDefenseRandomProbe()
+    
     // 連接狀態管理器 (使用Actor模式)
     private let connectionStateManager = ConnectionStateManager()
     
@@ -158,7 +162,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
         self.session = MCSession(
             peer: safePeerID, 
             securityIdentity: nil, 
-            encryptionPreference: .optional  // 可選加密，提高兼容性
+            encryptionPreference: .required  // 必需加密，確保安全性
         )
         
         // 關鍵：設置 session 的錯誤處理和超時配置
@@ -488,11 +492,59 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         print("📥 Received \(data.count) bytes from: \(peerID.displayName)")
         
+        // 🛡️ 安全檢查：檢測攻擊數據
+        checkForSecurityThreats(data: data, fromPeer: peerID)
+        
         // 調用新的協議回調
         self.onDataReceived?(data, peerID.displayName)
         
         // 保持向後兼容性
         self.onReceiveData?(data, peerID)
+    }
+    
+    // MARK: - 安全威脅檢測
+    private func checkForSecurityThreats(data: Data, fromPeer peerID: MCPeerID) {
+        // 解析 JSON 數據
+        guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let attackType = jsonObject["type"] as? String else {
+            return // 不是攻擊數據，正常處理
+        }
+        
+        // 只對真正的攻擊類型觸發警告，排除正常的遊戲和聊天消息
+        let maliciousTypes = [
+            "attack", "exploit", "injection", "malware", "virus", 
+            "breach", "compromise", "intrusion", "backdoor", "trojan",
+            "ddos", "flood", "spam", "phishing", "social_engineering"
+        ]
+        
+        let normalGameTypes = [
+            "game", "bingo", "chat", "message", "player", "room", "join", "leave",
+            "move", "action", "state", "update", "ping", "pong", "heartbeat",
+            "keyExchange", "keyExchangeResponse", "encrypted", "broadcast"
+        ]
+        
+        // 檢查是否為已知的正常類型
+        if normalGameTypes.contains(attackType.lowercased()) {
+            return // 正常遊戲消息，不觸發警告
+        }
+        
+        // 檢查是否為已知的惡意類型
+        if maliciousTypes.contains(attackType.lowercased()) {
+            // 記錄真正的安全威脅檢測
+            #if DEBUG
+            print("🚨 檢測到惡意數據類型: \(attackType)")
+            #endif
+            
+            // 觸發安全警報
+            DispatchQueue.main.async {
+                SecurityAlertBannerSystem.shared.showSecurityAlert(for: .systemCompromise, deviceName: peerID.displayName)
+            }
+        }
+        
+        // 對於未知類型，只記錄但不觸發警告
+        #if DEBUG
+        print("ℹ️ 收到未知數據類型: \(attackType)")
+        #endif
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
@@ -686,7 +738,7 @@ extension NetworkService: @preconcurrency MCNearbyServiceBrowserDelegate {
 
 // MARK: - Connection Reliability Enhancement
 extension NetworkService {
-    /// 檢查連接品質並提供穩定性建議
+    /// 檢查連接品質並提供穩定性建議（集成 Eclipse 防禦）
     func checkConnectionQuality() {
         let peerCount = connectedPeers.count
         print("📊 連接品質檢查：\(peerCount) 個連接的設備")
@@ -696,6 +748,9 @@ extension NetworkService {
             print("⚠️ 連接狀態不一致，需要更新狀態")
             updateConnectionStatus()
         }
+        
+        // Eclipse 攻擊防禦檢查
+        performEclipseDefenseCheck()
     }
     
     // MARK: - Protocol Methods
@@ -714,6 +769,92 @@ extension NetworkService {
     
     func getConnectedPeers() -> [String] {
         return connectedPeers.map { $0.displayName }
+    }
+    
+    // MARK: - Eclipse Attack Defense - Lightweight Random Probe
+    
+    private struct EclipseDefenseRandomProbe {
+        private let probeInterval: TimeInterval = 30.0
+        private var lastProbeTime: Date = Date.distantPast
+        private var probeTargets: Set<String> = []
+        
+        mutating func shouldPerformProbe() -> Bool {
+            let timeSinceLastProbe = Date().timeIntervalSince(lastProbeTime)
+            return timeSinceLastProbe >= probeInterval
+        }
+        
+        mutating func recordProbe() {
+            lastProbeTime = Date()
+        }
+        
+        mutating func updateProbeTargets(_ connectedPeers: [MCPeerID]) {
+            probeTargets = Set(connectedPeers.map { $0.displayName })
+        }
+        
+        func getRandomProbeTarget(from connectedPeers: [MCPeerID]) -> MCPeerID? {
+            guard !connectedPeers.isEmpty else { return nil }
+            return connectedPeers.randomElement()
+        }
+    }
+    
+    /// Eclipse 攻擊防禦 - 執行輕量隨機探測
+    @MainActor
+    private func performEclipseRandomProbe() {
+        guard eclipseProbe.shouldPerformProbe() else { return }
+        
+        let connectedPeers = self.connectedPeers
+        guard !connectedPeers.isEmpty else { return }
+        
+        guard let randomPeer = eclipseProbe.getRandomProbeTarget(from: connectedPeers) else { return }
+        
+        eclipseProbe.recordProbe()
+        eclipseProbe.updateProbeTargets(connectedPeers)
+        
+        #if DEBUG
+        print("🔍 Eclipse 防禦：執行隨機探測至 \(randomPeer.displayName)")
+        #endif
+        
+        Task {
+            do {
+                let probeData = createEclipseProbePacket()
+                try await send(probeData, to: [randomPeer])
+                
+                #if DEBUG
+                print("✅ Eclipse 探測包已發送至 \(randomPeer.displayName)")
+                #endif
+            } catch {
+                #if DEBUG
+                print("❌ Eclipse 探測失敗至 \(randomPeer.displayName): \(error)")
+                #endif
+            }
+        }
+    }
+    
+    /// 創建 Eclipse 探測包
+    private func createEclipseProbePacket() -> Data {
+        let probeMessage = [
+            "type": "eclipse_probe",
+            "timestamp": Date().timeIntervalSince1970,
+            "sender": myPeerID.displayName,
+            "probe_id": UUID().uuidString
+        ] as [String: Any]
+        
+        do {
+            let jsonData = try JSONSerialization.data(withJSONObject: probeMessage)
+            let meshMessage = MeshMessage(type: .system, data: jsonData)
+            return try BinaryMessageEncoder.encode(meshMessage)
+        } catch {
+            #if DEBUG
+            print("❌ 創建 Eclipse 探測包失敗: \(error)")
+            #endif
+            return Data()
+        }
+    }
+    
+    /// 檢查並處理 Eclipse 攻擊跡象
+    @MainActor
+    func performEclipseDefenseCheck() {
+        performEclipseRandomProbe()
     }
     
     // MARK: - Enhanced Retry Mechanism with Connection Protection

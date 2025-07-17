@@ -4,58 +4,10 @@
     "Localizable": [
       {
         "comment": "",
-        "key": "月費",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 93
-        }
-      },
-      {
-        "comment": "",
-        "key": "每月收費",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 96
-        }
-      },
-      {
-        "comment": "",
-        "key": "每年收費",
-        "location": {
-          "startingColumn": 30,
-          "startingLine": 127
-        }
-      },
-      {
-        "comment": "",
-        "key": "年費",
-        "location": {
-          "startingColumn": 34,
-          "startingLine": 116
-        }
-      },
-      {
-        "comment": "",
         "key": "15% OFF",
         "location": {
           "startingColumn": 34,
           "startingLine": 119
-        }
-      },
-      {
-        "comment": "",
-        "key": "處理中...",
-        "location": {
-          "startingColumn": 54,
-          "startingLine": 217
-        }
-      },
-      {
-        "comment": "",
-        "key": "立即購買",
-        "location": {
-          "startingColumn": 71,
-          "startingLine": 217
         }
       },
       {
@@ -88,22 +40,6 @@
         "location": {
           "startingColumn": 18,
           "startingLine": 253
-        }
-      },
-      {
-        "comment": "",
-        "key": "重試載入",
-        "location": {
-          "startingColumn": 26,
-          "startingLine": 300
-        }
-      },
-      {
-        "comment": "",
-        "key": "🔓 測試解鎖 (開發模式)",
-        "location": {
-          "startingColumn": 18,
-          "startingLine": 320
         }
       }
     ]

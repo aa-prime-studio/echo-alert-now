@@ -7,7 +7,7 @@
         "key": "Bingo\nGame Room",
         "location": {
           "startingColumn": 22,
-          "startingLine": 123
+          "startingLine": 117
         }
       },
       {
@@ -15,15 +15,7 @@
         "key": "%@ room %lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 129
-        }
-      },
-      {
-        "comment": "",
-        "key": "🚨 BINGO GAME VIEW BODY RENDERED: room=%lld 🚨",
-        "location": {
-          "startingColumn": 22,
-          "startingLine": 499
+          "startingLine": 123
         }
       },
       {
@@ -31,7 +23,7 @@
         "key": "%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 508
+          "startingLine": 497
         }
       },
       {
@@ -39,7 +31,7 @@
         "key": "%@ (%lld%@)",
         "location": {
           "startingColumn": 34,
-          "startingLine": 523
+          "startingLine": 512
         }
       },
       {
@@ -47,7 +39,7 @@
         "key": "%@ (%lld/6%@)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 515
+          "startingLine": 504
         }
       },
       {
@@ -55,7 +47,7 @@
         "key": "%@ (%lld/6%@)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 528
+          "startingLine": 517
         }
       },
       {
@@ -63,7 +55,7 @@
         "key": "%@: %lld/5",
         "location": {
           "startingColumn": 34,
-          "startingLine": 549
+          "startingLine": 538
         }
       },
       {
@@ -71,7 +63,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 699
+          "startingLine": 685
         }
       },
       {
@@ -79,7 +71,7 @@
         "key": "🏆",
         "location": {
           "startingColumn": 30,
-          "startingLine": 681
+          "startingLine": 667
         }
       }
     ]

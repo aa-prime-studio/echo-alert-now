@@ -6,6 +6,9 @@ struct ChatView: View {
     @EnvironmentObject var nicknameService: NicknameService
     @EnvironmentObject var languageService: LanguageService
     @FocusState private var isTextFieldFocused: Bool
+    @StateObject private var blacklistManager = ServiceContainer.shared.localBlacklistManager
+    @State private var selectedUserForBlacklist: String = ""
+    @State private var showBlacklistDialog = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -22,6 +25,23 @@ struct ChatView: View {
         .onChange(of: nicknameService.nickname) { newNickname in
             viewModel.deviceName = newNickname
         }
+        .confirmationDialog("用戶操作", isPresented: $showBlacklistDialog) {
+            Button("加入黑名單") {
+                blacklistManager.addToBlacklist(deviceName: selectedUserForBlacklist)
+            }
+            Button("取消", role: .cancel) { }
+        } message: {
+            Text("要將 \(NicknameFormatter.cleanNickname(selectedUserForBlacklist)) 加入黑名單嗎？")
+        }
+    }
+    
+    // MARK: - Computed Properties
+    
+    /// 過濾黑名單用戶的訊息
+    private var filteredMessages: [ChatMessage] {
+        return viewModel.messages.filter { message in
+            !blacklistManager.isBlacklisted(deviceName: message.deviceName)
+        }
     }
     
     // MARK: - Helper Methods
@@ -32,6 +52,9 @@ struct ChatView: View {
         
         viewModel.sendMessage()
         isTextFieldFocused = false // 收回鍵盤
+        
+        // 強制隱藏鍵盤
+        hideKeyboard()
     }
     
     private var headerSection: some View {
@@ -40,30 +63,30 @@ struct ChatView: View {
                 Text("Live Support\nChatroom")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.671, green: 0.576, blue: 0.898)) // #ab93e5
                 HStack(spacing: 4) {
                     Image(systemName: "clock")
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                     Text(languageService.t("auto_delete_24h"))
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
             }
             Spacer()
             HStack(spacing: 12) {
             Text("(\(viewModel.messages.count))")
                 .font(.subheadline)
-                    .foregroundColor(.black.opacity(0.8))
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
             Button(action: { viewModel.clearMessages() }) {
                 Image(systemName: "trash")
                     .font(.title3)
-                        .foregroundColor(.black)
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
                 }
             }
         }
         .padding()
-        .background(Color(red: 0.671, green: 0.576, blue: 0.898)) // #ab93e5
+        .background(.white)
     }
     
     private var messagesSection: some View {
@@ -87,8 +110,13 @@ struct ChatView: View {
             } else {
                 ScrollView {
                     LazyVStack(spacing: 12) {
-                        ForEach(viewModel.messages) { message in
-                            ChatMessageView(message: message, formatTime: viewModel.formatTime)
+                        ForEach(filteredMessages) { message in
+                            ChatMessageView(
+                                message: message, 
+                                formatTime: viewModel.formatTime,
+                                selectedUserForBlacklist: $selectedUserForBlacklist,
+                                showBlacklistDialog: $showBlacklistDialog
+                            )
                         }
                     }
                     .padding()
@@ -101,12 +129,12 @@ struct ChatView: View {
     private var inputSection: some View {
         VStack(spacing: 8) {
             HStack(spacing: 12) {
-                TextField(languageService.t("enter_message"), text: $viewModel.newMessage)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .focused($isTextFieldFocused)
-                    .onSubmit { 
-                        sendMessageAndDismissKeyboard()
-                    }
+                MentionTextField(
+                    text: $viewModel.newMessage,
+                    placeholder: languageService.t("enter_message"),
+                    availableUsers: viewModel.getAvailableUsers(),
+                    onSubmit: { sendMessageAndDismissKeyboard() }
+                )
                 
                 Button(action: { sendMessageAndDismissKeyboard() }) {
                     Image(systemName: "paperplane.fill")
@@ -129,7 +157,10 @@ struct ChatView: View {
 struct ChatMessageView: View {
     let message: ChatMessage
     let formatTime: (TimeInterval) -> String
+    @Binding var selectedUserForBlacklist: String
+    @Binding var showBlacklistDialog: Bool
     @EnvironmentObject var languageService: LanguageService
+    @EnvironmentObject var nicknameService: NicknameService
     
     var body: some View {
         GeometryReader { geometry in
@@ -138,11 +169,22 @@ struct ChatMessageView: View {
             
             VStack(alignment: message.isOwn ? .trailing : .leading, spacing: 4) {
                 HStack(spacing: 8) {
+                    // 提及我的標記
+                    if message.mentionsMe && !message.isOwn {
+                        Image(systemName: "at.circle.fill")
+                            .font(.caption)
+                            .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                    }
+                    
                     if !message.isOwn {
                         Text(NicknameFormatter.cleanNickname(message.deviceName))
                             .font(.caption)
                             .fontWeight(.medium)
                             .foregroundColor(.secondary)
+                            .onLongPressGesture {
+                                selectedUserForBlacklist = message.deviceName
+                                showBlacklistDialog = true
+                            }
                     }
                     
                     Text(formatTime(message.timestamp))
@@ -157,10 +199,11 @@ struct ChatMessageView: View {
                     }
                 }
                 
-                Text(message.message)
+                // 使用 AttributedString 來支援 @提及高亮
+                Text(createAttributedMessage(message.message))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
-                    .background(message.isOwn ? Color.blue : Color.white)
+                    .background(backgroundColor)
                     .foregroundColor(message.isOwn ? .white : .primary)
                     .cornerRadius(16)
             }
@@ -170,5 +213,229 @@ struct ChatMessageView: View {
         }
         }
         .frame(height: 60) // Set a fixed height for the GeometryReader
+    }
+    
+    private var backgroundColor: Color {
+        if message.isOwn {
+            return Color.blue
+        } else if message.mentionsMe {
+            return Color(red: 0.0, green: 0.843, blue: 0.416).opacity(0.1) // 淺綠色背景表示提及我
+        } else {
+            return Color.white
+        }
+    }
+    
+    private func createAttributedMessage(_ text: String) -> AttributedString {
+        var attributedString = AttributedString(text)
+        
+        // 找出所有的 @提及
+        let mentions = ChatMessage.extractMentions(from: text)
+        let myNickname = NicknameFormatter.cleanNickname(nicknameService.userNickname)
+        
+        for mention in mentions {
+            let mentionText = "@\(mention)"
+            if let range = attributedString.range(of: mentionText) {
+                // 被提及的使用者名稱顯示綠色（設置內文圖標色彩）
+                attributedString[range].foregroundColor = Color(red: 0.0, green: 0.843, blue: 0.416)
+                attributedString[range].font = .system(size: 16, weight: .medium)
+                
+                // 如果提及的是我，額外添加底線
+                if NicknameFormatter.cleanNickname(mention) == myNickname {
+                    attributedString[range].underlineStyle = .single
+                }
+            }
+        }
+        
+        return attributedString
+    }
+}
+
+// MARK: - 鍵盤管理擴展
+extension View {
+    func hideKeyboard() {
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+// MARK: - MentionTextField Implementation
+
+struct MentionAutocompleteView: View {
+    let users: [String]
+    let onSelectUser: (String) -> Void
+    let onDismiss: () -> Void
+    
+    var body: some View {
+        if !users.isEmpty {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(users, id: \.self) { user in
+                    Button(action: {
+                        onSelectUser(user)
+                    }) {
+                        HStack {
+                            Image(systemName: "person.circle.fill")
+                                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                                .font(.system(size: 16))
+                            
+                            Text(user)
+                                .foregroundColor(.primary)
+                                .font(.system(size: 16))
+                            
+                            Spacer()
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Color.white)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    
+                    if user != users.last {
+                        Divider()
+                            .background(Color.gray.opacity(0.3))
+                    }
+                }
+            }
+            .background(Color.white)
+            .cornerRadius(8)
+            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            .padding(.horizontal)
+            .transition(.opacity.combined(with: .scale(scale: 0.95)))
+        }
+    }
+}
+
+struct MentionTextField: View {
+    @Binding var text: String
+    @State private var showingMentionList = false
+    @State private var filteredUsers: [String] = []
+    @State private var currentMentionPrefix = ""
+    @State private var mentionStartIndex: String.Index?
+    @FocusState private var isFocused: Bool
+    
+    let placeholder: String
+    let availableUsers: [String]
+    let onSubmit: () -> Void
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // 自動補全列表 - 顯示在輸入框上方
+            if showingMentionList {
+                MentionAutocompleteView(
+                    users: filteredUsers,
+                    onSelectUser: { selectedUser in
+                        insertMention(selectedUser)
+                    },
+                    onDismiss: {
+                        dismissMentionList()
+                    }
+                )
+                .animation(.easeInOut(duration: 0.2), value: showingMentionList)
+            }
+            
+            // 輸入框
+            TextField(placeholder, text: $text)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .focused($isFocused)
+                .onSubmit {
+                    onSubmit()
+                    isFocused = false
+                    // 強制隱藏鍵盤
+                    hideKeyboard()
+                }
+                .onChange(of: text) { newValue in
+                    handleTextChange(newValue)
+                }
+                .onTapGesture {
+                    // 檢查是否需要顯示提及列表
+                    checkForMentionAtCursor()
+                }
+        }
+    }
+    
+    private func handleTextChange(_ newText: String) {
+        // 檢查是否在輸入 @ 提及
+        if let cursorPosition = getCursorPosition() {
+            checkForMentionAt(position: cursorPosition, in: newText)
+        }
+    }
+    
+    private func checkForMentionAt(position: String.Index, in text: String) {
+        // 從游標位置向前搜尋 @ 符號
+        var searchIndex = position
+        var foundAt = false
+        var mentionText = ""
+        
+        // 向前搜尋直到找到 @ 或空白字符
+        while searchIndex > text.startIndex {
+            searchIndex = text.index(before: searchIndex)
+            let char = text[searchIndex]
+            
+            if char == "@" {
+                foundAt = true
+                mentionStartIndex = searchIndex
+                break
+            } else if char.isWhitespace || char.isNewline {
+                break
+            } else {
+                mentionText = String(char) + mentionText
+            }
+        }
+        
+        if foundAt {
+            // 取得 @ 後面的文字
+            let afterAtIndex = text.index(after: searchIndex)
+            if afterAtIndex < position {
+                mentionText = String(text[afterAtIndex..<position])
+            }
+            
+            currentMentionPrefix = mentionText
+            filterUsers(with: mentionText)
+            showingMentionList = !filteredUsers.isEmpty
+        } else {
+            dismissMentionList()
+        }
+    }
+    
+    private func checkForMentionAtCursor() {
+        if let cursorPosition = getCursorPosition() {
+            checkForMentionAt(position: cursorPosition, in: text)
+        }
+    }
+    
+    private func getCursorPosition() -> String.Index? {
+        // 簡化版本：返回文字結尾位置
+        return text.endIndex
+    }
+    
+    private func filterUsers(with prefix: String) {
+        if prefix.isEmpty {
+            filteredUsers = Array(availableUsers.prefix(5))
+        } else {
+            filteredUsers = availableUsers.filter { user in
+                NicknameFormatter.cleanNickname(user).localizedCaseInsensitiveContains(prefix)
+            }.prefix(5).map { $0 }
+        }
+    }
+    
+    private func insertMention(_ user: String) {
+        guard let startIndex = mentionStartIndex else { return }
+        
+        let cleanUserName = NicknameFormatter.cleanNickname(user)
+        let mentionText = "@\(cleanUserName) "
+        
+        // 計算要替換的範圍
+        let endIndex = text.index(startIndex, offsetBy: currentMentionPrefix.count + 1, limitedBy: text.endIndex) ?? text.endIndex
+        
+        // 替換文字
+        text.replaceSubrange(startIndex..<endIndex, with: mentionText)
+        
+        dismissMentionList()
+    }
+    
+    private func dismissMentionList() {
+        showingMentionList = false
+        filteredUsers = []
+        currentMentionPrefix = ""
+        mentionStartIndex = nil
     }
 }

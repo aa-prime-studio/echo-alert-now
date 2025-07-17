@@ -920,11 +920,14 @@ class SignalViewModel: ObservableObject {
         isOnline = !connectedPeers.isEmpty
         
         if isOnline {
-            connectionStatus = "已連線 (\(connectedPeers.count) 個設備)"
+            // 使用 LanguageService 的格式化字符串
+            let languageService = ServiceContainer.shared.languageService
+            connectionStatus = String(format: languageService.t("connected_devices"), "\(connectedPeers.count)")
             encryptionStatus = "端到端加密"
         } else {
-            connectionStatus = "離線模式"
-            encryptionStatus = "未連線"
+            let languageService = ServiceContainer.shared.languageService
+            connectionStatus = languageService.t("offline")
+            encryptionStatus = languageService.t("disconnected")
         }
     }
     

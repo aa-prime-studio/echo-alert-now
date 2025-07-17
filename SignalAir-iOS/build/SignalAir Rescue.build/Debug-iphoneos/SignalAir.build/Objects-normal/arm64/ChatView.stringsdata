@@ -4,10 +4,42 @@
     "Localizable": [
       {
         "comment": "",
+        "key": "用戶操作",
+        "location": {
+          "startingColumn": 29,
+          "startingLine": 28
+        }
+      },
+      {
+        "comment": "",
+        "key": "加入黑名單",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 29
+        }
+      },
+      {
+        "comment": "",
+        "key": "取消",
+        "location": {
+          "startingColumn": 20,
+          "startingLine": 32
+        }
+      },
+      {
+        "comment": "",
+        "key": "要將 %@ 加入黑名單嗎？",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 34
+        }
+      },
+      {
+        "comment": "",
         "key": "Live Support\nChatroom",
         "location": {
           "startingColumn": 22,
-          "startingLine": 40
+          "startingLine": 63
         }
       },
       {
@@ -15,7 +47,7 @@
         "key": "(%lld)",
         "location": {
           "startingColumn": 18,
-          "startingLine": 55
+          "startingLine": 78
         }
       }
     ]

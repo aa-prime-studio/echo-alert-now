@@ -82,44 +82,47 @@ struct ContentView: View {
                     viewModelContainer.initializationError = nil
                     viewModelContainer.isReady = true
                 }
-            } else if viewModelContainer.isReady {
-                TabView(selection: $selectedTab) {
-                    SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
-                        .tabItem {
-                            Image(systemName: "antenna.radiowaves.left.and.right")
-                            Text(languageService.t("signals"))
-                        }
-                        .tag(0)
-                    
-                    ChatTabView()
-                        .tabItem {
-                            Image(systemName: "message")
-                            Text(languageService.t("chat"))
-                        }
-                        .tag(1)
-                    
-                    GameTabView(isPremiumUser: purchaseService.isPremiumUser)
-                        .tabItem {
-                            Image(systemName: "gamecontroller")
-                            Text(languageService.t("games"))
-                        }
-                        .tag(2)
-                    
-                    SettingsView()
-                        .tabItem {
-                            Image(systemName: "gear")
-                            Text(languageService.t("settings"))
-                        }
-                        .tag(3)
-                }
-                .accentColor(.blue)
-                .transaction { transaction in
-                    transaction.disablesAnimations = true
-                }
             } else {
-                // 顯示輕量級載入指示器，不阻塞UI
-                LoadingIndicatorView()
-                    .transition(.opacity)
+                // 直接顯示主界面，忽略初始化狀態
+                ZStack {
+                    TabView(selection: $selectedTab) {
+                        SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
+                            .tabItem {
+                                Image(systemName: "antenna.radiowaves.left.and.right")
+                                Text(languageService.t("signals"))
+                            }
+                            .tag(0)
+                        
+                        ChatTabView()
+                            .tabItem {
+                                Image(systemName: "message")
+                                Text(languageService.t("chat"))
+                            }
+                            .tag(1)
+                        
+                        GameTabView(isPremiumUser: purchaseService.isPremiumUser)
+                            .tabItem {
+                                Image(systemName: "gamecontroller")
+                                Text(languageService.t("games"))
+                            }
+                            .tag(2)
+                        
+                        SettingsView()
+                            .tabItem {
+                                Image(systemName: "gear")
+                                Text(languageService.t("settings"))
+                            }
+                            .tag(3)
+                    }
+                    .accentColor(.blue)
+                    .transaction { transaction in
+                        transaction.disablesAnimations = true
+                    }
+                    
+                    // 🛡️ 安全警報橫幅（顯示在最上層）
+                    SecurityAlertBannerView()
+                        .zIndex(1000)
+                }
             }
         }
     }
@@ -129,6 +132,7 @@ struct ContentView: View {
 struct ErrorView: View {
     let errorMessage: String
     let onRetry: () -> Void
+    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 20) {
@@ -136,7 +140,7 @@ struct ErrorView: View {
                 .font(.system(size: 50))
                 .foregroundColor(.orange)
             
-            Text("發生錯誤")
+            Text(languageService.t("error_occurred"))
                 .font(.title2)
                 .fontWeight(.semibold)
             
@@ -147,7 +151,7 @@ struct ErrorView: View {
                 .padding(.horizontal)
             
             Button(action: onRetry) {
-                Text("重試")
+                Text(languageService.t("retry"))
                     .fontWeight(.medium)
                     .foregroundColor(.white)
                     .padding(.horizontal, 30)
@@ -173,10 +177,6 @@ struct LoadingIndicatorView: View {
                 .frame(width: 50, height: 50)
                 .rotationEffect(.degrees(isAnimating ? 360 : 0))
                 .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
-            
-            Text("正在初始化服務...")
-                .font(.caption)
-                .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(UIColor.systemBackground))
@@ -254,12 +254,12 @@ struct SignalTabView: View {
                         .frame(width: 8, height: 8)
                     Text(translatedConnectionStatus)
                         .font(.caption)
-                        .foregroundColor(.black.opacity(0.8))
+                        .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894).opacity(0.8)) // #263ee4
                 }
                 Text("Broadcast\nSignal")
                     .font(.largeTitle)
                     .fontWeight(.bold)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
             Spacer()
             Button(action: {
@@ -267,11 +267,11 @@ struct SignalTabView: View {
             }) {
                 Image(systemName: connectionIconName)
                     .font(.title2)
-                    .foregroundColor(.black)
+                    .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
             }
         }
         .padding()
-        .background(Color(red: 0.898, green: 0.847, blue: 0.016)) // #e5d804
+        .background(Color(red: 0.957, green: 0.957, blue: 0.957)) // #f4f4f4
         .onAppear {
             // 連線狀態會自動更新，不需要手動呼叫
         }
@@ -280,11 +280,11 @@ struct SignalTabView: View {
     // 連線狀態顏色
     private var connectionStatusColor: Color {
         let status = signalViewModel.connectionStatus
-        if status.contains("已連線") || status.contains("Connected") {
+        if status.contains(languageService.t("connected")) || status.contains("Connected") {
             return .green
-        } else if status.contains("連線中") || status.contains("Connecting") {
+        } else if status.contains(languageService.t("connecting")) || status.contains("Connecting") {
             return .orange
-        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
+        } else if status.contains(languageService.t("disconnected")) || status.contains("Disconnected") || status.contains(languageService.t("offline")) {
             return .red
         } else {
             return .gray
@@ -293,26 +293,18 @@ struct SignalTabView: View {
     
     // 翻譯後的連線狀態文字
     private var translatedConnectionStatus: String {
-        let status = signalViewModel.connectionStatus
-        if status.contains("已連線") {
-            let deviceCount = status.components(separatedBy: " ").first { $0.contains("個") }?.replacingOccurrences(of: "個設備)", with: "") ?? "0"
-            return String(format: languageService.t("connected_devices"), deviceCount)
-        } else if status.contains("連線中") {
-            return languageService.t("connecting")
-        } else if status.contains("未連線") || status.contains("離線") {
-            return languageService.t("disconnected")
-        }
-        return status
+        // SignalViewModel 現在已經使用 LanguageService 進行正確的格式化
+        return signalViewModel.connectionStatus
     }
     
     // 連線圖標名稱
     private var connectionIconName: String {
         let status = signalViewModel.connectionStatus
-        if status.contains("已連線") || status.contains("Connected") {
+        if status.contains(languageService.t("connected")) || status.contains("Connected") {
             return "wifi"
-        } else if status.contains("連線中") || status.contains("Connecting") {
+        } else if status.contains(languageService.t("connecting")) || status.contains("Connecting") {
             return "wifi.exclamationmark"
-        } else if status.contains("未連線") || status.contains("Disconnected") || status.contains("離線") {
+        } else if status.contains(languageService.t("disconnected")) || status.contains("Disconnected") || status.contains(languageService.t("offline")) {
             return "wifi.slash"
         } else {
             return "wifi.slash"
@@ -506,7 +498,7 @@ struct UpgradePromptView: View {
                             Button(action: {
                                 showingTermsOfService = true
                             }) {
-                                Text("服務條款")
+                                Text(languageService.t("terms_of_service"))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .underline()
@@ -515,7 +507,7 @@ struct UpgradePromptView: View {
                             Button(action: {
                                 showingPrivacyPolicy = true
                             }) {
-                                Text("隱私權條款")
+                                Text(languageService.t("privacy_policy"))
                                     .font(.caption)
                                     .foregroundColor(.gray)
                                     .underline()
@@ -532,7 +524,7 @@ struct UpgradePromptView: View {
             NavigationView {
                 TermsOfServiceView()
                     .environmentObject(languageService)
-                    .navigationBarItems(trailing: Button("完成") {
+                    .navigationBarItems(trailing: Button(languageService.t("done")) {
                         showingTermsOfService = false
                     })
             }
@@ -541,7 +533,7 @@ struct UpgradePromptView: View {
             NavigationView {
                 PrivacyPolicyView()
                     .environmentObject(languageService)
-                    .navigationBarItems(trailing: Button("完成") {
+                    .navigationBarItems(trailing: Button(languageService.t("done")) {
                         showingPrivacyPolicy = false
                     })
             }
