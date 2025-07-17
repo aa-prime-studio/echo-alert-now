@@ -614,14 +614,12 @@ class EmergencyChannelManager {
 }
 
 // MARK: - Swift 6 並發限制器
-class AsyncConcurrencyLimiter {
+actor AsyncConcurrencyLimiter {
     private let maxOperations: Int
-    private let semaphore: NSLock
     private var currentOperations: Int = 0
     
     init(maxOperations: Int) {
         self.maxOperations = maxOperations
-        self.semaphore = NSLock()
     }
     
     func acquireOperation(timeoutSeconds: Double) async -> Bool {
@@ -641,25 +639,17 @@ class AsyncConcurrencyLimiter {
         }
     }
     
-    func releaseOperation() async {
-        semaphore.lock()
-        defer { semaphore.unlock() }
+    func releaseOperation() {
         currentOperations = max(0, currentOperations - 1)
     }
     
     private func waitForAvailableSlot() async -> Bool {
-        while true {
-            semaphore.lock()
-            if currentOperations < maxOperations {
-                currentOperations += 1
-                semaphore.unlock()
-                return true
-            }
-            semaphore.unlock()
-            
+        while currentOperations >= maxOperations {
             // 短暫等待後重試
             try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
         }
+        currentOperations += 1
+        return true
     }
 }
 

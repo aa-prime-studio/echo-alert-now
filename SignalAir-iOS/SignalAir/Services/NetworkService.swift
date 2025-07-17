@@ -510,15 +510,41 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
             return // 不是攻擊數據，正常處理
         }
         
-        // 記錄安全威脅檢測，但移除攻擊模擬代碼
-        #if DEBUG
-        print("🚨 檢測到可疑數據類型: \(attackType)")
-        #endif
+        // 只對真正的攻擊類型觸發警告，排除正常的遊戲和聊天消息
+        let maliciousTypes = [
+            "attack", "exploit", "injection", "malware", "virus", 
+            "breach", "compromise", "intrusion", "backdoor", "trojan",
+            "ddos", "flood", "spam", "phishing", "social_engineering"
+        ]
         
-        // 觸發通用安全警報
-        DispatchQueue.main.async {
-            SecurityAlertBannerSystem.shared.showSecurityAlert(for: .systemCompromise, deviceName: peerID.displayName)
+        let normalGameTypes = [
+            "game", "bingo", "chat", "message", "player", "room", "join", "leave",
+            "move", "action", "state", "update", "ping", "pong", "heartbeat",
+            "keyExchange", "keyExchangeResponse", "encrypted", "broadcast"
+        ]
+        
+        // 檢查是否為已知的正常類型
+        if normalGameTypes.contains(attackType.lowercased()) {
+            return // 正常遊戲消息，不觸發警告
         }
+        
+        // 檢查是否為已知的惡意類型
+        if maliciousTypes.contains(attackType.lowercased()) {
+            // 記錄真正的安全威脅檢測
+            #if DEBUG
+            print("🚨 檢測到惡意數據類型: \(attackType)")
+            #endif
+            
+            // 觸發安全警報
+            DispatchQueue.main.async {
+                SecurityAlertBannerSystem.shared.showSecurityAlert(for: .systemCompromise, deviceName: peerID.displayName)
+            }
+        }
+        
+        // 對於未知類型，只記錄但不觸發警告
+        #if DEBUG
+        print("ℹ️ 收到未知數據類型: \(attackType)")
+        #endif
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

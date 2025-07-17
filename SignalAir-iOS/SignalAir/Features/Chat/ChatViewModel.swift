@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import Combine
+import UserNotifications
 
 @MainActor
 class ChatViewModel: ObservableObject {
@@ -143,13 +144,19 @@ class ChatViewModel: ObservableObject {
         let currentDeviceName = ServiceContainer.shared.nicknameService.userNickname
         let networkID = ServiceContainer.shared.networkService.myPeerID.displayName
         
+        // 解析 @提及
+        let mentions = ChatMessage.extractMentions(from: messageText)
+        let mentionsMe = false // 自己發送的訊息不會提及自己
+        
         let chatMessage = ChatMessage(
             id: UUID().uuidString,
             message: messageText,
             deviceName: "\(currentDeviceName) (\(networkID))", // 使用 "暱稱 (網路ID)" 格式
             timestamp: Date().timeIntervalSince1970,
             isOwn: true,
-            isEncrypted: true
+            isEncrypted: true,
+            mentions: mentions,
+            mentionsMe: mentionsMe
         )
         
         // 檢查是否有連接的設備
@@ -222,6 +229,14 @@ class ChatViewModel: ObservableObject {
             data.append(contentsOf: [0, 0]) // 空訊息
         }
         
+        // @提及列表
+        let mentionsJson = (try? JSONEncoder().encode(message.mentions)) ?? Data()
+        data.append(contentsOf: UInt16(mentionsJson.count).littleEndianBytes)
+        data.append(mentionsJson)
+        
+        // mentionsMe 標誌
+        data.append(message.mentionsMe ? 1 : 0)
+        
         return data
     }
     
@@ -266,6 +281,42 @@ class ChatViewModel: ObservableObject {
         
         guard offset + Int(messageLength) <= data.count else { return nil }
         let message = String(data: data.subdata(in: offset..<offset+Int(messageLength)), encoding: .utf8) ?? ""
+        offset += Int(messageLength)
+        
+        // 解碼 @提及列表（如果有）
+        var mentions: [String] = []
+        var mentionsMe = false
+        
+        if offset + 2 <= data.count {
+            let mentionsLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
+                $0.load(as: UInt16.self).littleEndian
+            }
+            offset += 2
+            
+            if offset + Int(mentionsLength) <= data.count {
+                let mentionsData = data.subdata(in: offset..<offset+Int(mentionsLength))
+                if let decodedMentions = try? JSONDecoder().decode([String].self, from: mentionsData) {
+                    mentions = decodedMentions
+                }
+                offset += Int(mentionsLength)
+                
+                // 解碼 mentionsMe 標誌（如果有）
+                if offset < data.count {
+                    mentionsMe = data[offset] == 1
+                }
+            }
+        }
+        
+        // 如果沒有解碼到 @提及資料，從訊息內容中解析
+        if mentions.isEmpty {
+            mentions = ChatMessage.extractMentions(from: message)
+        }
+        
+        // 檢查是否提及了我
+        let myNickname = ServiceContainer.shared.nicknameService.userNickname
+        if !mentionsMe {
+            mentionsMe = ChatMessage.checkMentionsUser(myNickname, in: message)
+        }
         
         // 如果解碼出的設備名稱不包含設備ID，則添加發送者信息以便區分
         let finalDeviceName: String
@@ -283,7 +334,9 @@ class ChatViewModel: ObservableObject {
             deviceName: finalDeviceName,
             timestamp: timestamp,
             isOwn: false,
-            isEncrypted: true
+            isEncrypted: true,
+            mentions: mentions,
+            mentionsMe: mentionsMe
         )
     }
     
@@ -453,6 +506,39 @@ class ChatViewModel: ObservableObject {
         showUpgradePrompt = true
     }
     
+    /// 取得可用於 @提及的使用者列表
+    func getAvailableUsers() -> [String] {
+        var users: [String] = []
+        
+        // 獲取本機的網路 ID 和暱稱，用於過濾
+        let myNetworkID = ServiceContainer.shared.networkService.myPeerID.displayName
+        let myNickname = ServiceContainer.shared.nicknameService.userNickname
+        
+        print("💬 ChatViewModel: 本機網路 ID: \(myNetworkID)")
+        print("💬 ChatViewModel: 本機暱稱: \(myNickname)")
+        print("💬 ChatViewModel: 原始 connectedPeers: \(connectedPeers)")
+        
+        // 完全跳過 connectedPeers，只使用聊天記錄中的用戶
+        // 因為 connectedPeers 可能包含網路 ID 而不是暱稱
+        
+        // 添加最近聊天的使用者（已經通過 !message.isOwn 過濾了本機）
+        let recentUsers = messages.compactMap { message in
+            if !message.isOwn {
+                return NicknameFormatter.cleanNickname(message.deviceName)
+            }
+            return nil
+        }
+        
+        // 去重並排序
+        users.append(contentsOf: recentUsers)
+        let uniqueUsers = Array(Set(users)).sorted()
+        
+        print("💬 ChatViewModel: 可用於 @提及的使用者: \(uniqueUsers)")
+        print("💬 ChatViewModel: 已過濾本機 ID: \(myNetworkID), 暱稱: \(myNickname)")
+        
+        return uniqueUsers
+    }
+    
     // MARK: - 私有方法
     
     /// 設置 NotificationCenter 觀察者
@@ -510,14 +596,16 @@ class ChatViewModel: ObservableObject {
             return
         }
         
-        // 創建新的聊天訊息（確保標記為非本人）
+        // 創建新的聊天訊息（確保標記為非本人，保留 @提及資料）
         let receivedMessage = ChatMessage(
             id: chatMessage.id,
             message: chatMessage.message,
             deviceName: chatMessage.deviceName,
             timestamp: chatMessage.timestamp,
             isOwn: false,  // 強制標記為非本人
-            isEncrypted: chatMessage.isEncrypted
+            isEncrypted: chatMessage.isEncrypted,
+            mentions: chatMessage.mentions,
+            mentionsMe: chatMessage.mentionsMe
         )
         
         // 添加自定義 hash 到去重集合
@@ -536,7 +624,51 @@ class ChatViewModel: ObservableObject {
             // 追蹤接收的訊息以便自毀
             selfDestructManager.trackMessage(chatMessage.id, type: .chat, priority: .normal)
             
+            // 檢查是否提及了我，如果是則發送通知
+            if chatMessage.mentionsMe {
+                sendMentionNotification(chatMessage)
+            }
+            
             print("💬 ChatViewModel: 接收到加密訊息: \(chatMessage.message) 來自: \(chatMessage.deviceName)")
+        }
+    }
+    
+    /// 發送被提及的通知
+    private func sendMentionNotification(_ message: ChatMessage) {
+        let cleanSenderName = NicknameFormatter.cleanNickname(message.deviceName)
+        let notificationTitle = "有人提及了您"
+        let notificationBody = "\(cleanSenderName): \(message.message)"
+        
+        // 發送本地通知
+        let notificationCenter = UNUserNotificationCenter.current()
+        let content = UNMutableNotificationContent()
+        content.title = notificationTitle
+        content.body = notificationBody
+        content.sound = UNNotificationSound.default
+        content.badge = 1
+        
+        // 設定通知標識符
+        let identifier = "mention_notification_\(message.id)"
+        let request = UNNotificationRequest(identifier: identifier, content: content, trigger: nil)
+        
+        notificationCenter.add(request) { error in
+            if let error = error {
+                print("❌ ChatViewModel: 無法發送提及通知: \(error)")
+            } else {
+                print("✅ ChatViewModel: 已發送提及通知給使用者")
+            }
+        }
+        
+        // 發送應用內通知
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("MentionReceived"),
+                object: nil,
+                userInfo: [
+                    "message": message,
+                    "sender": cleanSenderName
+                ]
+            )
         }
     }
     
@@ -739,3 +871,12 @@ extension ChatViewModel {
  6. FloodProtection - 洪水攻擊保護
  7. SettingsViewModel 整合 - 使用者暱稱管理
  */
+
+// MARK: - 擴展
+
+extension UInt16 {
+    var littleEndianBytes: [UInt8] {
+        let value = self.littleEndian
+        return withUnsafeBytes(of: value) { Array($0) }
+    }
+}

@@ -1,0 +1,528 @@
+{
+  "" : {
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAir-master.dia",
+    "emit-module-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAir-master-emit-module.d",
+    "emit-module-diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAir-master-emit-module.dia",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAir-master.swiftdeps"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/ContentView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ContentView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/ServiceContainer.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ServiceContainer~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/App/SignalAirApp.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalAirApp~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Network/AdvancedChannelPoolManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedChannelPoolManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Network/EdgeCaseHandlers.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EdgeCaseHandlers~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Network/RobustNetworkLayer.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RobustNetworkLayer~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Network/TopologyManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TopologyManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Protocol/BinaryGameProtocol.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryGameProtocol~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/AdvancedThreatDefense.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AdvancedThreatDefense~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/AutomaticBanSystem.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticBanSystem~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/AutomaticSecurityMonitor.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSecurityMonitor~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/DeviceFingerprintManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DeviceFingerprintManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/EclipseDefenseCoordinator.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EclipseDefenseCoordinator~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/MaliciousContentDetector.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MaliciousContentDetector~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/SecurityEventTypes.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityEventTypes~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/TrustScoreManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustScoreManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/AutomaticSystemMaintenance.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/AutonomousSystemManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/SystemHealthMonitor.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Chat/ChatView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Chat/ChatViewModel.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ChatViewModel~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/BingoGameViewModel.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoGameViewModel~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/BingoCardView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BingoCardView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/DrawnNumbersView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DrawnNumbersView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/EmoteGridView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/EmoteGridView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/GameRulesView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/LeaderboardView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LeaderboardView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/PlayerListView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PlayerListView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/RoomChatView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomChatView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/RoomSelectorView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/RoomSelectorView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/GameView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/GameViewModel.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameViewModel~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/TimerManager.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TimerManager~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/HelpView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/PrivacyPolicyContent.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyContent~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/PrivacyPolicyView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PrivacyPolicyView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/TermsOfServiceContent.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceContent~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/TermsOfServiceView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TermsOfServiceView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/PurchaseOptionsView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseOptionsView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/SettingsView.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SettingsView~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Signal/SignalViewModel.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViewModel~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Signal/SignalViews.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SignalViews~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Security/SecurityAlertBannerDemo.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/LanguageService.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/NetworkService.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkService~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/NicknameService.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NicknameService~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/PurchaseService.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/PurchaseService~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/SecurityService.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityService~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/BinaryMessageDecoder.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/BinaryMessageEncoder.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/SharedTypes.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes~partial.swiftmodule"
+  },
+  "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "const-values" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues",
+    "dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.d",
+    "diagnostics" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.dia",
+    "index-unit-output-path" : "/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "swift-dependencies" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps",
+    "swiftmodule" : "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols~partial.swiftmodule"
+  }
+}

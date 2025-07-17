@@ -59,6 +59,8 @@
 		TIMER001234567890ABCDEF /* TimerManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TIMER001234567890ABCDE0 /* TimerManager.swift */; };
 		TOPO001234567890ABCDEF /* TopologyManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TOPO001234567890ABCDE0 /* TopologyManager.swift */; };
 		SECURITY_DEMO_001234567890 /* SecurityAlertBannerDemo.swift in Sources */ = {isa = PBXBuildFile; fileRef = SECURITY_DEMO_001234567891 /* SecurityAlertBannerDemo.swift */; };
+		LOCAL_BLACKLIST_001234567890 /* LocalBlacklistManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */; };
+		BLACKLIST_VIEW_001234567890 /* BlacklistManagementView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -146,6 +148,8 @@
 		TIMER001234567890ABCDE0 /* TimerManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimerManager.swift; sourceTree = "<group>"; };
 		TOPO001234567890ABCDE0 /* TopologyManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TopologyManager.swift; sourceTree = "<group>"; };
 		SECURITY_DEMO_001234567891 /* SecurityAlertBannerDemo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Security/SecurityAlertBannerDemo.swift; sourceTree = "<group>"; };
+		LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalBlacklistManager.swift; sourceTree = "<group>"; };
+		BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BlacklistManagementView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +181,7 @@
 				0BF2290F315B0BF1025CBE9B /* NicknameService.swift */,
 				1E117FB89370E8E7E8C05434 /* PurchaseService.swift */,
 				D8F6A3E25C9B4D7E8F1A5B69 /* SecurityService.swift */,
+			LOCAL_BLACKLIST_001234567891 /* LocalBlacklistManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -308,6 +313,7 @@
 			children = (
 				DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */,
 				4675B3B70F6055EB3F2ECB98 /* SettingsView.swift */,
+			BLACKLIST_VIEW_001234567891 /* BlacklistManagementView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -549,6 +555,8 @@
 				ED63C6F4E00C48EC88A2052B /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift in Sources */,
 				BA7A9BE7F4814F1CA2516007 /* SignalAir/Core/Services/SystemHealthMonitor.swift in Sources */,
 			SECURITY_DEMO_001234567890 /* SecurityAlertBannerDemo.swift in Sources */,
+			LOCAL_BLACKLIST_001234567890 /* LocalBlacklistManager.swift in Sources */,
+			BLACKLIST_VIEW_001234567890 /* BlacklistManagementView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

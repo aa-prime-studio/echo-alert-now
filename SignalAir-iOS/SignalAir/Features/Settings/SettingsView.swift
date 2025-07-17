@@ -21,6 +21,7 @@ struct SettingsView: View {
                         subscriptionSection
                         upgradeSection
                         deviceSection
+                        blacklistSection
                         legalSection
                         
                         // 恢復購買按鈕移到法律條款下方
@@ -235,6 +236,40 @@ struct SettingsView: View {
                 value: "1.0.0",
                 action: nil
             )
+        }
+        .background(Color.white)
+        .cornerRadius(12)
+    }
+    
+    private var blacklistSection: some View {
+        VStack(spacing: 0) {
+            NavigationLink(destination: BlacklistManagementView()) {
+                HStack {
+                    Image(systemName: "person.fill.xmark")
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                        .frame(width: 24)
+                    
+                    Text("黑名單管理")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    // 顯示黑名單數量
+                    Text("\(serviceContainer.localBlacklistManager.blacklistedUsers.count)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
+            }
         }
         .background(Color.white)
         .cornerRadius(12)

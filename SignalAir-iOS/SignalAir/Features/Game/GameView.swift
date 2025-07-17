@@ -83,10 +83,8 @@ struct GameView: View {
                     rooms: rooms,
                     leaderboard: leaderboard,
                     onJoinRoom: { room in
-                        print("🚨🚨🚨 ROOM SELECTED: id=\(room.id) name=\(room.name) 🚨🚨🚨")
                         DispatchQueue.main.async {
                             currentRoomID = room.id
-                            print("🚨🚨🚨 CURRENT ROOM SET ON MAIN THREAD: \(room.id) 🚨🚨🚨")
                         }
                     }
                 )
@@ -95,7 +93,6 @@ struct GameView: View {
         }
         .background(Color.gray.opacity(0.05))
         .onAppear {
-            print("🚨🚨🚨 GAME VIEW APPEARED, currentRoomID: \(currentRoomID) 🚨🚨🚨")
             setupLeaderboard()
             startRoomMonitoring()
         }
@@ -106,13 +103,10 @@ struct GameView: View {
             print("🧹 GameView: 已清理房間監控 Timer")
         }
         .onChange(of: currentRoomID) { newRoomID in
-            print("🚨🚨🚨 CURRENT ROOM CHANGED TO: \(newRoomID) 🚨🚨🚨")
             if newRoomID > 0 {
-                print("🚨🚨🚨 SHOULD SHOW BINGO GAME VIEW NOW 🚨🚨🚨")
                 // 更新現有 ViewModel 的房間
                 bingoViewModel.updateRoom(newRoomID)
             } else {
-                print("🚨🚨🚨 SHOULD SHOW ROOM LIST NOW 🚨🚨🚨")
             }
         }
     }
@@ -495,11 +489,6 @@ struct BingoGameView: View {
     var body: some View {
         ScrollView(.vertical, showsIndicators: true) {
             VStack(spacing: 20) {
-                // Debug view to ensure this view is being rendered
-                Text("🚨 BINGO GAME VIEW BODY RENDERED: room=\(currentRoomID) 🚨")
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.top)
                 
                 // Game Status Info
                 VStack(spacing: 8) {
@@ -601,13 +590,10 @@ struct BingoGameView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            print("🚨🚨🚨 BINGO GAME VIEW APPEARED: room=\(currentRoomID) 🚨🚨🚨")
-            print("🚨🚨🚨 BINGO GAME VIEW BODY WAS RENDERED 🚨🚨🚨")
             // 只在第一次出現時加入房間
             if viewModel.gameRoomID != String(currentRoomID) {
                 viewModel.attemptToJoinOrCreateRoom(roomID: String(currentRoomID))
             }
-            print("🚨🚨🚨 AFTER CALLING attemptToJoinOrCreateRoom 🚨🚨🚨")
             
             // 設置遊戲獲勝回調
             viewModel.onGameWon = { deviceName, score in

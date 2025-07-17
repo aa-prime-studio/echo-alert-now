@@ -75,7 +75,7 @@ class LanguageService: ObservableObject {
                 "nearby_signals": "附近訊號",
                 "no_signals": "目前沒有訊息",
                 "signals_will_show": "當附近有人發送訊號時，會顯示在這裡",
-                "broadcast_range_info": "訊號會廣播至 50-500 公尺範圍內的裝置",
+                "broadcast_range_info": "開啟藍牙或 WiFi，訊號將傳至 50–500 公尺內的裝置",
                 "from": "來自:",
                 "just_now": "剛剛",
                 "minutes_ago": "分鐘前",

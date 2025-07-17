@@ -1082,7 +1082,6 @@ class BingoGameViewModel: ObservableObject {
         // 確保依賴存在（MeshManagerProtocol 不是可選類型，但仍然檢查狀態）
         print("✅ meshManager 已初始化，繼續房間加入流程")
         
-        print("🚨🚨🚨 ROOM JOIN CALLED: roomID=\(roomID) player=\(deviceName) 🚨🚨🚨")
         
         // 設置原子狀態
         isInRoom = true
