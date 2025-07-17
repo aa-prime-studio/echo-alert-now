@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'SignalAir' in project 'SignalAir Rescue' (no dependencies)

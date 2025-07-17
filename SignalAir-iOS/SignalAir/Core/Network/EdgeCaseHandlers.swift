@@ -18,40 +18,39 @@ class SimultaneousConnectionHandler: EdgeCaseHandler {
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
         guard let peerID = context.peerID else {
-            return EdgeCaseResult(success: false, recoveryAction: .none, delay: nil, message: "No peer ID provided")
+            return EdgeCaseResult(success: false, recoveryAction: RecoveryAction.none, delay: nil, message: "No peer ID provided")
         }
         
         let peerName = peerID.displayName
         
-        connectionLock.lock()
-        defer { connectionLock.unlock() }
-        
-        // 檢查是否已經在處理該peer的連接
-        if activeConnections.contains(peerName) {
-            logger.warning("⚠️ Simultaneous connection detected for \(peerName)")
+        return connectionLock.withLock {
+            // 檢查是否已經在處理該peer的連接
+            if activeConnections.contains(peerName) {
+                self.logger.warning("⚠️ Simultaneous connection detected for \(peerName)")
+                
+                // 策略：延遲當前連接嘗試，讓第一個完成
+                return EdgeCaseResult(
+                    success: true,
+                    recoveryAction: .retry,
+                    delay: Double.random(in: 0.5...2.0), // 隨機延遲避免同步重試
+                    message: "Delayed connection to avoid race condition"
+                )
+            }
             
-            // 策略：延遲當前連接嘗試，讓第一個完成
-            return EdgeCaseResult(
-                success: true,
-                recoveryAction: .retry,
-                delay: Double.random(in: 0.5...2.0), // 隨機延遲避免同步重試
-                message: "Delayed connection to avoid race condition"
-            )
+            // 標記為正在處理
+            activeConnections.insert(peerName)
+            
+            // 設置自動清理（防止死鎖）
+            Task {
+                try? await Task.sleep(nanoseconds: 30_000_000_000) // 30秒後自動清理
+                _ = connectionLock.withLock {
+                    activeConnections.remove(peerName)
+                }
+            }
+            
+            self.logger.debug("✅ Handling simultaneous connection for \(peerName)")
+            return EdgeCaseResult(success: true, recoveryAction: RecoveryAction.none, delay: nil, message: "Connection handled")
         }
-        
-        // 標記為正在處理
-        activeConnections.insert(peerName)
-        
-        // 設置自動清理（防止死鎖）
-        Task {
-            try? await Task.sleep(nanoseconds: 30_000_000_000) // 30秒後自動清理
-            connectionLock.lock()
-            activeConnections.remove(peerName)
-            connectionLock.unlock()
-        }
-        
-        logger.debug("✅ Handling simultaneous connection for \(peerName)")
-        return EdgeCaseResult(success: true, recoveryAction: .none, delay: nil, message: "Connection handled")
     }
 }
 
@@ -71,41 +70,40 @@ class RapidDisconnectionHandler: EdgeCaseHandler {
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
         guard let peerID = context.peerID else {
-            return EdgeCaseResult(success: false, recoveryAction: .none, delay: nil, message: "No peer ID provided")
+            return EdgeCaseResult(success: false, recoveryAction: RecoveryAction.none, delay: nil, message: "No peer ID provided")
         }
         
         let peerName = peerID.displayName
         let now = Date()
         
-        historyLock.lock()
-        defer { historyLock.unlock() }
-        
-        // 更新斷開歷史
-        if disconnectionHistory[peerName] == nil {
-            disconnectionHistory[peerName] = []
-        }
-        
-        disconnectionHistory[peerName]?.append(now)
-        
-        // 清理過期記錄
-        let cutoffTime = now.addingTimeInterval(-rapidThreshold)
-        disconnectionHistory[peerName] = disconnectionHistory[peerName]?.filter { $0 > cutoffTime }
-        
-        // 檢查是否為快速斷開模式
-        if let history = disconnectionHistory[peerName], history.count >= maxDisconnections {
-            logger.warning("⚠️ Rapid disconnection pattern detected for \(peerName)")
+        return historyLock.withLock {
+            // 更新斷開歷史
+            if disconnectionHistory[peerName] == nil {
+                disconnectionHistory[peerName] = []
+            }
             
-            // 策略：暫時隔離該peer，避免頻繁重連
-            return EdgeCaseResult(
-                success: true,
-                recoveryAction: .isolate,
-                delay: 60.0, // 隔離60秒
-                message: "Peer temporarily isolated due to rapid disconnections"
-            )
+            disconnectionHistory[peerName]?.append(now)
+            
+            // 清理過期記錄
+            let cutoffTime = now.addingTimeInterval(-rapidThreshold)
+            disconnectionHistory[peerName] = disconnectionHistory[peerName]?.filter { $0 > cutoffTime }
+            
+            // 檢查是否為快速斷開模式
+            if let history = disconnectionHistory[peerName], history.count >= maxDisconnections {
+                self.logger.warning("⚠️ Rapid disconnection pattern detected for \(peerName)")
+                
+                // 策略：暫時隔離該peer，避免頻繁重連
+                return EdgeCaseResult(
+                    success: true,
+                    recoveryAction: .isolate,
+                    delay: 60.0, // 隔離60秒
+                    message: "Peer temporarily isolated due to rapid disconnections"
+                )
+            }
+            
+            self.logger.debug("✅ Normal disconnection for \(peerName)")
+            return EdgeCaseResult(success: true, recoveryAction: RecoveryAction.none, delay: nil, message: "Normal disconnection")
         }
-        
-        logger.debug("✅ Normal disconnection for \(peerName)")
-        return EdgeCaseResult(success: true, recoveryAction: .none, delay: nil, message: "Normal disconnection")
     }
 }
 
@@ -121,7 +119,7 @@ class BackgroundTransitionHandler: EdgeCaseHandler {
     }
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
-        logger.info("📱 Handling background transition")
+        self.logger.info("📱 Handling background transition")
         
         // 記錄背景開始時間
         backgroundStartTime = Date()
@@ -132,18 +130,18 @@ class BackgroundTransitionHandler: EdgeCaseHandler {
         // 保存狀態以便前景恢復
         saveStateForRecovery()
         
-        logger.debug("✅ Background transition handled, suspended \(suspendedOperations) operations")
+        self.logger.debug("✅ Background transition handled, suspended \(suspendedOperations) operations")
         
         return EdgeCaseResult(
             success: true,
-            recoveryAction: .none,
+            recoveryAction: RecoveryAction.none,
             delay: nil,
             message: "Background transition completed, \(suspendedOperations) operations suspended"
         )
     }
     
     func handleForegroundTransition() async -> EdgeCaseResult {
-        logger.info("☀️ Handling foreground transition")
+        self.logger.info("☀️ Handling foreground transition")
         
         // 計算背景時間
         let backgroundDuration = backgroundStartTime.map { Date().timeIntervalSince($0) } ?? 0
@@ -154,11 +152,11 @@ class BackgroundTransitionHandler: EdgeCaseHandler {
         // 執行健康檢查
         await performPostBackgroundHealthCheck()
         
-        logger.debug("✅ Foreground transition handled, resumed \(resumedOperations) operations after \(Int(backgroundDuration))s")
+        self.logger.debug("✅ Foreground transition handled, resumed \(resumedOperations) operations after \(Int(backgroundDuration))s")
         
         return EdgeCaseResult(
             success: true,
-            recoveryAction: .none,
+            recoveryAction: RecoveryAction.none,
             delay: nil,
             message: "Foreground transition completed, \(resumedOperations) operations resumed"
         )
@@ -196,13 +194,13 @@ class MemoryPressureHandler: EdgeCaseHandler {
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
         guard !isHandlingPressure else {
-            return EdgeCaseResult(success: false, recoveryAction: .none, delay: 1.0, message: "Already handling memory pressure")
+            return EdgeCaseResult(success: false, recoveryAction: RecoveryAction.none, delay: 1.0, message: "Already handling memory pressure")
         }
         
         isHandlingPressure = true
         defer { isHandlingPressure = false }
         
-        logger.warning("⚠️ Handling memory pressure")
+        self.logger.warning("⚠️ Handling memory pressure")
         
         // 獲取當前記憶體使用
         let memoryUsage = await getCurrentMemoryUsage()
@@ -231,11 +229,11 @@ class MemoryPressureHandler: EdgeCaseHandler {
         actionsPerformed.append("Forced garbage collection")
         
         let message = "Memory pressure handled: " + actionsPerformed.joined(separator: ", ")
-        logger.info("✅ \(message)")
+        self.logger.info("✅ \(message)")
         
         return EdgeCaseResult(
             success: true,
-            recoveryAction: .none,
+            recoveryAction: RecoveryAction.none,
             delay: nil,
             message: message
         )
@@ -288,33 +286,38 @@ class ChannelContentionHandler: EdgeCaseHandler {
     }
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
-        logger.warning("⚠️ Handling channel contention")
+        self.logger.warning("⚠️ Handling channel contention")
         
-        usageLock.lock()
-        defer { usageLock.unlock() }
-        
-        // 分析通道使用模式
-        let contentionLevel = analyzeChannelContention()
-        
-        var strategy: RecoveryAction = .none
-        var delay: TimeInterval? = nil
-        var message = "Channel contention resolved"
-        
-        if contentionLevel > 0.8 {
-            // 高競爭：實施流量控制
-            strategy = .retry
-            delay = Double.random(in: 0.1...0.5) // 隨機延遲避免同步重試
-            message = "High contention detected, implementing flow control"
+        let (strategy, delay, message) = usageLock.withLock { () -> (RecoveryAction, TimeInterval?, String) in
+            // 分析通道使用模式
+            let contentionLevel = analyzeChannelContention()
             
-            await implementFlowControl()
+            var strategy: RecoveryAction = RecoveryAction.none
+            var delay: TimeInterval? = nil
+            var message = "Channel contention resolved"
             
-        } else if contentionLevel > 0.6 {
-            // 中競爭：負載均衡
-            await performLoadBalancing()
-            message = "Medium contention detected, load balancing applied"
+            if contentionLevel > 0.8 {
+                // 高競爭：實施流量控制
+                strategy = .retry
+                delay = Double.random(in: 0.1...0.5) // 隨機延遲避免同步重試
+                message = "High contention detected, implementing flow control"
+                
+            } else if contentionLevel > 0.6 {
+                // 中競爭：負載均衡
+                message = "Medium contention detected, load balancing applied"
+            }
+            
+            return (strategy, delay, message)
         }
         
-        logger.debug("✅ Channel contention handled with strategy: \(strategy)")
+        // 執行異步任務
+        if strategy == .retry {
+            Task {
+                await implementFlowControl()
+            }
+        }
+        
+        self.logger.debug("✅ Channel contention handled with strategy: \(String(describing: strategy))")
         
         return EdgeCaseResult(
             success: true,
@@ -354,13 +357,13 @@ class NetworkInstabilityHandler: EdgeCaseHandler {
     }
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
-        logger.warning("⚠️ Handling network instability")
+        self.logger.warning("⚠️ Handling network instability")
         
         // 評估網路穩定性
         let instabilityLevel = await assessNetworkInstability()
         
         var actions: [String] = []
-        var recoveryAction: RecoveryAction = .none
+        var recoveryAction: RecoveryAction = RecoveryAction.none
         
         if instabilityLevel > 0.7 {
             // 高不穩定：切換到穩定模式
@@ -380,7 +383,7 @@ class NetworkInstabilityHandler: EdgeCaseHandler {
         actions.append("Adjusted timeout parameters")
         
         let message = "Network instability handled: " + actions.joined(separator: ", ")
-        logger.info("✅ \(message)")
+        self.logger.info("✅ \(message)")
         
         return EdgeCaseResult(
             success: true,
@@ -412,40 +415,53 @@ class NetworkInstabilityHandler: EdgeCaseHandler {
 class ConcurrentOperationHandler: EdgeCaseHandler {
     let priority = 70
     private let logger = Logger(subsystem: "com.signalair", category: "ConcurrentOperation")
-    private let operationSemaphore = DispatchSemaphore(value: 10) // 最多10個併發操作
+    private static let maxConcurrentOperations = 10
+    private static var currentOperations = 0
+    private static let operationsLock = NSLock()
     
     func canHandle(_ edgeCase: EdgeCaseType) -> Bool {
         return edgeCase == .concurrentOperations
     }
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
-        logger.warning("⚠️ Handling excessive concurrent operations")
+        self.logger.warning("⚠️ Handling excessive concurrent operations")
         
-        // 檢查當前併發數
-        let availableSlots = operationSemaphore.wait(timeout: .now())
+        // 使用線程安全的方式檢查可用槽位
+        let canProceed = Self.operationsLock.withLock {
+            if Self.currentOperations < Self.maxConcurrentOperations {
+                Self.currentOperations += 1
+                return true
+            }
+            return false
+        }
         
-        if availableSlots == .success {
+        if canProceed {
             // 有可用槽位，允許操作繼續
-            defer { operationSemaphore.signal() }
+            self.logger.debug("✅ Concurrent operation slot acquired (\(Self.currentOperations)/\(Self.maxConcurrentOperations))")
             
-            logger.debug("✅ Concurrent operation slot acquired")
             return EdgeCaseResult(
                 success: true,
-                recoveryAction: .none,
+                recoveryAction: RecoveryAction.none,
                 delay: nil,
                 message: "Concurrent operation managed"
             )
-            
-        } else {
-            // 無可用槽位，建議延遲重試
-            logger.warning("⚠️ No available concurrent operation slots")
-            
-            return EdgeCaseResult(
-                success: true,
-                recoveryAction: .retry,
-                delay: Double.random(in: 0.5...2.0),
-                message: "Operation queued due to concurrency limit"
-            )
+        }
+        
+        // 無可用槽位，建議延遲重試
+        self.logger.warning("⚠️ No available concurrent operation slots (\(Self.currentOperations)/\(Self.maxConcurrentOperations))")
+        
+        return EdgeCaseResult(
+            success: true,
+            recoveryAction: .retry,
+            delay: Double.random(in: 0.5...2.0),
+            message: "Operation queued due to concurrency limit"
+        )
+    }
+    
+    // 操作完成時調用以釋放槽位
+    static func releaseOperation() {
+        operationsLock.withLock {
+            currentOperations = max(0, currentOperations - 1)
         }
     }
 }
@@ -460,13 +476,13 @@ class ResourceExhaustionHandler: EdgeCaseHandler {
     }
     
     func handle(_ context: EdgeCaseContext) async -> EdgeCaseResult {
-        logger.warning("⚠️ Handling resource exhaustion")
+        self.logger.warning("⚠️ Handling resource exhaustion")
         
         // 評估資源使用情況
         let resourceStatus = await assessResourceStatus()
         
         var actions: [String] = []
-        var recoveryAction: RecoveryAction = .none
+        var recoveryAction: RecoveryAction = RecoveryAction.none
         
         if resourceStatus.memoryPressure > 0.8 {
             await performEmergencyCleanup()
@@ -486,7 +502,7 @@ class ResourceExhaustionHandler: EdgeCaseHandler {
         }
         
         let message = "Resource exhaustion handled: " + actions.joined(separator: ", ")
-        logger.info("✅ \(message)")
+        self.logger.info("✅ \(message)")
         
         return EdgeCaseResult(
             success: true,

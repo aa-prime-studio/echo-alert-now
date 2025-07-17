@@ -48,11 +48,6 @@
 		ED63C6F4E00C48EC88A2052B /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift in Sources */ = {isa = PBXBuildFile; fileRef = ED63C6F4E00C48EC88A2052C /* SignalAir/Core/Services/AutomaticSystemMaintenance.swift */; };
 		F87AB45DA883066EB0FCEF0A /* DrawnNumbersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */; };
 		FF77BCA316EA4A52BE91A566 /* SignalAir/Core/Security/MaliciousContentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */; };
-		E449823484FF887D696C9401 /* SignalAir/Core/Security/AdvancedThreatDefense.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */; };
-		B35E062BB4FDF3F23F5F7E77 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */; };
-		9F76594E7DB27B53DB073F1B /* SignalAir/Core/Network/RobustNetworkLayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */; };
-		ADVCH001234567890ABCDEF /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */; };
-		EDGE001234567890ABCDEF /* SignalAir/Core/Network/EdgeCaseHandlers.swift in Sources */ = {isa = PBXBuildFile; fileRef = EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */; };
 		GAMEVM001234567890ABCD /* GameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = GAMEVM001234567890ABCE /* GameViewModel.swift */; };
 		PRIVACY001234567890ABCD /* PrivacyPolicyContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */; };
 		TERMS001234567890ABCDEF /* TermsOfServiceContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */; };
@@ -135,11 +130,6 @@
 		F81268ACA82E934FD6A50B6E /* SignalAirApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAirApp.swift; sourceTree = "<group>"; };
 		F935E385905E41D0BF579EFD /* BinaryMessageDecoder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryMessageDecoder.swift; sourceTree = "<group>"; };
 		FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/MaliciousContentDetector.swift; sourceTree = "<group>"; };
-		B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/AdvancedThreatDefense.swift; sourceTree = "<group>"; };
-		E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Security/EclipseDefenseCoordinator.swift; sourceTree = "<group>"; };
-		F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/RobustNetworkLayer.swift; sourceTree = "<group>"; };
-		ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/AdvancedChannelPoolManager.swift; sourceTree = "<group>"; };
-		EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignalAir/Core/Network/EdgeCaseHandlers.swift; sourceTree = "<group>"; };
 		GAMEVM001234567890ABCE /* GameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewModel.swift; sourceTree = "<group>"; };
 		PRIVACY001234567890ABCE /* PrivacyPolicyContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyPolicyContent.swift; sourceTree = "<group>"; };
 		TERMS001234567890ABCDE0 /* TermsOfServiceContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TermsOfServiceContent.swift; sourceTree = "<group>"; };
@@ -253,11 +243,6 @@
 			children = (
 				5A8432A64E8F41219640ECC1 /* SignalAir/Core/Security/DeviceFingerprintManager.swift */,
 				FF77BCA316EA4A52BE91A567 /* SignalAir/Core/Security/MaliciousContentDetector.swift */,
-				B7E5B23DF5CF27C9C78379A0 /* SignalAir/Core/Security/AdvancedThreatDefense.swift */,
-				E65B7D505F8561CC19BEB004 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift */,
-				F3E25A6DC567A84B6661DF79 /* SignalAir/Core/Network/RobustNetworkLayer.swift */,
-				ADVCH001234567890ABCDE0 /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift */,
-				EDGE001234567890ABCDE0 /* SignalAir/Core/Network/EdgeCaseHandlers.swift */,
 				6C2D6F709D2248F2AB1005EB /* SignalAir/Core/Security/TrustScoreManager.swift */,
 				2D1E7C4A274F4AB79218FB89 /* SignalAir/Core/Security/SecurityEventTypes.swift */,
 				508C09E1C1644D6089164F4C /* SignalAir/Core/Services/AutonomousSystemManager.swift */,
@@ -536,11 +521,6 @@
 				E552B154598A42CEAAA0C552 /* EmoteGridView.swift in Sources */,
 				5A8432A64E8F41219640ECC0 /* SignalAir/Core/Security/DeviceFingerprintManager.swift in Sources */,
 				FF77BCA316EA4A52BE91A566 /* SignalAir/Core/Security/MaliciousContentDetector.swift in Sources */,
-				E449823484FF887D696C9401 /* SignalAir/Core/Security/AdvancedThreatDefense.swift in Sources */,
-				B35E062BB4FDF3F23F5F7E77 /* SignalAir/Core/Security/EclipseDefenseCoordinator.swift in Sources */,
-				9F76594E7DB27B53DB073F1B /* SignalAir/Core/Network/RobustNetworkLayer.swift in Sources */,
-				ADVCH001234567890ABCDEF /* SignalAir/Core/Network/AdvancedChannelPoolManager.swift in Sources */,
-				EDGE001234567890ABCDEF /* SignalAir/Core/Network/EdgeCaseHandlers.swift in Sources */,
 				6C2D6F709D2248F2AB1005EA /* SignalAir/Core/Security/TrustScoreManager.swift in Sources */,
 				2D1E7C4A274F4AB79218FB88 /* SignalAir/Core/Security/SecurityEventTypes.swift in Sources */,
 				508C09E1C1644D6089164F4B /* SignalAir/Core/Services/AutonomousSystemManager.swift in Sources */,

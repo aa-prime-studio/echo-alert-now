@@ -1,5 +1,5 @@
 import Foundation
-import MultipeerConnectivity
+@preconcurrency import MultipeerConnectivity
 import Combine
 import os.log
 
@@ -34,12 +34,12 @@ struct ChannelQuality {
         let latencyScore = max(0, 1.0 - Float(latency / 1000.0)) // 1秒為最差
         let throughputScore = min(1.0, throughput / 10240.0) // 10KB/s為滿分
         
-        return Float(
-            reliability * reliabilityWeight +
-            throughputScore * throughputWeight +
-            latencyScore * latencyWeight +
-            (1.0 - errorRate) * errorWeight
-        )
+        let reliabilityComponent = reliability * Float(reliabilityWeight)
+        let throughputComponent = throughputScore * Float(throughputWeight)
+        let latencyComponent = latencyScore * Float(latencyWeight)
+        let errorComponent = (1.0 - errorRate) * Float(errorWeight)
+        
+        return reliabilityComponent + throughputComponent + latencyComponent + errorComponent
     }
     
     var isHealthy: Bool {
@@ -61,7 +61,7 @@ class ChannelInstance {
     var recoveryAttempts: Int = 0
     
     private let maxRecoveryAttempts = 3
-    private let maintenanceThreshold = 0.4
+    private let maintenanceThreshold: Float = 0.4
     
     init(peerID: MCPeerID) {
         self.id = UUID().uuidString
@@ -82,7 +82,7 @@ class ChannelInstance {
     }
     
     var needsMaintenance: Bool {
-        return quality.overallScore < maintenanceThreshold || 
+        return quality.overallScore < Float(maintenanceThreshold) || 
                failureCount > 5 ||
                recoveryAttempts >= maxRecoveryAttempts
     }
@@ -107,10 +107,10 @@ class ChannelInstance {
         
         let newReliability = success ? 1.0 : 0.0
         let newThroughput = success ? Float(dataSize) / Float(max(latency, 0.001)) : 0.0
-        let newErrorRate = success ? 0.0 : 1.0
+        let newErrorRate: Float = success ? 0.0 : 1.0
         
         quality = ChannelQuality(
-            reliability: quality.reliability * (1 - alpha) + newReliability * alpha,
+            reliability: quality.reliability * (1 - alpha) + Float(newReliability) * alpha,
             throughput: quality.throughput * (1 - alpha) + newThroughput * alpha,
             latency: quality.latency * (1 - Double(alpha)) + latency * Double(alpha),
             errorRate: quality.errorRate * (1 - alpha) + newErrorRate * alpha,
@@ -153,11 +153,11 @@ class AdvancedChannelPoolManager: ObservableObject {
     private let emergencyManager = EmergencyChannelManager()
     private let recoveryEngine = ChannelRecoveryEngine()
     
-    // MARK: - 併發控制
+    // MARK: - 併發控制 (Swift 6 Compatible)
     private let channelQueue = DispatchQueue(label: "com.signalair.channel-pool", 
                                            qos: .userInitiated, 
                                            attributes: .concurrent)
-    private let operationSemaphore = DispatchSemaphore(value: Configuration.maxConcurrentOperations)
+    private let concurrencyLimiter = AsyncConcurrencyLimiter(maxOperations: Configuration.maxConcurrentOperations)
     
     // MARK: - 定時器
     private var healthCheckTimer: Timer?
@@ -175,144 +175,109 @@ class AdvancedChannelPoolManager: ObservableObject {
     }
     
     deinit {
-        cleanup()
+        healthCheckTimer?.invalidate()
+        maintenanceTimer?.invalidate()
+        metricsTimer?.invalidate()
+        NotificationCenter.default.removeObserver(self)
+        // Note: cleanup() 在 deinit 中無法安全調用，因為它是 async
+        // 資源清理已在上面的同步操作中完成
     }
     
     // MARK: - 公共API
     
     /// 獲取最佳通道進行操作
     func acquireChannel(for peerID: MCPeerID, priority: OperationPriority = .normal) async -> ChannelInstance? {
-        return await withCheckedContinuation { continuation in
-            channelQueue.async { [weak self] in
-                guard let self = self else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                
-                let channel = self.selectOptimalChannel(for: peerID, priority: priority)
-                
-                if let channel = channel {
-                    channel.activeOperations += 1
-                    self.logger.debug("📡 Acquired channel \(channel.id) for \(peerID.displayName)")
-                }
-                
-                continuation.resume(returning: channel)
-            }
+        let channel = await selectOptimalChannel(for: peerID, priority: priority)
+        
+        if let channel = channel {
+            channel.activeOperations += 1
+            logger.debug("📡 Acquired channel \(channel.id) for \(peerID.displayName)")
         }
+        
+        return channel
     }
     
     /// 釋放通道
     func releaseChannel(_ channel: ChannelInstance, success: Bool, latency: TimeInterval, dataSize: Int) {
-        channelQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            
-            channel.activeOperations = max(0, channel.activeOperations - 1)
-            channel.recordOperation(success: success, latency: latency, dataSize: dataSize)
-            
-            self.operationSemaphore.signal()
-            
-            // 更新狀態
-            Task { @MainActor in
-                self.updateChannelState(channel)
-                self.updatePoolStatistics()
-            }
-            
-            self.logger.debug("🔓 Released channel \(channel.id), success: \(success)")
+        channel.activeOperations = max(0, channel.activeOperations - 1)
+        channel.recordOperation(success: success, latency: latency, dataSize: dataSize)
+        
+        Task {
+            await concurrencyLimiter.releaseOperation()
         }
+        
+        // 更新狀態
+        updateChannelState(channel)
+        updatePoolStatistics()
+        
+        logger.debug("🔓 Released channel \(channel.id), success: \(success)")
     }
     
     /// 處理peer連接
     func handlePeerConnected(_ peerID: MCPeerID) {
-        channelQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            
-            // 檢查是否已存在通道
-            let existingChannels = self.activeChannels.values.filter { $0.peerID == peerID }
-            guard existingChannels.isEmpty else {
-                self.logger.warning("⚠️ Channels already exist for \(peerID.displayName)")
-                return
-            }
-            
-            // 創建新通道
-            let channel = ChannelInstance(peerID: peerID)
-            self.activeChannels[channel.id] = channel
-            
-            Task { @MainActor in
-                self.updatePoolStatistics()
-            }
-            
-            self.logger.info("✅ Created channel for \(peerID.displayName)")
+        // 檢查是否已存在通道
+        let existingChannels = activeChannels.values.filter { $0.peerID == peerID }
+        guard existingChannels.isEmpty else {
+            logger.warning("⚠️ Channels already exist for \(peerID.displayName)")
+            return
         }
+        
+        // 創建新通道
+        let channel = ChannelInstance(peerID: peerID)
+        activeChannels[channel.id] = channel
+        
+        updatePoolStatistics()
+        
+        logger.info("✅ Created channel for \(peerID.displayName)")
     }
     
     /// 處理peer斷開
     func handlePeerDisconnected(_ peerID: MCPeerID) {
-        channelQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            
-            let channelsToRemove = self.activeChannels.filter { $0.value.peerID == peerID }
-            
-            for (channelId, _) in channelsToRemove {
-                self.activeChannels.removeValue(forKey: channelId)
-            }
-            
-            Task { @MainActor in
-                self.updatePoolStatistics()
-            }
-            
-            self.logger.info("❌ Removed channels for \(peerID.displayName)")
+        let channelsToRemove = activeChannels.filter { $0.value.peerID == peerID }
+        
+        for (channelId, _) in channelsToRemove {
+            activeChannels.removeValue(forKey: channelId)
         }
+        
+        updatePoolStatistics()
+        
+        logger.info("❌ Removed channels for \(peerID.displayName)")
     }
     
     /// 執行緊急通道重置
     func emergencyChannelReset() async {
         logger.warning("🚨 Emergency channel reset initiated")
         
-        return await withCheckedContinuation { continuation in
-            channelQueue.async(flags: .barrier) { [weak self] in
-                guard let self = self else {
-                    continuation.resume()
-                    return
-                }
-                
-                // 保留緊急通道，重置其他通道
-                let emergencyChannels = self.emergencyManager.getEmergencyChannels(from: self.activeChannels)
-                
-                // 重置非緊急通道
-                for (channelId, channel) in self.activeChannels {
-                    if !emergencyChannels.contains(channelId) {
-                        channel.state = .recovering
-                        channel.recoveryAttempts += 1
-                    }
-                }
-                
-                Task { @MainActor in
-                    self.systemState = .recovery
-                    self.updatePoolStatistics()
-                }
-                
-                continuation.resume()
+        // 保留緊急通道，重置其他通道
+        let emergencyChannels = emergencyManager.getEmergencyChannels(from: activeChannels)
+        
+        // 重置非緊急通道
+        for (channelId, channel) in activeChannels {
+            if !emergencyChannels.contains(channelId) {
+                channel.state = .recovering
+                channel.recoveryAttempts += 1
             }
         }
+        
+        systemState = .recovery
+        updatePoolStatistics()
     }
     
     /// 獲取池狀態報告
     func getDetailedReport() -> ChannelPoolReport {
-        return channelQueue.sync {
-            let healthyChannels = activeChannels.values.filter { $0.quality.isHealthy }.count
-            let degradedChannels = activeChannels.values.filter { !$0.quality.isHealthy && $0.state != .failed }.count
-            let failedChannels = activeChannels.values.filter { $0.state == .failed }.count
-            
-            return ChannelPoolReport(
-                totalChannels: activeChannels.count,
-                healthyChannels: healthyChannels,
-                degradedChannels: degradedChannels,
-                failedChannels: failedChannels,
-                systemState: systemState,
-                averageQuality: calculateAverageQuality(),
-                recommendations: generateRecommendations()
-            )
-        }
+        let healthyChannels = activeChannels.values.filter { $0.quality.isHealthy }.count
+        let degradedChannels = activeChannels.values.filter { !$0.quality.isHealthy && $0.state != .failed }.count
+        let failedChannels = activeChannels.values.filter { $0.state == .failed }.count
+        
+        return ChannelPoolReport(
+            totalChannels: activeChannels.count,
+            healthyChannels: healthyChannels,
+            degradedChannels: degradedChannels,
+            failedChannels: failedChannels,
+            systemState: systemState,
+            averageQuality: calculateAverageQuality(),
+            recommendations: generateRecommendations()
+        )
     }
     
     // MARK: - 私有方法
@@ -360,10 +325,10 @@ class AdvancedChannelPoolManager: ObservableObject {
         }
     }
     
-    private func selectOptimalChannel(for peerID: MCPeerID, priority: OperationPriority) -> ChannelInstance? {
-        // 1. 檢查並發限制
-        guard operationSemaphore.wait(timeout: .now() + 0.1) == .success else {
-            logger.warning("⚠️ Operation semaphore timeout for \(peerID.displayName)")
+    private func selectOptimalChannel(for peerID: MCPeerID, priority: OperationPriority) async -> ChannelInstance? {
+        // 1. 檢查並發限制 (Swift 6 Compatible)
+        guard await concurrencyLimiter.acquireOperation(timeoutSeconds: 0.1) else {
+            logger.warning("⚠️ Operation concurrency timeout for \(peerID.displayName)")
             return nil
         }
         
@@ -478,23 +443,19 @@ class AdvancedChannelPoolManager: ObservableObject {
     }
     
     private func updatePoolStatistics() {
-        let stats = channelQueue.sync {
-            let healthy = activeChannels.values.filter { $0.quality.isHealthy }.count
-            let active = activeChannels.values.filter { $0.state == .active }.count
-            let failed = activeChannels.values.filter { $0.state == .failed }.count
-            
-            return PoolStatistics(
-                totalChannels: activeChannels.count,
-                healthyChannels: healthy,
-                activeChannels: active,
-                failedChannels: failed,
-                averageQuality: calculateAverageQuality(),
-                totalOperations: activeChannels.values.reduce(0) { $0 + $1.totalOperations },
-                successfulOperations: activeChannels.values.reduce(0) { $0 + $1.successfulOperations }
-            )
-        }
+        let healthy = activeChannels.values.filter { $0.quality.isHealthy }.count
+        let active = activeChannels.values.filter { $0.state == .active }.count
+        let failed = activeChannels.values.filter { $0.state == .failed }.count
         
-        poolStatistics = stats
+        poolStatistics = PoolStatistics(
+            totalChannels: activeChannels.count,
+            healthyChannels: healthy,
+            activeChannels: active,
+            failedChannels: failed,
+            averageQuality: calculateAverageQuality(),
+            totalOperations: activeChannels.values.reduce(0) { $0 + $1.totalOperations },
+            successfulOperations: activeChannels.values.reduce(0) { $0 + $1.successfulOperations }
+        )
     }
     
     private func calculateAverageQuality() -> Float {
@@ -525,7 +486,7 @@ class AdvancedChannelPoolManager: ObservableObject {
         return recommendations
     }
     
-    private func cleanup() {
+    private func cleanup() async {
         healthCheckTimer?.invalidate()
         maintenanceTimer?.invalidate()
         metricsTimer?.invalidate()
@@ -649,6 +610,56 @@ class EmergencyChannelManager {
     
     func reserveEmergencyCapacity() {
         // 為緊急情況預留資源
+    }
+}
+
+// MARK: - Swift 6 並發限制器
+class AsyncConcurrencyLimiter {
+    private let maxOperations: Int
+    private let semaphore: NSLock
+    private var currentOperations: Int = 0
+    
+    init(maxOperations: Int) {
+        self.maxOperations = maxOperations
+        self.semaphore = NSLock()
+    }
+    
+    func acquireOperation(timeoutSeconds: Double) async -> Bool {
+        return await withTaskGroup(of: Bool.self) { group in
+            group.addTask { [weak self] in
+                return await self?.waitForAvailableSlot() ?? false
+            }
+            
+            group.addTask {
+                try? await Task.sleep(nanoseconds: UInt64(timeoutSeconds * 1_000_000_000))
+                return false
+            }
+            
+            let result = await group.next() ?? false
+            group.cancelAll()
+            return result
+        }
+    }
+    
+    func releaseOperation() async {
+        semaphore.lock()
+        defer { semaphore.unlock() }
+        currentOperations = max(0, currentOperations - 1)
+    }
+    
+    private func waitForAvailableSlot() async -> Bool {
+        while true {
+            semaphore.lock()
+            if currentOperations < maxOperations {
+                currentOperations += 1
+                semaphore.unlock()
+                return true
+            }
+            semaphore.unlock()
+            
+            // 短暫等待後重試
+            try? await Task.sleep(nanoseconds: 10_000_000) // 10ms
+        }
     }
 }
 

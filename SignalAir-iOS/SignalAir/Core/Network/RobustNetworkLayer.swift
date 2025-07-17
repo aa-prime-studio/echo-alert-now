@@ -128,7 +128,8 @@ class RobustNetworkLayer: ObservableObject {
         for edgeCase in detectedEdgeCases {
             let handled = await handleEdgeCase(edgeCase)
             if !handled.success {
-                logger.warning("⚠️ Failed to handle edge case: \(edgeCase.type)")
+                let edgeCaseType: EdgeCaseType = edgeCase.type
+                self.logger.warning("⚠️ Failed to handle edge case: \(String(describing: edgeCaseType))")
             }
         }
         
@@ -155,11 +156,11 @@ class RobustNetworkLayer: ObservableObject {
         
         let edgeCase = await edgeCaseDetector.analyzeContext(context)
         if let edgeCase = edgeCase {
-            await handleEdgeCase(edgeCase)
+            let _ = await handleEdgeCase(edgeCase)
         }
         
         // 更新通道池
-        await channelPoolManager.handlePeerConnected(peerID)
+        channelPoolManager.handlePeerConnected(peerID)
         
         // 更新網路健康度
         await updateNetworkHealth()
@@ -182,11 +183,11 @@ class RobustNetworkLayer: ObservableObject {
         
         let edgeCase = await edgeCaseDetector.analyzeContext(context)
         if let edgeCase = edgeCase {
-            await handleEdgeCase(edgeCase)
+            let _ = await handleEdgeCase(edgeCase)
         }
         
         // 更新通道池
-        await channelPoolManager.handlePeerDisconnected(peerID)
+        channelPoolManager.handlePeerDisconnected(peerID)
         
         // 清理相關恢復操作
         cleanupRecoveryOperations(for: peerID)
@@ -197,7 +198,8 @@ class RobustNetworkLayer: ObservableObject {
     
     /// 處理背景/前景轉換
     func handleAppStateTransition(to state: AppState) async {
-        logger.info("📱 Handling app state transition to \(state)")
+        let appState: AppState = state
+        self.logger.info("📱 Handling app state transition to \(String(describing: appState))")
         
         let context = EdgeCaseContext(
             type: .backgroundTransition,
@@ -211,7 +213,7 @@ class RobustNetworkLayer: ObservableObject {
         
         let edgeCase = await edgeCaseDetector.analyzeContext(context)
         if let edgeCase = edgeCase {
-            await handleEdgeCase(edgeCase)
+            let _ = await handleEdgeCase(edgeCase)
         }
         
         // 調整操作策略
@@ -248,7 +250,7 @@ class RobustNetworkLayer: ObservableObject {
             ResourceExhaustionHandler()
         ].sorted { $0.priority > $1.priority }
         
-        logger.debug("📝 Registered \(edgeCaseHandlers.count) edge case handlers")
+        logger.debug("📝 Registered \(self.edgeCaseHandlers.count) edge case handlers")
     }
     
     private func startMonitoring() {
@@ -296,29 +298,14 @@ class RobustNetworkLayer: ObservableObject {
         var attempt = 0
         
         while attempt <= maxRetries {
-            do {
-                lastResult = await operation()
-                
-                // 操作成功，通知熔斷器
-                circuitBreaker.recordSuccess()
-                
-                logger.debug("✅ Operation \(operationId) succeeded on attempt \(attempt + 1)")
-                break
-                
-            } catch {
-                attempt += 1
-                
-                // 記錄失敗
-                circuitBreaker.recordFailure()
-                
-                logger.warning("❌ Operation \(operationId) failed on attempt \(attempt): \(error)")
-                
-                if attempt <= maxRetries {
-                    // 計算退避延遲
-                    let delay = calculateBackoffDelay(attempt: attempt)
-                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
-                }
-            }
+            lastResult = await operation()
+            attempt += 1
+            
+            // 操作成功，通知熔斷器
+            circuitBreaker.recordSuccess()
+            
+            self.logger.debug("✅ Operation \(operationId) succeeded on attempt \(attempt)")
+            break
         }
         
         return lastResult
@@ -373,7 +360,7 @@ class RobustNetworkLayer: ObservableObject {
         } else if successfulSends > 0 {
             return .partialSuccess(nil, errors)
         } else {
-            return .failure(.sendFailed)
+            return .failure(NetworkError.sendFailed)
         }
     }
     
@@ -384,17 +371,19 @@ class RobustNetworkLayer: ObservableObject {
                 let result = await handler.handle(context)
                 
                 // 更新統計
-                edgeCaseStats[context.type, default: 0] += 1
+                self.edgeCaseStats[context.type, default: 0] += 1
                 
-                logger.info("🔧 Handled edge case \(context.type) with result: \(result.success)")
+                let contextType: EdgeCaseType = context.type
+        self.logger.info("🔧 Handled edge case \(String(describing: contextType)) with result: \(result.success)")
                 
                 return result
             }
         }
         
         // 沒有找到合適的處理器
-        logger.warning("⚠️ No handler found for edge case: \(context.type)")
-        return EdgeCaseResult(success: false, recoveryAction: .none, delay: nil, message: "No handler available")
+        let contextType: EdgeCaseType = context.type
+        self.logger.warning("⚠️ No handler found for edge case: \(String(describing: contextType))")
+        return EdgeCaseResult(success: false, recoveryAction: RecoveryAction.none, delay: nil, message: "No handler available")
     }
     
     private func getSystemState() async -> [String: Any] {
@@ -427,23 +416,24 @@ class RobustNetworkLayer: ObservableObject {
     
     private func updateNetworkHealth() async {
         let connectedPeers = networkService.connectedPeers.count
-        let poolReport = channelPoolManager.getDetailedReport()
+        let poolReport = self.channelPoolManager.getDetailedReport()
         let memoryPressure = await checkMemoryPressure()
         
         // 綜合評估網路健康度
         if connectedPeers == 0 {
-            networkHealth = .offline
+            self.networkHealth = .offline
         } else if poolReport.averageQuality > 0.8 && poolReport.failedChannels == 0 && memoryPressure < 0.6 {
-            networkHealth = .excellent
+            self.networkHealth = .excellent
         } else if poolReport.averageQuality > 0.6 && poolReport.failedChannels < 3 && memoryPressure < 0.8 {
-            networkHealth = .good
+            self.networkHealth = .good
         } else if poolReport.averageQuality > 0.4 && poolReport.failedChannels < 5 {
-            networkHealth = .fair
+            self.networkHealth = .fair
         } else {
-            networkHealth = .poor
+            self.networkHealth = .poor
         }
         
-        logger.debug("💊 Network health updated to: \(networkHealth)")
+        let currentHealth: NetworkHealth = self.networkHealth
+        self.logger.debug("💊 Network health updated to: \(String(describing: currentHealth))")
     }
     
     private func collectMetrics() async {
@@ -584,7 +574,7 @@ class RobustNetworkLayer: ObservableObject {
     
     /// Eclipse 攻擊防禦 - 評估連接重新整理需求
     @MainActor
-    func evaluateEclipseConnectionRefresh() -> EclipseDefenseConnectionRefresh.RefreshRecommendation {
+    private func evaluateEclipseConnectionRefresh() -> EclipseDefenseConnectionRefresh.RefreshRecommendation {
         let connectedPeers = networkService.connectedPeers.count
         let edgeCaseCount = edgeCaseStats.values.reduce(0, +)
         
@@ -597,7 +587,7 @@ class RobustNetworkLayer: ObservableObject {
     
     /// Eclipse 攻擊防禦 - 執行智能重連
     @MainActor
-    func performIntelligentReconnection() async {
+    private func performIntelligentReconnection() async {
         let recommendation = evaluateEclipseConnectionRefresh()
         
         guard case .refreshNeeded(let priority) = recommendation else {

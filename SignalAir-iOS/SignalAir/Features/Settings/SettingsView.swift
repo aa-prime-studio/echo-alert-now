@@ -58,7 +58,7 @@ struct SettingsView: View {
             Text("Settings")
                 .font(.largeTitle)
                 .fontWeight(.bold)
-                .foregroundColor(Color(red: 0.149, green: 0.243, blue: 0.894)) // #263ee4
+                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416)) // #00d76a
             Spacer()
             Button(action: { showingPurchaseSheet = true }) {
                 Image(systemName: "heart.fill")

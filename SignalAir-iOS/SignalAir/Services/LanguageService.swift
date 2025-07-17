@@ -93,6 +93,7 @@ class LanguageService: ObservableObject {
                 "distance_only": "僅距離",
                 
                 // 聊天室頁面
+                "live_support_chatroom": "即時支援\n聊天室",
                 "auto_delete_24h": "24小時自動清除",
                 "no_messages": "目前沒有訊息",
                 "send_first_message": "發送第一條訊息開始對話",
@@ -260,8 +261,8 @@ class LanguageService: ObservableObject {
                 "error_occurred": "發生錯誤",
                 "retry": "重試",
                 "initializing_services": "正在初始化服務...",
-                "terms_of_service": "服務條款",
-                "privacy_policy": "隱私權條款",
+                "terms_of_service_alt": "服務條款",
+                "privacy_policy_terms": "隱私權條款",
                 "network_diagnosis": "🔍 網路診斷",
                 
                 // 購買選項
@@ -296,7 +297,7 @@ class LanguageService: ObservableObject {
                 "bingo_god": "Bingo神",
                 "are_you_dj": "你是DJ嗎",
                 "turtle_god": "烏龜神",
-                "no_leaderboard_data": "本週暫無排行榜數據",
+                "no_leaderboard_data_weekly": "本週暫無排行榜數據",
                 "joining": "加入中...",
                 "emote_broadcast": "表情廣播",
                 "terms_agreement": "使用條款同意",
@@ -304,7 +305,22 @@ class LanguageService: ObservableObject {
                 "read_terms_before": "在使用本應用程式之前，請仔細閱讀並同意以下使用條款：",
                 "agree_terms": "我已閱讀並同意上述使用條款",
                 "agree_continue": "同意並繼續",
-                "signalair_privacy_policy": "SignalAir Rescue 隱私權政策"
+                "signalair_privacy_policy": "SignalAir Rescue 隱私權政策",
+                
+                // 幫助頁面
+                "help_guide_main": "使用說明",
+                "emergency_signals": "緊急訊號",
+                "emergency_signals_content": "快速發送求救訊號：\n• 藍色「我安全」- 告知他人您的安全狀況\n• 紫色「需要物資」- 請求食物、水或其他物資\n• 紅色「需要醫療」- 緊急醫療協助\n• 黃色「危險警告」- 警告他人周遭危險",
+                "chat_functions": "聊天室功能",
+                "chat_functions_content": "與附近使用者溝通：\n• 輸入文字訊息並發送\n• 查看其他人的訊息\n• 訊息會在24小時後自動刪除\n• 支援最多50條訊息記錄",
+                "bingo_game": "賓果遊戲",
+                "bingo_game_content": "多人連線娛樂功能：\n• 需要付費解鎖\n• 3個遊戲房間可選擇\n• 與其他玩家即時互動\n• 自動產生隨機賓果卡",
+                "settings_options": "設定選項",
+                "settings_options_content": "個人化設定：\n• 切換語言（中文/English）\n• 查看訂購狀態\n• 升級到付費版本\n• 恢復之前的購買",
+                "location_info": "位置資訊",
+                "location_info_content": "距離與方向顯示：\n• 自動計算與訊號源的距離\n• 顯示模糊方位\n• 僅用於改善使用體驗\n",
+                "important_notes": "注意事項",
+                "important_notes_content": "使用時請注意：\n• 確保裝置有足夠電量\n• 在真正緊急情況下，請同時聯繫官方救援單位\n• 不要濫用緊急訊號功能\n• 保持裝置在通訊範圍內"
             ]
         case .english:
             return [
@@ -326,8 +342,8 @@ class LanguageService: ObservableObject {
                 "nickname": "Nickname",
                 "device_name": "Device Name",
                 "version": "Version",
-                "privacy_policy": "Privacy Policy",
-                "terms_of_service": "Terms of Service",
+                "privacy_policy_main": "Privacy Policy",
+                "terms_of_service_main": "Terms of Service",
                 "help_guide": "Help Guide",
                 "select_language": "Select Language",
                 "done": "Done",
@@ -361,6 +377,7 @@ class LanguageService: ObservableObject {
                 "distance_only": "Distance Only",
                 
                 // Chat page
+                "live_support_chatroom": "Live Support\nChatroom",
                 "auto_delete_24h": "Auto-delete in 24 hours",
                 "no_messages": "No messages yet",
                 "send_first_message": "Send first message to start conversation",
@@ -398,7 +415,7 @@ class LanguageService: ObservableObject {
                 "count_unit": "numbers",
                 "waiting_draw": "Waiting to draw...",
                 "todays_leaderboard": "Today's Leaderboard",
-                "no_leaderboard_data": "No leaderboard data yet",
+                "no_leaderboard_data_main": "No leaderboard data yet",
                 
                 // Nickname editing
                 "set_nickname": "Set Nickname",
@@ -528,7 +545,7 @@ class LanguageService: ObservableObject {
                 "error_occurred": "An Error Occurred",
                 "retry": "Retry",
                 "initializing_services": "Initializing services...",
-                "terms_of_service": "Terms of Service",
+                "terms_of_service_alt": "Terms of Service",
                 "privacy_policy": "Privacy Policy",
                 "network_diagnosis": "🔍 Network Diagnosis",
                 
@@ -564,7 +581,7 @@ class LanguageService: ObservableObject {
                 "bingo_god": "Bingo God",
                 "are_you_dj": "Are You a DJ?",
                 "turtle_god": "Turtle God",
-                "no_leaderboard_data": "No leaderboard data this week",
+                "no_leaderboard_data_weekly": "No leaderboard data this week",
                 "joining": "Joining...",
                 "emote_broadcast": "Emote Broadcast",
                 "terms_agreement": "Terms Agreement",
@@ -572,7 +589,22 @@ class LanguageService: ObservableObject {
                 "read_terms_before": "Before using this application, please read and agree to the following terms:",
                 "agree_terms": "I have read and agree to the above terms",
                 "agree_continue": "Agree and Continue",
-                "signalair_privacy_policy": "SignalAir Rescue Privacy Policy"
+                "signalair_privacy_policy": "SignalAir Rescue Privacy Policy",
+                
+                // 幫助頁面
+                "help_guide_main": "Help Guide",
+                "emergency_signals": "Emergency Signals",
+                "emergency_signals_content": "Quick emergency signal sending:\n• Blue 'I'm Safe' - Inform others of your safety status\n• Purple 'Need Supplies' - Request food, water or other supplies\n• Red 'Need Medical' - Emergency medical assistance\n• Yellow 'Danger Alert' - Warn others of surrounding dangers",
+                "chat_functions": "Chat Functions",
+                "chat_functions_content": "Communicate with nearby users:\n• Enter text messages and send\n• View messages from others\n• Messages auto-delete after 24 hours\n• Support up to 50 message records",
+                "bingo_game": "Bingo Game",
+                "bingo_game_content": "Multiplayer entertainment features:\n• Requires paid unlock\n• 3 game rooms to choose from\n• Real-time interaction with other players\n• Automatically generate random bingo cards",
+                "settings_options": "Settings Options",
+                "settings_options_content": "Personalization settings:\n• Switch language (Chinese/English)\n• View subscription status\n• Upgrade to paid version\n• Restore previous purchases",
+                "location_info": "Location Information",
+                "location_info_content": "Distance and direction display:\n• Automatically calculate distance to signal source\n• Show approximate direction\n• Only used to improve user experience\n",
+                "important_notes": "Important Notes",
+                "important_notes_content": "Please note when using:\n• Ensure device has sufficient battery\n• In real emergencies, also contact official rescue units\n• Do not abuse emergency signal functions\n• Keep device within communication range"
             ]
         }
     }

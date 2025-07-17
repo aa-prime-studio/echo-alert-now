@@ -794,8 +794,8 @@ struct EmoteButtonsView: View {
     // 所有可用的表情
     private let allEmotes: [EmoteType] = [
         .bingo, .nen, .wow, .boom, .pirate, .rocket, .bug, .fly, .fire, .poop,
-        .clown, .mindBlown, .pinch, .cockroach, .eyeRoll, .burger, .rockOn, .battery,
-        .dizzy, .bottle, .skull, .mouse, .trophy, .ring, .juggler
+        .clown, .mindBlown, .pinch, .eyeRoll, .burger, .rockOn, .battery,
+        .dizzy, .bottle, .skull, .mouse, .ring, .juggler, .pray, .love
     ]
     
     // 網格佈局配置：每行5個按鈕

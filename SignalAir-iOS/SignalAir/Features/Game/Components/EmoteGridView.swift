@@ -5,12 +5,11 @@ struct EmoteGridView: View {
     @EnvironmentObject var languageService: LanguageService
     
     let emotes: [EmoteType] = [
-        .bingo, .nen, .wow, .boom,
-        .pirate, .rocket, .bug, .fly,
-        .fire, .poop, .clown, .mindBlown,
-        .pinch, .cockroach, .eyeRoll, .burger,
-        .rockOn, .battery, .dizzy, .bottle,
-        .skull, .mouse, .trophy, .ring, .juggler
+        .bingo, .nen, .wow, .dizzy, .ring,
+        .boom, .pirate, .bug, .fly, .fire,
+        .poop, .clown, .mindBlown, .pinch, .eyeRoll,
+        .rockOn, .bottle, .skull, .juggler, .burger,
+        .battery, .rocket, .mouse, .pray, .love
     ]
     
     let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 5)

@@ -82,7 +82,8 @@ struct ContentView: View {
                     viewModelContainer.initializationError = nil
                     viewModelContainer.isReady = true
                 }
-            } else if viewModelContainer.isReady {
+            } else {
+                // 直接顯示主界面，忽略初始化狀態
                 ZStack {
                     TabView(selection: $selectedTab) {
                         SignalTabView(signalViewModel: viewModelContainer.signalViewModel)
@@ -122,10 +123,6 @@ struct ContentView: View {
                     SecurityAlertBannerView()
                         .zIndex(1000)
                 }
-            } else {
-                // 顯示輕量級載入指示器，不阻塞UI
-                LoadingIndicatorView()
-                    .transition(.opacity)
             }
         }
     }
@@ -171,7 +168,6 @@ struct ErrorView: View {
 // MARK: - Loading Indicator
 struct LoadingIndicatorView: View {
     @State private var isAnimating = false
-    @EnvironmentObject var languageService: LanguageService
     
     var body: some View {
         VStack(spacing: 20) {
@@ -181,10 +177,6 @@ struct LoadingIndicatorView: View {
                 .frame(width: 50, height: 50)
                 .rotationEffect(.degrees(isAnimating ? 360 : 0))
                 .animation(.linear(duration: 1).repeatForever(autoreverses: false), value: isAnimating)
-            
-            Text(languageService.t("initializing_services"))
-                .font(.caption)
-                .foregroundColor(.gray)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(UIColor.systemBackground))
@@ -301,16 +293,8 @@ struct SignalTabView: View {
     
     // 翻譯後的連線狀態文字
     private var translatedConnectionStatus: String {
-        let status = signalViewModel.connectionStatus
-        if status.contains(languageService.t("connected")) {
-            let deviceCount = status.components(separatedBy: " ").first { $0.contains(languageService.t("count_unit")) }?.replacingOccurrences(of: languageService.t("count_unit") + languageService.t("device_name") + ")", with: "") ?? "0"
-            return String(format: languageService.t("connected_devices"), deviceCount)
-        } else if status.contains(languageService.t("connecting")) {
-            return languageService.t("connecting")
-        } else if status.contains(languageService.t("disconnected")) || status.contains(languageService.t("offline")) {
-            return languageService.t("disconnected")
-        }
-        return status
+        // SignalViewModel 現在已經使用 LanguageService 進行正確的格式化
+        return signalViewModel.connectionStatus
     }
     
     // 連線圖標名稱

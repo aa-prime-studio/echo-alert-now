@@ -5,40 +5,47 @@ import UIKit
 
 // MARK: - Emote Types
 enum EmoteType: String, Codable, Hashable {
-    case bingo
-    case nen
-    case wow
-    case boom // 💥
-    case pirate // 🏴‍☠️
-    case rocket // 🚀
-    case bug // 🐛
-    case fly // 🪰
-    case fire // 🔥
-    case poop // 💩
-    case clown // 🤡
+    // 文字表情 (5個)
+    case bingo     // 🎉 - "玩家 喊出 BINGO!"
+    case nen       // 🤔 - "玩家 說你嫩！"
+    case wow       // 😱 - "玩家 大叫太扯！"
+    case dizzy     // 😵‍💫 - "玩家 頭暈了"
+    case ring      // 💍 - "玩家 問你要不要嫁給他"
+    
+    // 純Emoji表情 (20個)
+    case boom      // 💥
+    case pirate    // 🏴‍☠️
+    case bug       // 🐛
+    case fly       // 🪰
+    case fire      // 🔥
+    case poop      // 💩
+    case clown     // 🤡
     case mindBlown // 🤯
-    case pinch // 🤏
-    case cockroach // 🪳
-    case eyeRoll // 🙄
-    case burger // 🍔
-    case rockOn // 🤟
-    case battery // 🔋
-    case dizzy // 😵‍💫
-    case bottle // 🍼
-    case skull // 💀
-    case mouse // 🐭
-    case trophy // 🏆
-    case ring // 💍
-    case juggler // 🤹‍♂️
+    case pinch     // 🤏
+    case eyeRoll   // 🙄
+    case rockOn    // 🤟
+    case bottle    // 🍼
+    case skull     // 💀
+    case juggler   // 🤹‍♂️
+    case burger    // 🍔
+    case battery   // 🔋
+    case rocket    // 🚀
+    case mouse     // 🐭
+    case pray      // 🙏
+    case love      // 💕
     
     var emoji: String {
         switch self {
+        // 文字表情 (5個)
         case .bingo: return "🎉"
         case .nen: return "🤔"
         case .wow: return "😱"
+        case .dizzy: return "😵‍💫"
+        case .ring: return "💍"
+        
+        // 純Emoji表情 (20個)
         case .boom: return "💥"
         case .pirate: return "🏴‍☠️"
-        case .rocket: return "🚀"
         case .bug: return "🐛"
         case .fly: return "🪰"
         case .fire: return "🔥"
@@ -46,29 +53,32 @@ enum EmoteType: String, Codable, Hashable {
         case .clown: return "🤡"
         case .mindBlown: return "🤯"
         case .pinch: return "🤏"
-        case .cockroach: return "🪳"
         case .eyeRoll: return "🙄"
-        case .burger: return "🍔"
         case .rockOn: return "🤟"
-        case .battery: return "🔋"
-        case .dizzy: return "😵‍💫"
         case .bottle: return "🍼"
         case .skull: return "💀"
-        case .mouse: return "🐭"
-        case .trophy: return "🏆"
-        case .ring: return "💍"
         case .juggler: return "🤹‍♂️"
+        case .burger: return "🍔"
+        case .battery: return "🔋"
+        case .rocket: return "🚀"
+        case .mouse: return "🐭"
+        case .pray: return "🙏"
+        case .love: return "💕"
         }
     }
     
     var template: String {
         switch self {
+        // 文字表情 (5個 - 有動作描述)
         case .bingo: return "%@ 喊出 BINGO!"
         case .nen: return "%@ 說你嫩！"
         case .wow: return "%@ 大叫太扯！"
+        case .dizzy: return "%@ 頭暈了"
+        case .ring: return "%@ 問你要不要嫁給他"
+        
+        // 純Emoji表情 (20個 - 僅顯示emoji)
         case .boom: return "%@ 💥"
         case .pirate: return "%@ 🏴‍☠️"
-        case .rocket: return "%@ 說一起飛向宇宙"
         case .bug: return "%@ 🐛"
         case .fly: return "%@ 🪰"
         case .fire: return "%@ 🔥"
@@ -76,24 +86,23 @@ enum EmoteType: String, Codable, Hashable {
         case .clown: return "%@ 🤡"
         case .mindBlown: return "%@ 🤯"
         case .pinch: return "%@ 🤏"
-        case .cockroach: return "%@ 🪳"
         case .eyeRoll: return "%@ 🙄"
-        case .burger: return "%@ 想吃漢堡 "
         case .rockOn: return "%@ 🤟"
-        case .battery: return "%@ 需要充電 "
-        case .dizzy: return "%@ 頭暈了 "
         case .bottle: return "%@ 🍼"
         case .skull: return "%@ 💀"
-        case .mouse: return "%@ 説家裡有老鼠 "
-        case .trophy: return "%@ 🏆"
-        case .ring: return "%@ 問你要不要嫁給他"
         case .juggler: return "%@ 🤹‍♂️"
+        case .burger: return "%@ 🍔"
+        case .battery: return "%@ 🔋"
+        case .rocket: return "%@ 🚀"
+        case .mouse: return "%@ 🐭"
+        case .pray: return "%@ 🙏"
+        case .love: return "%@ 💕"
         }
     }
     
     var isPureEmoji: Bool {
         switch self {
-        case .boom, .pirate, .bug, .fly, .fire, .poop, .clown, .mindBlown, .pinch, .cockroach, .eyeRoll, .rockOn, .bottle, .skull, .trophy, .juggler, .burger:
+        case .boom, .pirate, .bug, .fly, .fire, .poop, .clown, .mindBlown, .pinch, .eyeRoll, .rockOn, .bottle, .skull, .juggler, .burger, .pray, .love:
             return true
         case .bingo, .nen, .wow, .rocket, .battery, .dizzy, .mouse, .ring:
             return false

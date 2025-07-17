@@ -7,7 +7,7 @@ struct SplashScreenView: View {
     @State private var canProceed = false
     @State private var shouldProceed = false
     
-    private let animationDuration: Double = 5.0 // 5秒動畫時長
+    private let animationDuration: Double = 2.0 // 2秒動畫時長 - 優化啟動速度
     
     var onComplete: () -> Void
     
@@ -40,17 +40,17 @@ struct SplashScreenView: View {
     }
     
     private func startAnimation() {
-        // 持續閃爍動畫直到加載完成
-        withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+        // 持續閃爍動畫直到加載完成 - 優化頻率
+        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
             isFlashing = true
         }
         
-        // 模擬載入完成 (3.5秒後可以提前進入)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3.5) {
+        // 模擬載入完成 (1.5秒後可以提前進入)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             canProceed = true
         }
         
-        // 完整動畫結束 (5秒)
+        // 完整動畫結束 (2秒)
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             if !shouldProceed {
                 completeAnimation()
