@@ -504,7 +504,28 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
     
     // MARK: - 安全威脅檢測
     private func checkForSecurityThreats(data: Data, fromPeer peerID: MCPeerID) {
-        // 解析 JSON 數據
+        // 🛡️ 基礎安全檢查 - 檢查數據大小
+        if data.count > 1024 * 1024 { // 1MB 限制
+            print("⚠️ Large data packet detected from \(peerID.displayName): \(data.count) bytes")
+            ServiceContainer.shared.securityLogManager.logLargeDataPacket(peerID: peerID.displayName, size: data.count)
+            reportSecurityEvent(type: "large_packet", peerID: peerID.displayName, details: "Data size: \(data.count) bytes")
+        }
+        
+        // 🛡️ 基礎惡意內容檢測
+        let maliciousContentDetector = ServiceContainer.shared.maliciousContentDetector
+        let contentString = String(data: data, encoding: .utf8) ?? ""
+        if maliciousContentDetector.isObviouslyMalicious(contentString) {
+            print("⚠️ Malicious content detected from \(peerID.displayName)")
+            ServiceContainer.shared.securityLogManager.logEntry(
+                eventType: "malicious_content_detected",
+                source: "NetworkService",
+                severity: SecurityLogSeverity.warning,
+                details: "惡意內容檢測 - PeerID: \(peerID.displayName)"
+            )
+            reportSecurityEvent(type: "malicious_content", peerID: peerID.displayName, details: "Malicious content detected")
+        }
+        
+        // 原有的 JSON 攻擊類型檢測
         guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let attackType = jsonObject["type"] as? String else {
             return // 不是攻擊數據，正常處理
@@ -545,6 +566,25 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         #if DEBUG
         print("ℹ️ 收到未知數據類型: \(attackType)")
         #endif
+    }
+    
+    /// 報告安全事件到監控系統
+    private func reportSecurityEvent(type: String, peerID: String, details: String) {
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("SecurityEvent"),
+                object: nil,
+                userInfo: [
+                    "event": type,
+                    "peerID": peerID,
+                    "details": details,
+                    "timestamp": Date(),
+                    "source": "NetworkService"
+                ]
+            )
+        }
+        
+        print("⚠️ Security event reported: \(type) from \(peerID) - \(details)")
     }
     
     func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {

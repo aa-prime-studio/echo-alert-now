@@ -624,12 +624,13 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     var temporaryIDManager = TemporaryIDManager()
     var purchaseService = PurchaseService()
     var selfDestructManager = SelfDestructManager()
-    var floodProtection = FloodProtection()
+    var floodProtection: FloodProtection
     var settingsViewModel = SettingsViewModel()
     var connectionOptimizer = ConnectionOptimizer()
     var deviceFingerprintManager = DeviceFingerprintManager()
     var maliciousContentDetector = MaliciousContentDetector()
     var localBlacklistManager = LocalBlacklistManager()
+    var securityLogManager = SecurityLogManager()
     // var connectionKeepAlive: ConnectionKeepAlive?
     // var autoReconnectManager: AutoReconnectManager?
     
@@ -643,6 +644,14 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     // MARK: - Basic Initialization (優化為非阻塞初始化)
     private init() {
         print("🚀 ServiceContainer: 開始非阻塞初始化...")
+        
+        // 初始化 FloodProtection 並使用預設配置
+        self.floodProtection = FloodProtection()
+        print("🛡️ ServiceContainer: FloodProtection 已初始化")
+        
+        // 啟動安全日誌監聽
+        self.securityLogManager.startListening()
+        print("📝 ServiceContainer: SecurityLogManager 已啟動監聽")
         
         // 標記為已初始化，允許UI立即顯示
         self.isInitialized = true

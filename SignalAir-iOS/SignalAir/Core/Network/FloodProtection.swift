@@ -436,6 +436,14 @@ class FloodProtection: FloodProtectionProtocol {
             incrementBlockedCount()
             stats.blockedByBan += 1
             print("🚫 Blocked message from banned peer: \(peerID)")
+            
+            // 記錄到安全日誌
+            logSecurityEvent(
+                eventType: "banned_peer_message_blocked",
+                severity: .warning,
+                details: "已封禁節點嘗試發送訊息 - PeerID: \(peerID)"
+            )
+            
             return true
         }
         
@@ -444,9 +452,23 @@ class FloodProtection: FloodProtectionProtocol {
             incrementBlockedCount()
             stats.blockedByTypeLimit += 1
             
+            // 記錄到安全日誌
+            logSecurityEvent(
+                eventType: "message_type_rate_limit_exceeded",
+                severity: .warning,
+                details: "訊息類型速率限制超出 - PeerID: \(peerID), 類型: \(message.type.rawValue)"
+            )
+            
             // 多次違反可能導致臨時禁止
             if shouldTemporarilyBan(peerID) {
                 banManager.banPeer(peerID, duration: config.banDuration / 2) // 較短的禁止時間
+                
+                // 記錄臨時封禁
+                logSecurityEvent(
+                    eventType: "temporary_ban_applied",
+                    severity: .error,
+                    details: "臨時封禁節點 - PeerID: \(peerID), 原因: 訊息類型速率超限"
+                )
             }
             
             return true
@@ -457,9 +479,23 @@ class FloodProtection: FloodProtectionProtocol {
             incrementBlockedCount()
             stats.blockedByRateLimit += 1
             
+            // 記錄到安全日誌
+            logSecurityEvent(
+                eventType: "flood_protection_triggered",
+                severity: .error,
+                details: "洪水攻擊防護觸發 - PeerID: \(peerID), 訊息速率超限"
+            )
+            
             // 嚴重超速可能導致禁止
             if shouldBanPeer(peerID) {
                 banManager.banPeer(peerID, duration: config.banDuration)
+                
+                // 記錄封禁事件
+                logSecurityEvent(
+                    eventType: "peer_banned",
+                    severity: .critical,
+                    details: "封禁節點 - PeerID: \(peerID), 原因: 嚴重洪水攻擊, 時長: \(config.banDuration)秒"
+                )
             }
             
             return true
@@ -471,11 +507,25 @@ class FloodProtection: FloodProtectionProtocol {
             incrementBlockedCount()
             stats.blockedByPattern += 1
             
+            // 記錄到安全日誌
+            logSecurityEvent(
+                eventType: "suspicious_content_detected",
+                severity: .warning,
+                details: "可疑重複內容檢測 - PeerID: \(peerID)"
+            )
+            
             // 如果需要封禁该节点，执行阶梯式封禁
             if contentCheck.shouldBan {
                 banManager.banPeerForSuspiciousContent(peerID)
                 updateBannedPeersCount()
                 print("🚫 封禁可疑内容发送者: \(peerID)")
+                
+                // 記錄階梯式封禁
+                logSecurityEvent(
+                    eventType: "tiered_ban_applied",
+                    severity: .critical,
+                    details: "階梯式封禁節點 - PeerID: \(peerID), 原因: 可疑重複內容"
+                )
             }
             
             print("🚫 阻止可疑内容来自: \(peerID)")
@@ -487,6 +537,14 @@ class FloodProtection: FloodProtectionProtocol {
             incrementBlockedCount()
             stats.blockedBySize += 1
             print("🚫 Blocked oversized message from: \(peerID)")
+            
+            // 記錄到安全日誌
+            logSecurityEvent(
+                eventType: "oversized_message_blocked",
+                severity: .warning,
+                details: "超大訊息被阻止 - PeerID: \(peerID), 大小: \(message.data.count) bytes"
+            )
+            
             return true
         }
         
@@ -615,6 +673,21 @@ class FloodProtection: FloodProtectionProtocol {
     }
     
     // MARK: - Private Methods
+    
+    /// 記錄安全事件到日誌
+    private func logSecurityEvent(eventType: String, severity: SecurityLogSeverity, details: String) {
+        // 使用通知機制記錄安全事件，避免循環依賴
+        NotificationCenter.default.post(
+            name: NSNotification.Name("SecurityEvent"),
+            object: nil,
+            userInfo: [
+                "event": eventType,
+                "source": "FloodProtection",
+                "severity": severity.rawValue,
+                "details": details
+            ]
+        )
+    }
     
     private func recordMessage(from peerID: String) {
         lock.lock()

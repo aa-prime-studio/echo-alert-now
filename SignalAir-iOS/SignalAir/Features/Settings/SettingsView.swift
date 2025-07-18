@@ -17,12 +17,32 @@ struct SettingsView: View {
                 
                 ScrollView {
                     VStack(spacing: 20) {
-                        languageSection
-                        subscriptionSection
                         upgradeSection
-                        deviceSection
-                        blacklistSection
-                        legalSection
+                        
+                        // 語言和訂購區塊
+                        VStack(spacing: 0) {
+                            languageSection
+                            Divider()
+                            subscriptionSection
+                        }
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        
+                        // 裝置資訊區塊
+                        VStack(spacing: 0) {
+                            deviceSection
+                        }
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        
+                        // 安全和法律區塊
+                        VStack(spacing: 0) {
+                            securitySection
+                            Divider()
+                            legalSection
+                        }
+                        .background(Color.white)
+                        .cornerRadius(12)
                         
                         // 恢復購買按鈕移到法律條款下方
                         HStack {
@@ -72,16 +92,12 @@ struct SettingsView: View {
     }
     
     private var languageSection: some View {
-        VStack(spacing: 0) {
-            SettingsRowView(
-                icon: "globe",
-                title: languageService.t("language"),
-                value: languageService.currentLanguage.displayName,
-                action: { showingLanguageSheet = true }
-            )
-        }
-        .background(Color.white)
-        .cornerRadius(12)
+        SettingsRowView(
+            icon: "globe",
+            title: languageService.t("language"),
+            value: languageService.currentLanguage.displayName,
+            action: { showingLanguageSheet = true }
+        )
     }
     
     private var subscriptionSection: some View {
@@ -119,8 +135,6 @@ struct SettingsView: View {
                 )
             }
         }
-        .background(Color.white)
-        .cornerRadius(12)
     }
     
     private var upgradeSection: some View {
@@ -140,6 +154,8 @@ struct SettingsView: View {
                 }
             }
         }
+        .background(Color.white)
+        .cornerRadius(12)
     }
     
     private var deviceSection: some View {
@@ -237,11 +253,10 @@ struct SettingsView: View {
                 action: nil
             )
         }
-        .background(Color.white)
-        .cornerRadius(12)
     }
     
-    private var blacklistSection: some View {
+    
+    private var securitySection: some View {
         VStack(spacing: 0) {
             NavigationLink(destination: BlacklistManagementView()) {
                 HStack {
@@ -270,9 +285,37 @@ struct SettingsView: View {
                 }
                 .padding()
             }
+            
+            Divider()
+            
+            NavigationLink(destination: SecurityLogView(securityLogManager: serviceContainer.securityLogManager).environmentObject(languageService)) {
+                HStack {
+                    Image(systemName: "shield.lefthalf.filled")
+                        .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
+                        .frame(width: 24)
+                    
+                    Text("安全日誌")
+                        .font(.headline)
+                        .foregroundColor(.black)
+                    
+                    Spacer()
+                    
+                    // 顯示最近日誌數量
+                    Text("\(serviceContainer.securityLogManager.recentLogs.count)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                    
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                }
+                .padding()
+            }
         }
-        .background(Color.white)
-        .cornerRadius(12)
     }
     
     private var legalSection: some View {
@@ -363,8 +406,6 @@ struct SettingsView: View {
                 .padding()
             }
         }
-        .background(Color.white)
-        .cornerRadius(12)
     }
     
     private func saveNickname() {

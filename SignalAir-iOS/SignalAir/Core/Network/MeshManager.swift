@@ -549,6 +549,12 @@ struct NetworkStats {
     var connectedPeersCount: Int = 0
     var averageRouteLength: Double = 0.0
     var networkReliability: Float = 1.0
+    
+    // 洪水防護統計
+    var blockedMessages: Int = 0
+    var lastBlockedPeer: String = ""
+    var lastBlockedTime: Date = Date()
+    var floodProtectionEnabled: Bool = true
 }
 
 // MARK: - Flood Protection Protocol
@@ -715,6 +721,43 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         clearProcessedMessages()
         
         print("🧹 MeshManager: 所有資源已清理")
+    }
+    
+    // MARK: - Security Integration
+    
+    /// 通知安全監控系統
+    private func notifySecurityMonitor(event: SecurityEventType, peerID: String, details: String) async {
+        // 使用 NotificationCenter 通知安全監控系統
+        DispatchQueue.main.async {
+            NotificationCenter.default.post(
+                name: NSNotification.Name("SecurityEvent"),
+                object: nil,
+                userInfo: [
+                    "event": event.rawValue,
+                    "peerID": peerID,
+                    "details": details,
+                    "timestamp": Date(),
+                    "source": "MeshManager"
+                ]
+            )
+        }
+        
+        print("⚠️ Security event reported: \(event.rawValue) from \(peerID)")
+    }
+    
+    /// 檢查緊急訊息是否應該繞過洪水防護
+    private func shouldBypassFloodProtection(message: MeshMessage) -> Bool {
+        // 緊急訊息類型繞過防護
+        if message.type.isEmergency {
+            return true
+        }
+        
+        // 系統關鍵訊息繞過防護
+        if message.type == .system || message.type == .keyExchange {
+            return true
+        }
+        
+        return false
     }
     
     // MARK: - MeshNetworkProtocol Implementation
@@ -961,10 +1004,36 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
             // 解析訊息 (使用二進制協議替換JSON)
             let message = try BinaryMessageDecoder.decode(decryptedData)
             
-            // 防洪檢查
-            if floodProtection.shouldBlock(message, from: peerID) {
-                print("🚫 Blocked flooding from \(peerID)")
-                return
+            // 🛡️ 增強洪水攻擊防護檢查（緊急訊息繞過）
+            if !shouldBypassFloodProtection(message: message) {
+                if floodProtection.shouldBlock(message, from: peerID) {
+                    print("🚫 Flood protection: Blocked message from \(peerID) (ID: \(message.id), Type: \(message.type.rawValue))")
+                    
+                    // 記錄攻擊統計
+                    networkStats.blockedMessages += 1
+                    networkStats.lastBlockedPeer = peerID
+                    networkStats.lastBlockedTime = Date()
+                    
+                    // 記錄到安全日誌
+                    ServiceContainer.shared.securityLogManager.logEntry(
+                        eventType: "flood_protection_triggered",
+                        source: "MeshManager",
+                        severity: SecurityLogSeverity.error,
+                        details: "洪水攻擊防護觸發 - PeerID: \(peerID), 訊息類型: \(message.type.rawValue)"
+                    )
+                    
+                    // 通知安全監控系統
+                    Task {
+                        await notifySecurityMonitor(
+                            event: .floodProtection,
+                            peerID: peerID,
+                            details: "Message blocked by flood protection (Type: \(message.type.rawValue))"
+                        )
+                    }
+                    return
+                }
+            } else {
+                print("🚨 Emergency/System message bypass: \(message.type.rawValue) from \(peerID)")
             }
             
             // 重複訊息檢查（線程安全）
