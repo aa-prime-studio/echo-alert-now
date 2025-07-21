@@ -1,6 +1,119 @@
 import Foundation
 import CryptoKit
 import Security
+import Compression
+
+// 壓縮功能已內聯實現在 SecurityService 中
+
+// MARK: - Risk Level Definition - Using existing definition from AutomaticBanSystem.swift
+
+// MARK: - Data Transfer Types
+public struct DataTransferRequest {
+    public let id: String
+    public let source: String
+    public let destination: String
+    public let data: Data
+    public let timestamp: Date
+    public let networkProtocol: NetworkProtocol
+    public let metadata: [String: Any]
+    
+    public init(id: String, source: String, destination: String, data: Data, timestamp: Date, networkProtocol: NetworkProtocol, metadata: [String: Any]) {
+        self.id = id
+        self.source = source
+        self.destination = destination
+        self.data = data
+        self.timestamp = timestamp
+        self.networkProtocol = networkProtocol
+        self.metadata = metadata
+    }
+}
+
+public struct DataTransferAnalysis {
+    public let allowed: Bool
+    public let risk: RiskLevel
+    public let reason: String
+    public let recommendations: [String]
+    public let detailedAnalysis: DetailedAnalysis?
+    
+    public init(allowed: Bool, risk: RiskLevel, reason: String, recommendations: [String], detailedAnalysis: DetailedAnalysis? = nil) {
+        self.allowed = allowed
+        self.risk = risk
+        self.reason = reason
+        self.recommendations = recommendations
+        self.detailedAnalysis = detailedAnalysis
+    }
+}
+
+public struct DetailedAnalysis {
+    public let fragmentAnalysis: FragmentAnalysis?
+    public let tunnelAnalysis: TunnelAnalysis?
+    public let contentAnalysis: ContentAnalysis?
+    public let behaviorAnalysis: Any? // Using Any to avoid type conflicts
+    public let overallConfidence: Double
+    
+    public init(fragmentAnalysis: FragmentAnalysis?, tunnelAnalysis: TunnelAnalysis?, contentAnalysis: ContentAnalysis?, behaviorAnalysis: Any?, overallConfidence: Double) {
+        self.fragmentAnalysis = fragmentAnalysis
+        self.tunnelAnalysis = tunnelAnalysis
+        self.contentAnalysis = contentAnalysis
+        self.behaviorAnalysis = behaviorAnalysis
+        self.overallConfidence = overallConfidence
+    }
+}
+
+public struct FragmentAnalysis {
+    public let isFragmented: Bool
+    public let confidence: Double
+    public let indicators: [String]
+    public let estimatedTotalSize: Int?
+    public let fragmentPosition: String?
+    
+    public init(isFragmented: Bool, confidence: Double, indicators: [String], estimatedTotalSize: Int?, fragmentPosition: String?) {
+        self.isFragmented = isFragmented
+        self.confidence = confidence
+        self.indicators = indicators
+        self.estimatedTotalSize = estimatedTotalSize
+        self.fragmentPosition = fragmentPosition
+    }
+}
+
+public struct TunnelAnalysis {
+    public let isTunneled: Bool
+    public let confidence: Double
+    public let tunnelType: String?
+    public let indicators: [String]
+    public let decryptionHint: String?
+    
+    public init(isTunneled: Bool, confidence: Double, tunnelType: String?, indicators: [String], decryptionHint: String?) {
+        self.isTunneled = isTunneled
+        self.confidence = confidence
+        self.tunnelType = tunnelType
+        self.indicators = indicators
+        self.decryptionHint = decryptionHint
+    }
+}
+
+public struct ContentAnalysis {
+    public let containsSensitiveData: Bool
+    public let dataTypes: [String]
+    public let confidence: Double
+    
+    public init(containsSensitiveData: Bool, dataTypes: [String], confidence: Double) {
+        self.containsSensitiveData = containsSensitiveData
+        self.dataTypes = dataTypes
+        self.confidence = confidence
+    }
+}
+
+// MARK: - BehaviorAnalysis - Using existing definition from AutomaticBanSystem.swift
+
+public enum NetworkProtocol {
+    case p2p
+    case tcp
+    case udp
+    case http
+    case https
+    case custom(String)
+}
 
 // MARK: - Secure Memory Management
 /// 安全字串類別，確保敏感資料在記憶體中的安全處理
@@ -274,6 +387,7 @@ enum CryptoError: Error {
     case decryptionFailed
     case invalidSignature
     case messageNumberMismatch
+    case messageExpired
     case invalidData
     case keychainError(OSStatus)
     case invalidKeyData
@@ -294,6 +408,8 @@ enum CryptoError: Error {
             return "簽名驗證失敗"
         case .messageNumberMismatch:
             return "訊息序號不匹配"
+        case .messageExpired:
+            return "訊息已過期"
         case .invalidData:
             return "無效資料"
         case .keychainError(let status):
@@ -365,7 +481,8 @@ struct EncryptedMessage {
         let version = data[offset]
         offset += 1
         
-        guard version == 0x01 else {
+        guard version == 1 else {
+            print("❌ SecurityService: 協議版本不匹配：期望版本 1，收到版本 \(version)")
             throw CryptoError.invalidData
         }
         
@@ -409,16 +526,16 @@ struct EncryptedMessage {
 }
 
 // MARK: - Security Service Protocol
-protocol SecurityServiceProtocol {
+protocol SecurityServiceLegacyProtocol {
     func hasSessionKey(for peerID: String) -> Bool
-    func encrypt(_ data: Data, for peerID: String) throws -> Data
+    func encrypt(_ data: Data, for peerID: String) async throws -> Data
     func decrypt(_ data: Data, from peerID: String) throws -> Data
     func getPublicKey() throws -> Data
     func removeSessionKey(for peerID: String)
 }
 
 // MARK: - Security Service
-class SecurityService: ObservableObject, SecurityServiceProtocol {
+class SecurityService: ObservableObject, SecurityServiceLegacyProtocol {
     // MARK: - Properties
     private var privateKey: Curve25519.KeyAgreement.PrivateKey?
     private var sessionKeys: [String: SessionKey] = [:]
@@ -474,7 +591,7 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             let sharedSecret = try privateKey.sharedSecretFromKeyAgreement(with: peerKey)
             
             // 使用 HKDF 衍生雙密鑰
-            let salt = "SignalAir Rescue-v1.0".data(using: .utf8)!
+            let salt = Data((0..<32).map { _ in UInt8.random(in: 0...255) })
             let info = "\(peerID)-session".data(using: .utf8)!
             
             let keyMaterial = sharedSecret.hkdfDerivedSymmetricKey(
@@ -520,8 +637,54 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         }
     }
     
-    /// 加密訊息 - Protocol 版本 (返回 Data)
-    func encrypt(_ data: Data, for peerID: String) throws -> Data {
+    /// 🚀 超高速加密 - 智能算法選擇 + 壓縮
+    func ultraEncrypt(_ data: Data, for peerID: String) async throws -> Data {
+        // 高速壓縮
+        let compressedData = await fastCompress(data)
+        
+        // 智能算法選擇
+        if data.count > 1024 {
+            return try await encryptWithChaCha20(compressedData, peerID: peerID)
+        } else {
+            return try await encryptWithAESGCM(compressedData, peerID: peerID)
+        }
+    }
+    
+    /// 傳統加密 - Protocol 版本 (返回 Data) - 保持向後兼容
+    func encrypt(_ data: Data, for peerID: String) async throws -> Data {
+        // 資料外洩防禦檢查
+        let transferRequest = DataTransferRequest(
+            id: UUID().uuidString,
+            source: "local",
+            destination: peerID,
+            data: data,
+            timestamp: Date(),
+            networkProtocol: .p2p,
+            metadata: [:]
+        )
+        
+        let analysis = await MainActor.run {
+            ServiceContainer.shared.dataTransferMonitor.analyzeDataTransfer(transferRequest)
+        }
+        
+        if !analysis.allowed {
+            print("🛡️ 資料外洩防禦：阻止傳輸 - \(analysis.reason)")
+            throw CryptoError.encryptionFailed
+        }
+        
+        if analysis.risk == RiskLevel.high || analysis.risk == RiskLevel.critical {
+            print("⚠️ 資料外洩防禦：高風險傳輸 - \(analysis.reason)")
+            // 記錄高風險事件
+            await MainActor.run {
+                ServiceContainer.shared.securityLogManager.logEntry(
+                    eventType: "high_risk_data_transfer",
+                    source: "SecurityService",
+                    severity: .warning,
+                    details: analysis.reason
+                )
+            }
+        }
+        
         let encryptedMessage = try encryptToMessage(data, for: peerID)
         return encryptedMessage.encodedData()
     }
@@ -613,13 +776,26 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
             let encryptedMessage = try EncryptedMessage.decode(from: encryptedData)
             
             // 驗證訊息順序（防重放攻擊）
-            // 允許一定的訊息編號容錯，處理網路延遲和亂序
-            let expectedMinNumber = max(0, sessionKey.messageNumber - 10) // 允許10個訊息的回退
+            // 縮小容錯範圍，更嚴格的重放攻擊防護
+            let allowedBacktrack = 3 // 只允許3個訊息的回退，處理輕微網路亂序
+            let expectedMinNumber = max(0, sessionKey.messageNumber - UInt64(allowedBacktrack))
+            
+            // 額外的時間窗口檢查（5分鐘內的訊息）
+            let messageAge = Date().timeIntervalSince1970 - Double(encryptedMessage.messageNumber)
+            let maxMessageAge: TimeInterval = 300 // 5分鐘
+            
             guard encryptedMessage.messageNumber >= expectedMinNumber else {
                 #if DEBUG
-                print("❌ 訊息編號異常：可能的重放攻擊")
+                print("❌ 訊息編號異常：期望 >= \(expectedMinNumber)，實際 \(encryptedMessage.messageNumber)")
                 #endif
                 throw CryptoError.messageNumberMismatch
+            }
+            
+            guard messageAge <= maxMessageAge else {
+                #if DEBUG
+                print("❌ 訊息過期：訊息年齡 \(messageAge)s > 最大允許 \(maxMessageAge)s")
+                #endif
+                throw CryptoError.messageExpired
             }
             
             // 驗證 HMAC
@@ -936,5 +1112,256 @@ class SecurityService: ObservableObject, SecurityServiceProtocol {
         }
         
         return try Curve25519.KeyAgreement.PrivateKey(rawRepresentation: keyData)
+    }
+    
+    // MARK: - 🚀 高速加密實現
+    
+    /// 高速壓縮 (LZ4) - 內置實現
+    private func fastCompress(_ data: Data) async -> Data {
+        guard data.count > 128 else {
+            return addCompressionHeader(data, compressed: false)
+        }
+        
+        return await Task.detached(priority: .userInitiated) {
+            let result = self.smartCompress(data, threshold: 128)
+            return self.addCompressionHeader(result.data, compressed: result.compressed)
+        }.value
+    }
+    
+    /// 高速解壓縮
+    private func fastDecompress(_ data: Data) async -> Data {
+        guard data.count > 1 else { return data }
+        
+        let isCompressed = data[0] == 0x01
+        let payload = Data(data.dropFirst())
+        
+        guard isCompressed else { return payload }
+        
+        return await Task.detached(priority: .userInitiated) {
+            return self.smartDecompress(payload, wasCompressed: true)
+        }.value
+    }
+    
+    
+    private func addCompressionHeader(_ data: Data, compressed: Bool) -> Data {
+        var result = Data(capacity: data.count + 1)
+        result.append(compressed ? 0x01 : 0x00)
+        result.append(data)
+        return result
+    }
+    
+    // MARK: - 內置壓縮方法
+    
+    /// 智能壓縮 (自動判斷是否值得壓縮)
+    private func smartCompress(_ data: Data, threshold: Int = 128) -> (data: Data, compressed: Bool) {
+        guard data.count > threshold else {
+            return (data, false)
+        }
+        
+        do {
+            let compressed = try compressLZ4(data)
+            // 只有壓縮率 > 10% 才使用
+            if compressed.count < data.count * 9 / 10 {
+                return (compressed, true)
+            } else {
+                return (data, false)
+            }
+        } catch {
+            return (data, false)
+        }
+    }
+    
+    /// 智能解壓縮
+    private func smartDecompress(_ data: Data, wasCompressed: Bool, originalSize: Int? = nil) -> Data {
+        guard wasCompressed else { return data }
+        
+        do {
+            return try decompressLZ4(data, expectedSize: originalSize)
+        } catch {
+            print("⚠️ 解壓縮失敗: \(error)")
+            return data
+        }
+    }
+    
+    /// LZ4 壓縮
+    private func compressLZ4(_ data: Data) throws -> Data {
+        guard !data.isEmpty else {
+            throw CryptoError.encryptionFailed
+        }
+        
+        return try data.withUnsafeBytes { bytes in
+            guard let sourceAddress = bytes.bindMemory(to: UInt8.self).baseAddress,
+                  bytes.count > 0,
+                  data.count <= Int.max / 2 else {
+                throw CryptoError.encryptionFailed
+            }
+            
+            let maxCompressedSize = max(data.count + 1024, Int(Double(data.count) * 1.1))
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: maxCompressedSize)
+            defer { buffer.deallocate() }
+            
+            let compressedSize = compression_encode_buffer(
+                buffer, maxCompressedSize,
+                sourceAddress, data.count,
+                nil, COMPRESSION_LZ4
+            )
+            
+            guard compressedSize > 0, compressedSize <= maxCompressedSize else {
+                throw CryptoError.encryptionFailed
+            }
+            
+            return Data(bytes: buffer, count: compressedSize)
+        }
+    }
+    
+    /// LZ4 解壓縮
+    private func decompressLZ4(_ data: Data, expectedSize: Int? = nil) throws -> Data {
+        guard !data.isEmpty else {
+            throw CryptoError.encryptionFailed
+        }
+        
+        let maxBufferSize = 50 * 1024 * 1024 // 50MB 上限
+        let bufferSize = min(expectedSize ?? data.count * 4, maxBufferSize)
+        
+        guard bufferSize > 0 else {
+            throw CryptoError.encryptionFailed
+        }
+        
+        return try data.withUnsafeBytes { bytes in
+            guard let sourceAddress = bytes.bindMemory(to: UInt8.self).baseAddress,
+                  bytes.count > 0,
+                  data.count <= maxBufferSize else {
+                throw CryptoError.encryptionFailed
+            }
+            
+            let buffer = UnsafeMutablePointer<UInt8>.allocate(capacity: bufferSize)
+            defer { buffer.deallocate() }
+            
+            let decompressedSize = compression_decode_buffer(
+                buffer, bufferSize,
+                sourceAddress, data.count,
+                nil, COMPRESSION_LZ4
+            )
+            
+            guard decompressedSize > 0, decompressedSize <= bufferSize else {
+                throw CryptoError.encryptionFailed
+            }
+            
+            return Data(bytes: buffer, count: decompressedSize)
+        }
+    }
+    
+    /// ChaCha20-Poly1305 高速加密
+    private func encryptWithChaCha20(_ data: Data, peerID: String) async throws -> Data {
+        guard let sessionKey = sessionKeys[peerID] else {
+            throw CryptoError.noSessionKey
+        }
+        
+        let nonce = ChaChaPoly.Nonce()
+        let sealed = try ChaChaPoly.seal(data, using: sessionKey.encryptionKey, nonce: nonce)
+        
+        var result = Data(capacity: data.count + 32)
+        result.append(0x01) // ChaCha20 標識
+        result.append(sealed.combined)
+        
+        return result
+    }
+    
+    /// AES-GCM 硬件加速加密
+    private func encryptWithAESGCM(_ data: Data, peerID: String) async throws -> Data {
+        guard let sessionKey = sessionKeys[peerID] else {
+            throw CryptoError.noSessionKey
+        }
+        
+        let sealed = try AES.GCM.seal(data, using: sessionKey.encryptionKey)
+        guard let combined = sealed.combined else {
+            throw CryptoError.encryptionFailed
+        }
+        
+        var result = Data(capacity: combined.count + 1)
+        result.append(0x02) // AES-GCM 標識
+        result.append(combined)
+        
+        return result
+    }
+    
+    /// 🚀 超高速解密
+    func ultraDecrypt(_ data: Data, from peerID: String) async throws -> Data {
+        guard data.count > 1 else {
+            throw CryptoError.invalidData
+        }
+        
+        let cryptoType = data[0]
+        let payload = data.dropFirst()
+        
+        let decryptedData: Data
+        switch cryptoType {
+        case 0x01: // ChaCha20
+            decryptedData = try await decryptWithChaCha20(payload, peerID: peerID)
+        case 0x02: // AES-GCM
+            decryptedData = try await decryptWithAESGCM(payload, peerID: peerID)
+        default:
+            // 嘗試傳統解密作為回退
+            return try decrypt(data, from: peerID)
+        }
+        
+        return await fastDecompress(decryptedData)
+    }
+    
+    /// ChaCha20 解密
+    private func decryptWithChaCha20(_ data: Data, peerID: String) async throws -> Data {
+        guard let sessionKey = sessionKeys[peerID] else {
+            throw CryptoError.noSessionKey
+        }
+        
+        let sealed = try ChaChaPoly.SealedBox(combined: data)
+        return try ChaChaPoly.open(sealed, using: sessionKey.encryptionKey)
+    }
+    
+    /// AES-GCM 解密
+    private func decryptWithAESGCM(_ data: Data, peerID: String) async throws -> Data {
+        guard let sessionKey = sessionKeys[peerID] else {
+            throw CryptoError.noSessionKey
+        }
+        
+        let sealed = try AES.GCM.SealedBox(combined: data)
+        return try AES.GCM.open(sealed, using: sessionKey.encryptionKey)
+    }
+    
+    // MARK: - 🏎️ 批量處理優化
+    
+    /// 批量加密 (大規模網路優化)
+    func batchEncrypt(_ dataArray: [Data], for peerID: String) async throws -> [Data] {
+        let batchSize = 50
+        var results: [Data] = []
+        results.reserveCapacity(dataArray.count)
+        
+        for batch in dataArray.chunked(into: batchSize) {
+            let batchResults = try await withThrowingTaskGroup(of: Data.self) { group in
+                for data in batch {
+                    group.addTask {
+                        return try await self.ultraEncrypt(data, for: peerID)
+                    }
+                }
+                
+                var batchResults: [Data] = []
+                for try await result in group {
+                    batchResults.append(result)
+                }
+                return batchResults
+            }
+            results.append(contentsOf: batchResults)
+        }
+        
+        return results
+    }
+}
+
+// MARK: - Array Extension for Chunking
+extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
+        }
     }
 } 

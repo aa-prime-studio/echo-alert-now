@@ -1,7 +1,13 @@
 import Foundation
 import MultipeerConnectivity
 
+// MARK: - ⚠️ DEPRECATED ⚠️
+// 此檔案已被 UnifiedConnectionManager 取代
+// 請使用 UnifiedConnectionManager 替代此實作
+// 計劃移除日期: 下個主要版本
+
 /// 自動重連管理器 - 處理 MultipeerConnectivity 斷線重連
+@available(*, deprecated, message: "使用 UnifiedConnectionManager 替代")
 class AutoReconnectManager {
     
     // MARK: - Properties

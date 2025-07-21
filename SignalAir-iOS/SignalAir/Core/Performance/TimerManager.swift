@@ -1,6 +1,12 @@
 import Foundation
 import Combine
 
+// MARK: - ⚠️ DEPRECATED ⚠️
+// 此檔案已被 UnifiedTimerManager 取代
+// 請使用 UnifiedTimerManager.shared 替代此實作
+// 計劃移除日期: 下個主要版本
+@available(*, deprecated, message: "使用 UnifiedTimerManager.shared 替代")
+
 // MARK: - Timer 配置
 struct TimerConfiguration {
     let interval: TimeInterval
@@ -48,6 +54,7 @@ private class TimerInfo {
 }
 
 // MARK: - 統一 Timer 管理器
+@available(*, deprecated, message: "使用 UnifiedTimerManager.shared 替代")
 @MainActor
 class TimerManager: ObservableObject {
     

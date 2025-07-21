@@ -6,6 +6,33 @@ import os.log
 // MARK: - 健壯網路層 - 邊界情況專用處理
 // 專為處理複雜的邊界情況和網路異常設計
 
+/// 網路錯誤類型
+enum NetworkError: Error {
+    case channelUnavailable
+    case sendFailed
+    case internalError
+    case operationFailed
+    case timeout
+    case cancelled
+    
+    var localizedDescription: String {
+        switch self {
+        case .channelUnavailable:
+            return "通道不可用"
+        case .sendFailed:
+            return "發送失敗"
+        case .internalError:
+            return "內部錯誤"
+        case .operationFailed:
+            return "操作失敗"
+        case .timeout:
+            return "操作超時"
+        case .cancelled:
+            return "操作已取消"
+        }
+    }
+}
+
 /// 網路操作結果
 enum NetworkOperationResult {
     case success(Data?)
@@ -67,7 +94,7 @@ enum RecoveryAction {
 class RobustNetworkLayer: ObservableObject {
     
     // MARK: - 依賴注入
-    private let networkService: NetworkServiceProtocol
+    private let networkService: NetworkService
     private let channelPoolManager: AdvancedChannelPoolManager
     
     // MARK: - 邊界情況處理
@@ -97,7 +124,7 @@ class RobustNetworkLayer: ObservableObject {
         static let recoveryTimeout: TimeInterval = 60.0
     }
     
-    init(networkService: NetworkServiceProtocol, channelPoolManager: AdvancedChannelPoolManager) {
+    init(networkService: NetworkService, channelPoolManager: AdvancedChannelPoolManager) {
         self.networkService = networkService
         self.channelPoolManager = channelPoolManager
         
@@ -134,8 +161,13 @@ class RobustNetworkLayer: ObservableObject {
         }
         
         // 4. 執行實際操作（帶重試機制）
-        return await executeWithRetry(operationId: operationId) {
-            await self.performActualSend(data, to: peers, timeout: timeout)
+        do {
+            return try await executeWithRetry(operationId: operationId) {
+                await self.performActualSend(data, to: peers, timeout: timeout)
+            }
+        } catch {
+            logger.error("❌ Execute with retry failed: \(error)")
+            return .failure(.sendFailed)
         }
     }
     
@@ -292,75 +324,159 @@ class RobustNetworkLayer: ObservableObject {
     private func executeWithRetry<T>(
         operationId: String,
         maxRetries: Int = 3,
-        operation: @escaping () async -> T
-    ) async -> T {
-        var lastResult: T!
+        operation: @escaping () async throws -> T
+    ) async throws -> T {
+        var lastError: Error?
         var attempt = 0
+        let maxBackoffDelay: TimeInterval = 30.0 // 最大退避延遲 30 秒
+        let baseDelay: TimeInterval = 0.5 // 基礎延遲 500ms
         
         while attempt <= maxRetries {
-            lastResult = await operation()
-            attempt += 1
-            
-            // 操作成功，通知熔斷器
-            circuitBreaker.recordSuccess()
-            
-            self.logger.debug("✅ Operation \(operationId) succeeded on attempt \(attempt)")
-            break
+            do {
+                let result = try await operation()
+                
+                // 操作成功，通知熔斷器
+                circuitBreaker.recordSuccess()
+                
+                self.logger.debug("✅ Operation \(operationId) succeeded on attempt \(attempt + 1)")
+                return result
+                
+            } catch {
+                lastError = error
+                attempt += 1
+                
+                // 如果已達最大重試次數，拋出最後的錯誤
+                if attempt > maxRetries {
+                    circuitBreaker.recordFailure()
+                    self.logger.error("❌ Operation \(operationId) failed after \(maxRetries + 1) attempts: \(error)")
+                    throw error
+                }
+                
+                // 計算指數退避延遲 (0.5s, 1s, 2s, 4s, 8s, ...)
+                let backoffDelay = min(baseDelay * pow(2.0, Double(attempt - 1)), maxBackoffDelay)
+                let jitter = Double.random(in: 0...0.1) * backoffDelay // 添加 10% 隨機抖動
+                let totalDelay = backoffDelay + jitter
+                
+                self.logger.warning("⚠️ Operation \(operationId) failed on attempt \(attempt), retrying in \(String(format: "%.2f", totalDelay))s: \(error)")
+                
+                // 等待退避時間
+                try await Task.sleep(nanoseconds: UInt64(totalDelay * 1_000_000_000))
+            }
         }
         
-        return lastResult
+        // 這裡理論上不會到達，但為了編譯器滿意
+        throw lastError ?? NSError(domain: "RobustNetworkLayer", code: -1, userInfo: [NSLocalizedDescriptionKey: "未知錯誤"])
     }
     
     private func performActualSend(_ data: Data, to peers: [MCPeerID], timeout: TimeInterval) async -> NetworkOperationResult {
         let startTime = Date()
-        var results: [MCPeerID: Result<Void, Error>] = [:]
-        var successfulSends = 0
-        var errors: [String: Error] = [:]
         
-        // 並行發送到所有peers
+        // 並行發送並收集結果
+        let results = await performParallelSend(data: data, to: peers, startTime: startTime)
+        
+        // 分析發送結果
+        return analyzeSendResults(results)
+    }
+    
+    /// 並行發送到多個 peers
+    private func performParallelSend(data: Data, to peers: [MCPeerID], startTime: Date) async -> [MCPeerID: Result<Void, Error>] {
         await withTaskGroup(of: (MCPeerID, Result<Void, Error>).self) { group in
+            var results: [MCPeerID: Result<Void, Error>] = [:]
+            
+            // 為每個 peer 創建發送任務
             for peer in peers {
                 group.addTask { [weak self] in
-                    do {
-                        // 嘗試獲取通道
-                        guard let channel = await self?.channelPoolManager.acquireChannel(for: peer) else {
-                            throw NetworkError.channelUnavailable
-                        }
-                        
-                        // 執行發送
-                        try await self?.networkService.send(data, to: [peer])
-                        
-                        // 記錄成功並釋放通道
-                        let latency = Date().timeIntervalSince(startTime)
-                        await self?.channelPoolManager.releaseChannel(channel, success: true, latency: latency, dataSize: data.count)
-                        
-                        return (peer, .success(()))
-                        
-                    } catch {
-                        return (peer, .failure(error))
-                    }
+                    let result = await self?.sendToPeer(data: data, peer: peer, startTime: startTime) ?? .failure(NetworkError.internalError)
+                    return (peer, result)
                 }
             }
             
+            // 收集所有結果
             for await (peer, result) in group {
                 results[peer] = result
-                
-                switch result {
-                case .success:
-                    successfulSends += 1
-                case .failure(let error):
-                    errors[peer.displayName] = error
-                }
+            }
+            
+            return results
+        }
+    }
+    
+    /// 發送到單個 peer
+    private func sendToPeer(data: Data, peer: MCPeerID, startTime: Date) async -> Result<Void, Error> {
+        do {
+            // 步驟 1: 獲取通道
+            let channel = try await acquireChannelForPeer(peer)
+            
+            // 步驟 2: 執行發送
+            try await performSendOperation(data: data, to: peer)
+            
+            // 步驟 3: 記錄成功並釋放通道
+            await recordSuccessAndReleaseChannel(channel: channel, startTime: startTime, dataSize: data.count)
+            
+            return .success(())
+            
+        } catch {
+            logger.warning("⚠️ 發送到 \(peer.displayName) 失敗: \(error)")
+            return .failure(error)
+        }
+    }
+    
+    /// 獲取通道
+    private func acquireChannelForPeer(_ peer: MCPeerID) async throws -> AdvancedChannelPoolManager.Channel {
+        guard let channel = await channelPoolManager.acquireChannel(for: peer) else {
+            throw NetworkError.channelUnavailable
+        }
+        return channel
+    }
+    
+    /// 執行實際發送操作
+    private func performSendOperation(data: Data, to peer: MCPeerID) async throws {
+        try await networkService.send(data, to: [peer])
+    }
+    
+    /// 記錄成功並釋放通道
+    private func recordSuccessAndReleaseChannel(channel: AdvancedChannelPoolManager.Channel, startTime: Date, dataSize: Int) async {
+        let latency = Date().timeIntervalSince(startTime)
+        await channelPoolManager.releaseChannel(channel, success: true, latency: latency, dataSize: dataSize)
+    }
+    
+    /// 分析發送結果
+    private func analyzeSendResults(_ results: [MCPeerID: Result<Void, Error>]) -> NetworkOperationResult {
+        let successfulSends = results.values.compactMap { result in
+            if case .success = result { return 1 } else { return nil }
+        }.count
+        
+        let errors = extractErrors(from: results)
+        let totalPeers = results.count
+        
+        return determineOperationResult(
+            successfulSends: successfulSends,
+            totalPeers: totalPeers,
+            errors: errors
+        )
+    }
+    
+    /// 提取錯誤信息
+    private func extractErrors(from results: [MCPeerID: Result<Void, Error>]) -> [String: Error] {
+        var errors: [String: Error] = [:]
+        
+        for (peer, result) in results {
+            if case .failure(let error) = result {
+                errors[peer.displayName] = error
             }
         }
         
-        // 分析結果
-        if successfulSends == peers.count {
+        return errors
+    }
+    
+    /// 決定操作結果
+    private func determineOperationResult(successfulSends: Int, totalPeers: Int, errors: [String: Error]) -> NetworkOperationResult {
+        switch successfulSends {
+        case totalPeers:
             return .success(nil)
-        } else if successfulSends > 0 {
+        case 1..<totalPeers:
             return .partialSuccess(nil, errors)
-        } else {
-            return .failure(NetworkError.sendFailed)
+        default:
+            return .failure(.sendFailed)
         }
     }
     

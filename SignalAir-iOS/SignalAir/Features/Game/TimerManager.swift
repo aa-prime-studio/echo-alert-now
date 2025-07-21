@@ -1,7 +1,13 @@
 import Foundation
 import SwiftUI
 
+// MARK: - ⚠️ DEPRECATED ⚠️
+// 此檔案已被 UnifiedTimerManager 取代
+// 請使用 UnifiedTimerManager.shared 替代此實作
+// 計劃移除日期: 下個主要版本
+
 /// 定時器管理器 - 負責所有定時器的生命週期管理
+@available(*, deprecated, message: "使用 UnifiedTimerManager.shared 替代")
 @MainActor
 class TimerManager: ObservableObject {
     

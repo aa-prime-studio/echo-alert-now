@@ -1,7 +1,13 @@
 import Foundation
 import MultipeerConnectivity
 
+// MARK: - ⚠️ DEPRECATED ⚠️
+// 此檔案已被 UnifiedConnectionManager 取代
+// 請使用 UnifiedConnectionManager 替代此實作
+// 計劃移除日期: 下個主要版本
+
 /// 連接保持機制 - 防止iOS系統斷開MultipeerConnectivity連接
+@available(*, deprecated, message: "使用 UnifiedConnectionManager 替代")
 class ConnectionKeepAlive {
     
     // MARK: - Properties

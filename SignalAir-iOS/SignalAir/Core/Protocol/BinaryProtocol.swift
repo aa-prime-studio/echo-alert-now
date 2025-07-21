@@ -3,10 +3,8 @@ import Foundation
 // MARK: - Binary Protocol for SignalAir
 // 優化用於大規模斷網場景的二進制協議
 
-/// 協議版本
-public enum BinaryProtocolVersion: UInt8 {
-    case v1 = 1
-}
+/// 協議版本 - 統一使用全局常數
+private let PROTOCOL_VERSION: UInt8 = 1
 
 /// 密鑰交換狀態
 public enum KeyExchangeStatus: UInt8 {
@@ -15,15 +13,9 @@ public enum KeyExchangeStatus: UInt8 {
     case error = 2
 }
 
-/// 消息類型（與其他文件保持一致）
-public enum BinaryMessageType: UInt8 {
-    case chat = 1
-    case game = 2  
-    case signal = 3
-    case keyExchange = 4
-    case keyExchangeResponse = 5
-    case system = 6
-}
+/// 消息類型 - 使用統一的 MeshMessageType
+/// 這個 BinaryMessageType 已廢棄，改用 SharedTypes.swift 中的 MeshMessageType
+// public enum BinaryMessageType: UInt8 - 已移除重複定義
 
 /// 信號標誌位（使用位運算節省空間）
 struct SignalFlags: OptionSet {
@@ -58,10 +50,10 @@ class BinaryEncoder {
         var data = Data()
         
         // 1 byte: 協議版本
-        data.append(BinaryProtocolVersion.v1.rawValue)
+        data.append(PROTOCOL_VERSION)
         
         // 1 byte: 消息類型
-        data.append(BinaryMessageType.signal.rawValue)
+        data.append(MeshMessageType.signal.rawValue)
         
         // 1 byte: 加密標誌（固定為1）
         data.append(1)
@@ -113,11 +105,11 @@ class BinaryEncoder {
         var offset = 0
         
         // 協議版本 (1 byte)
-        data[offset] = BinaryProtocolVersion.v1.rawValue
+        data[offset] = PROTOCOL_VERSION
         offset += 1
         
         // 消息類型 (1 byte)
-        data[offset] = BinaryMessageType.signal.rawValue
+        data[offset] = MeshMessageType.signal.rawValue
         offset += 1
         
         // 加密標誌 (1 byte)
@@ -241,10 +233,10 @@ class BinaryEncoder {
         var result = Data()
         
         // 1 byte: 協議版本
-        result.append(BinaryProtocolVersion.v1.rawValue)
+        result.append(PROTOCOL_VERSION)
         
         // 1 byte: 消息類型
-        result.append(BinaryMessageType.game.rawValue)
+        result.append(MeshMessageType.game.rawValue)
         
         // 1 byte: 遊戲消息子類型（使用GameMessageType的rawValue哈希）
         let gameTypeHash = UInt8(abs(type.rawValue.hashValue) % 256)
@@ -302,38 +294,43 @@ class BinaryEncoder {
         senderID: String,
         retryCount: UInt8 = 0,
         timestamp: Date = Date()
-    ) -> Data {
-        var data = Data()
-        
-        // 1 byte: 協議版本
-        data.append(BinaryProtocolVersion.v1.rawValue)
-        
-        // 1 byte: 消息類型
-        data.append(BinaryMessageType.keyExchange.rawValue)
+    ) throws -> Data {
+        // 使用標準 BinaryMessageEncoder 格式
+        var keyExchangeData = Data()
         
         // 1 byte: 重試次數
-        data.append(retryCount)
-        
-        // 4 bytes: 時間戳
-        let ts = UInt32(timestamp.timeIntervalSince1970)
-        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        keyExchangeData.append(retryCount)
         
         // 發送者ID
         if let senderData = senderID.data(using: .utf8) {
-            data.append(UInt8(min(senderData.count, 255)))
-            data.append(senderData.prefix(255))
+            keyExchangeData.append(UInt8(min(senderData.count, 255)))
+            keyExchangeData.append(senderData.prefix(255))
         } else {
-            data.append(0)
+            keyExchangeData.append(0)
         }
         
         // 2 bytes: 公鑰長度
         let keyLength = UInt16(publicKey.count)
-        data.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
+        keyExchangeData.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
         
         // N bytes: 公鑰數據
-        data.append(publicKey)
+        keyExchangeData.append(publicKey)
         
-        return data
+        // 創建標準 MeshMessage
+        let message = MeshMessage(
+            id: UUID().uuidString,
+            type: .keyExchange,
+            data: keyExchangeData
+        )
+        
+        // 使用標準編碼器，提供適當的錯誤處理
+        do {
+            return try BinaryMessageEncoder.encode(message)
+        } catch {
+            // 記錄編碼錯誤並提供降級策略
+            print("❌ KeyExchange 編碼失敗: \(error)")
+            throw BinaryEncodingError.keyExchangeEncodingFailed(underlying: error)
+        }
     }
     
     static func encodeKeyExchangeResponse(
@@ -342,46 +339,137 @@ class BinaryEncoder {
         status: KeyExchangeStatus,
         errorMessage: String? = nil,
         timestamp: Date = Date()
-    ) -> Data {
-        var data = Data()
-        
-        // 1 byte: 協議版本
-        data.append(BinaryProtocolVersion.v1.rawValue)
-        
-        // 1 byte: 消息類型
-        data.append(BinaryMessageType.keyExchangeResponse.rawValue)
+    ) throws -> Data {
+        // 使用標準 BinaryMessageEncoder 格式
+        var responseData = Data()
         
         // 1 byte: 狀態
-        data.append(status.rawValue)
-        
-        // 4 bytes: 時間戳
-        let ts = UInt32(timestamp.timeIntervalSince1970)
-        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        responseData.append(status.rawValue)
         
         // 發送者ID
         if let senderData = senderID.data(using: .utf8) {
-            data.append(UInt8(min(senderData.count, 255)))
-            data.append(senderData.prefix(255))
+            responseData.append(UInt8(min(senderData.count, 255)))
+            responseData.append(senderData.prefix(255))
         } else {
-            data.append(0)
+            responseData.append(0)
         }
         
         // 2 bytes: 公鑰長度
         let keyLength = UInt16(publicKey.count)
-        data.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
+        responseData.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
         
         // N bytes: 公鑰數據
-        data.append(publicKey)
+        responseData.append(publicKey)
         
         // 錯誤訊息（可選）
         if let errorMessage = errorMessage, let errorData = errorMessage.data(using: .utf8) {
-            data.append(UInt8(min(errorData.count, 255)))
-            data.append(errorData.prefix(255))
+            responseData.append(UInt8(min(errorData.count, 255)))
+            responseData.append(errorData.prefix(255))
         } else {
-            data.append(0)
+            responseData.append(0)
         }
         
-        return data
+        // 創建標準 MeshMessage
+        let message = MeshMessage(
+            id: UUID().uuidString,
+            type: .keyExchangeResponse,
+            data: responseData
+        )
+        
+        // 使用標準編碼器，提供適當的錯誤處理
+        do {
+            return try BinaryMessageEncoder.encode(message)
+        } catch {
+            // 記錄編碼錯誤並提供降級策略
+            print("❌ KeyExchangeResponse 編碼失敗: \(error)")
+            throw BinaryEncodingError.keyExchangeResponseEncodingFailed(underlying: error)
+        }
+    }
+    
+    // MARK: - Safe Encoding Wrappers
+    
+    /// 安全的密鑰交換編碼包裝器，提供降級策略
+    static func safeEncodeKeyExchange(
+        publicKey: Data,
+        senderID: String,
+        retryCount: UInt8 = 0,
+        timestamp: Date = Date()
+    ) -> Data? {
+        do {
+            return try encodeKeyExchange(
+                publicKey: publicKey,
+                senderID: senderID,
+                retryCount: retryCount,
+                timestamp: timestamp
+            )
+        } catch {
+            print("⚠️ 密鑰交換編碼失敗，使用降級策略: \(error)")
+            // 降級策略：創建最基本的密鑰交換包
+            return createFallbackKeyExchange(publicKey: publicKey, senderID: senderID)
+        }
+    }
+    
+    /// 安全的密鑰交換回應編碼包裝器
+    static func safeEncodeKeyExchangeResponse(
+        publicKey: Data,
+        senderID: String,
+        status: KeyExchangeStatus,
+        errorMessage: String? = nil,
+        timestamp: Date = Date()
+    ) -> Data? {
+        do {
+            return try encodeKeyExchangeResponse(
+                publicKey: publicKey,
+                senderID: senderID,
+                status: status,
+                errorMessage: errorMessage,
+                timestamp: timestamp
+            )
+        } catch {
+            print("⚠️ 密鑰交換回應編碼失敗，使用降級策略: \(error)")
+            // 降級策略：創建最基本的回應包
+            return createFallbackKeyExchangeResponse(status: status, senderID: senderID)
+        }
+    }
+    
+    // MARK: - Fallback Strategies
+    
+    /// 降級策略：創建最基本的密鑰交換包
+    private static func createFallbackKeyExchange(publicKey: Data, senderID: String) -> Data {
+        var fallbackData = Data()
+        
+        // 簡化的格式：協議版本 + 類型 + 基本數據
+        fallbackData.append(PROTOCOL_VERSION)
+        fallbackData.append(MeshMessageType.keyExchange.rawValue)
+        
+        // 發送者ID長度和數據
+        let senderData = senderID.data(using: .utf8) ?? Data()
+        fallbackData.append(UInt8(min(senderData.count, 255)))
+        fallbackData.append(senderData.prefix(255))
+        
+        // 公鑰長度和數據
+        let keyLength = UInt16(publicKey.count)
+        fallbackData.append(contentsOf: withUnsafeBytes(of: keyLength.littleEndian) { Array($0) })
+        fallbackData.append(publicKey)
+        
+        return fallbackData
+    }
+    
+    /// 降級策略：創建最基本的密鑰交換回應包
+    private static func createFallbackKeyExchangeResponse(status: KeyExchangeStatus, senderID: String) -> Data {
+        var fallbackData = Data()
+        
+        // 簡化的格式
+        fallbackData.append(PROTOCOL_VERSION)
+        fallbackData.append(MeshMessageType.keyExchangeResponse.rawValue)
+        fallbackData.append(status.rawValue)
+        
+        // 發送者ID
+        let senderData = senderID.data(using: .utf8) ?? Data()
+        fallbackData.append(UInt8(min(senderData.count, 255)))
+        fallbackData.append(senderData.prefix(255))
+        
+        return fallbackData
     }
     
     // MARK: - Chat Encoding
@@ -396,10 +484,10 @@ class BinaryEncoder {
         var data = Data()
         
         // 1 byte: 協議版本
-        data.append(BinaryProtocolVersion.v1.rawValue)
+        data.append(PROTOCOL_VERSION)
         
         // 1 byte: 消息類型
-        data.append(BinaryMessageType.chat.rawValue)
+        data.append(MeshMessageType.chat.rawValue)
         
         // 1 byte: 加密標誌
         data.append(isEncrypted ? 1 : 0)
@@ -445,7 +533,7 @@ class BinaryDecoder {
     /// 解碼加密信號外層結構
     static func decodeEncryptedSignal(_ data: Data) -> (
         version: UInt8,
-        messageType: BinaryMessageType,
+        messageType: MeshMessageType,
         isEncrypted: Bool,
         timestamp: Date,
         id: String,
@@ -461,7 +549,7 @@ class BinaryDecoder {
         offset += 1
         
         // 消息類型
-        guard let messageType = BinaryMessageType(rawValue: data[offset]) else { return nil }
+        guard let messageType = MeshMessageType(rawValue: data[offset]) else { return nil }
         offset += 1
         
         // 加密標誌
@@ -847,15 +935,62 @@ class BinaryDecoder {
 
 class BinaryDataValidator {
     
+    // MARK: - 編碼錯誤類型
+    enum BinaryEncodingError: Error, LocalizedError {
+        case keyExchangeEncodingFailed(underlying: Error)
+        case keyExchangeResponseEncodingFailed(underlying: Error)
+        case chatMessageEncodingFailed(underlying: Error)
+        case gameDataEncodingFailed(underlying: Error)
+        case systemMessageEncodingFailed(underlying: Error)
+        case encodingConfigurationError(String)
+        
+        var errorDescription: String? {
+            switch self {
+            case .keyExchangeEncodingFailed(let error):
+                return "密鑰交換編碼失敗: \(error.localizedDescription)"
+            case .keyExchangeResponseEncodingFailed(let error):
+                return "密鑰交換回應編碼失敗: \(error.localizedDescription)"
+            case .chatMessageEncodingFailed(let error):
+                return "聊天訊息編碼失敗: \(error.localizedDescription)"
+            case .gameDataEncodingFailed(let error):
+                return "遊戲資料編碼失敗: \(error.localizedDescription)"
+            case .systemMessageEncodingFailed(let error):
+                return "系統訊息編碼失敗: \(error.localizedDescription)"
+            case .encodingConfigurationError(let message):
+                return "編碼配置錯誤: \(message)"
+            }
+        }
+        
+        var recoverySuggestion: String? {
+            switch self {
+            case .keyExchangeEncodingFailed:
+                return "檢查密鑰格式是否正確，如果問題持續，請嘗試重新生成密鑰"
+            case .keyExchangeResponseEncodingFailed:
+                return "檢查回應狀態和錯誤訊息格式"
+            case .chatMessageEncodingFailed:
+                return "檢查訊息內容長度和字符編碼"
+            case .gameDataEncodingFailed:
+                return "檢查遊戲資料結構是否符合協議規範"
+            case .systemMessageEncodingFailed:
+                return "檢查系統訊息格式"
+            case .encodingConfigurationError:
+                return "檢查編碼器配置和參數設定"
+            }
+        }
+    }
+    
     // MARK: - 驗證錯誤類型
     enum ValidationError: Error, LocalizedError {
         case invalidProtocolVersion(UInt8)
         case invalidMessageType(UInt8)
         case corruptedData(String)
         case payloadSizeExceeded(Int, max: Int)
+        case invalidPayloadSize(String)
+        case lengthMismatch(String)
+        case checksumMismatch(String)
+        case invalidReservedField(String)
         case invalidUUID
         case invalidTimestamp(Double)
-        case checksumMismatch
         
         var errorDescription: String? {
             switch self {
@@ -867,12 +1002,18 @@ class BinaryDataValidator {
                 return "數據損壞: \(reason)"
             case .payloadSizeExceeded(let size, let max):
                 return "載荷大小超限: \(size) > \(max)"
+            case .invalidPayloadSize(let message):
+                return "載荷大小無效: \(message)"
+            case .lengthMismatch(let message):
+                return "長度不匹配: \(message)"
+            case .checksumMismatch(let message):
+                return "校驗和錯誤: \(message)"
+            case .invalidReservedField(let message):
+                return "保留字段錯誤: \(message)"
             case .invalidUUID:
                 return "無效的UUID格式"
             case .invalidTimestamp(let timestamp):
                 return "無效的時間戳: \(timestamp)"
-            case .checksumMismatch:
-                return "校驗和不匹配"
             }
         }
     }
@@ -884,40 +1025,73 @@ class BinaryDataValidator {
     
     /// 驗證二進制數據完整性
     static func validateBinaryData(_ data: Data) throws {
-        guard data.count >= 3 else {
-            throw ValidationError.corruptedData("數據太短，至少需要3字節")
+        // 基本長度檢查
+        guard data.count >= 8 else {
+            throw ValidationError.corruptedData("數據太短，至少需要8字節")
+        }
+        
+        // 最大負載限制檢查
+        guard data.count <= maxPayloadSize else {
+            throw ValidationError.invalidPayloadSize("數據包過大：\(data.count) > \(maxPayloadSize)")
         }
         
         // 檢查協議版本
         let version = data[0]
-        guard version == BinaryProtocolVersion.v1.rawValue else {
+        guard version == PROTOCOL_VERSION else {
             throw ValidationError.invalidProtocolVersion(version)
         }
         
         // 檢查消息類型
         let messageType = data[1]
         let validTypes: [UInt8] = [
-            BinaryMessageType.signal.rawValue,
-            BinaryMessageType.chat.rawValue,
-            BinaryMessageType.game.rawValue,
-            BinaryMessageType.keyExchange.rawValue,
-            BinaryMessageType.system.rawValue
+            MeshMessageType.signal.rawValue,
+            MeshMessageType.chat.rawValue,
+            MeshMessageType.game.rawValue,
+            MeshMessageType.keyExchange.rawValue,
+            MeshMessageType.system.rawValue
         ]
         
         guard validTypes.contains(messageType) else {
             throw ValidationError.invalidMessageType(messageType)
         }
         
+        // 檢查長度字段一致性
+        guard data.count >= 6 else {
+            throw ValidationError.corruptedData("數據包缺少長度字段")
+        }
+        
+        let declaredLength = UInt32(data[2]) << 24 | UInt32(data[3]) << 16 | UInt32(data[4]) << 8 | UInt32(data[5])
+        guard declaredLength == data.count - 6 else {
+            throw ValidationError.lengthMismatch("聲明長度 \(declaredLength) 與實際長度 \(data.count - 6) 不符")
+        }
+        
+        // 檢查 checksum (簡單的異或校驗)
+        let payloadData = data.dropFirst(6)
+        let calculatedChecksum = payloadData.reduce(0) { $0 ^ $1 }
+        let declaredChecksum = data[6]
+        guard calculatedChecksum == declaredChecksum else {
+            throw ValidationError.checksumMismatch("校驗和不匹配")
+        }
+        
+        // 檢查保留字段（第7字節應為0）
+        guard data[7] == 0 else {
+            throw ValidationError.invalidReservedField("保留字段必須為0")
+        }
+        
         // 根據消息類型進行具體驗證
-        switch BinaryMessageType(rawValue: messageType) {
+        switch MeshMessageType(rawValue: messageType) {
         case .signal:
             try validateSignalData(data)
         case .chat:
             try validateChatData(data)
         case .game:
             try validateGameData(data)
+        case .keyExchange:
+            try validateKeyExchangeData(data)
+        case .system:
+            try validateSystemData(data)
         default:
-            break
+            throw ValidationError.invalidMessageType(messageType)
         }
     }
     

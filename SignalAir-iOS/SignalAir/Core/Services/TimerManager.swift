@@ -1,6 +1,12 @@
 import Foundation
 
+// MARK: - ⚠️ DEPRECATED ⚠️
+// 此檔案已被 UnifiedTimerManager 取代
+// 請使用 UnifiedTimerManager.shared 替代此實作
+// 計劃移除日期: 下個主要版本
+
 /// 🎯 集中式計時器管理器 - 解決記憶體洩漏和生命週期問題
+@available(*, deprecated, message: "使用 UnifiedTimerManager.shared 替代")
 @MainActor
 class TimerManager: ObservableObject {
     static let shared = TimerManager()
