@@ -2,52 +2,52 @@ import Foundation
 import MultipeerConnectivity
 import Combine
 
-// MARK: - Eclipse Attack Defense Coordinator
+// MARK: - Eclipse Attack Detection Coordinator
 // 統一協調 Eclipse 攻擊防禦機制
 
 /// Eclipse 攻擊防禦協調器 - 統一管理三層防禦機制
 @MainActor
-class EclipseDefenseCoordinator: ObservableObject {
+class EclipseDetectionCoordinator: ObservableObject {
     
     // MARK: - Published Properties
-    @Published private(set) var defenseStatus: DefenseStatus = .initializing
-    @Published private(set) var lastDefenseCheck: Date = Date.distantPast
+    @Published private(set) var defenseStatus: DetectionStatus = .initializing
+    @Published private(set) var lastDetectionCheck: Date = Date.distantPast
     @Published private(set) var detectedThreats: [EclipseThreat] = []
-    @Published private(set) var defenseMetrics: DefenseMetrics = DefenseMetrics()
+    @Published private(set) var defenseMetrics: DetectionMetrics = DetectionMetrics()
     
     // MARK: - Dependencies
-    private weak var networkService: NetworkServiceProtocol?
+    private weak var networkService: NetworkService?
     private weak var topologyManager: TopologyManager?
     // 暫時註解，等 RobustNetworkLayer 修復後再啟用
     // private weak var robustNetworkLayer: RobustNetworkLayer?
     
-    // MARK: - Defense Configuration
+    // MARK: - Detection Configuration
     // ⚡ 性能優化師：優化防禦配置參數
-    private struct DefenseConfiguration {
+    private struct DetectionConfiguration {
         static let coordinatedCheckInterval: TimeInterval = 30.0  // 優化：減少檢查間隔
         static let threatRetentionPeriod: TimeInterval = 180.0    // 優化：減少威脅保存時間
-        static let maxConcurrentDefenseActions = 2               // 優化：減少並發動作數
+        static let maxConcurrentDetectionActions = 2               // 優化：減少並發動作數
         static let performanceCheckThreshold = 10                 // 新增：性能檢查閾值
     }
     
     // MARK: - Internal State
     // ⚡ 性能優化師：優化內部狀態管理
     private var defenseTimer: Timer?
-    private var activeDefenseActions: Set<String> = []
+    private var activeDetectionActions: Set<String> = []
     private let defenseQueue = DispatchQueue(label: "com.signalair.eclipse-defense", qos: .utility) // 優化：降低 QoS
     private var performanceMetrics: [String: TimeInterval] = [:]  // 新增：性能指標追蹤
     private var lastOptimizationTime: Date = Date()               // 新增：最後優化時間
     
     // MARK: - Initialization
     init(
-        networkService: NetworkServiceProtocol? = nil,
+        networkService: NetworkService? = nil,
         topologyManager: TopologyManager? = nil
     ) {
         self.networkService = networkService
         self.topologyManager = topologyManager
         
         setupNotificationObservers()
-        print("🛡️ EclipseDefenseCoordinator 初始化完成")
+        print("🛡️ EclipseDetectionCoordinator 初始化完成")
     }
     
     // 🛡️ 安全專家：安全的析構函數
@@ -55,21 +55,21 @@ class EclipseDefenseCoordinator: ObservableObject {
         // 同步清理，避免併發問題
         defenseTimer?.invalidate()
         defenseTimer = nil
-        activeDefenseActions.removeAll()
+        activeDetectionActions.removeAll()
         NotificationCenter.default.removeObserver(self)
     }
     
     // MARK: - Public Methods
     
     /// 啟動 Eclipse 攻擊防禦系統
-    func startEclipseDefense() {
+    func startEclipseDetection() {
         guard defenseStatus != .active else {
             print("⚠️ Eclipse 防禦系統已經在運行中")
             return
         }
         
         defenseStatus = .active
-        startCoordinatedDefense()
+        startCoordinatedDetection()
         
         #if DEBUG
         print("🚀 Eclipse 攻擊防禦系統已啟動")
@@ -77,11 +77,11 @@ class EclipseDefenseCoordinator: ObservableObject {
     }
     
     /// 停止 Eclipse 攻擊防禦系統
-    func stopEclipseDefense() {
+    func stopEclipseDetection() {
         defenseStatus = .inactive
         defenseTimer?.invalidate()
         defenseTimer = nil
-        activeDefenseActions.removeAll()
+        activeDetectionActions.removeAll()
         
         #if DEBUG
         print("🛑 Eclipse 攻擊防禦系統已停止")
@@ -89,18 +89,18 @@ class EclipseDefenseCoordinator: ObservableObject {
     }
     
     /// 執行即時防禦檢查
-    func performImmediateDefenseCheck() async {
-        await executeCoordinatedDefenseCheck()
+    func performImmediateDetectionCheck() async {
+        await executeCoordinatedDetectionCheck()
     }
     
     /// 獲取防禦狀態報告
-    func getDefenseReport() -> EclipseDefenseReport {
-        return EclipseDefenseReport(
+    func getDetectionReport() -> EclipseDetectionReport {
+        return EclipseDetectionReport(
             status: defenseStatus,
-            lastCheck: lastDefenseCheck,
+            lastCheck: lastDetectionCheck,
             activeThreats: detectedThreats,
             metrics: defenseMetrics,
-            recommendations: generateDefenseRecommendations()
+            recommendations: generateDetectionRecommendations()
         )
     }
     
@@ -118,21 +118,21 @@ class EclipseDefenseCoordinator: ObservableObject {
         }
     }
     
-    private func startCoordinatedDefense() {
-        defenseTimer = Timer.scheduledTimer(withTimeInterval: DefenseConfiguration.coordinatedCheckInterval, repeats: true) { [weak self] _ in
+    private func startCoordinatedDetection() {
+        defenseTimer = Timer.scheduledTimer(withTimeInterval: DetectionConfiguration.coordinatedCheckInterval, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
-                await self?.executeCoordinatedDefenseCheck()
+                await self?.executeCoordinatedDetectionCheck()
             }
         }
     }
     
     /// 執行協調的防禦檢查
     // ⚡ 性能優化師：優化防禦檢查性能
-    private func executeCoordinatedDefenseCheck() async {
+    private func executeCoordinatedDetectionCheck() async {
         guard defenseStatus == .active else { return }
         
         let startTime = Date()
-        lastDefenseCheck = startTime
+        lastDetectionCheck = startTime
         
         #if DEBUG
         print("🔍 執行協調的 Eclipse 防禦檢查")
@@ -173,10 +173,10 @@ class EclipseDefenseCoordinator: ObservableObject {
         } // 結束 shouldPerformOptimizedCheck
         
         // 更新防禦指標
-        updateDefenseMetrics()
+        updateDetectionMetrics()
         
         // 執行協調的防禦動作
-        await executeCoordinatedDefenseActions()
+        await executeCoordinatedDetectionActions()
         
         // ⚡ 性能優化：記錄性能指標
         let executionTime = Date().timeIntervalSince(startTime)
@@ -188,7 +188,7 @@ class EclipseDefenseCoordinator: ObservableObject {
     }
     
     // 🛡️ 安全專家：實現安全的隨機探測檢查
-    private func performRandomProbeCheck(_ networkService: NetworkServiceProtocol) async -> EclipseThreat? {
+    private func performRandomProbeCheck(_ networkService: NetworkService) async -> EclipseThreat? {
         let connectedPeers = networkService.connectedPeers.count
         
         // 安全檢查：檢測異常連接模式
@@ -208,7 +208,7 @@ class EclipseDefenseCoordinator: ObservableObject {
     }
     
     // 🛡️ 安全專家：新增安全連接檢查方法
-    private func performSecureConnectionCheck(_ networkService: NetworkServiceProtocol) async {
+    private func performSecureConnectionCheck(_ networkService: NetworkService) async {
         // 檢查連接品質和安全性
         let peers = networkService.connectedPeers
         for peer in peers {
@@ -267,49 +267,49 @@ class EclipseDefenseCoordinator: ObservableObject {
         detectedThreats.append(contentsOf: newThreats)
         
         // 清理過期威脅
-        let cutoffTime = Date().addingTimeInterval(-DefenseConfiguration.threatRetentionPeriod)
+        let cutoffTime = Date().addingTimeInterval(-DetectionConfiguration.threatRetentionPeriod)
         detectedThreats.removeAll { $0.timestamp < cutoffTime }
         
         // 按嚴重性排序
         detectedThreats.sort { $0.severity.rawValue > $1.severity.rawValue }
     }
     
-    private func updateDefenseMetrics() {
+    private func updateDetectionMetrics() {
         let now = Date()
-        defenseMetrics = DefenseMetrics(
+        defenseMetrics = DetectionMetrics(
             totalChecks: defenseMetrics.totalChecks + 1,
             threatsDetected: detectedThreats.count,
             lastUpdate: now,
             averageResponseTime: calculateAverageResponseTime(),
-            defenseEffectiveness: calculateDefenseEffectiveness()
+            defenseEffectiveness: calculateDetectionEffectiveness()
         )
     }
     
-    private func executeCoordinatedDefenseActions() async {
+    private func executeCoordinatedDetectionActions() async {
         let highPriorityThreats = detectedThreats.filter { $0.severity == .critical || $0.severity == .high }
         
         guard !highPriorityThreats.isEmpty,
-              activeDefenseActions.count < DefenseConfiguration.maxConcurrentDefenseActions else {
+              activeDetectionActions.count < DetectionConfiguration.maxConcurrentDetectionActions else {
             return
         }
         
-        for threat in highPriorityThreats.prefix(DefenseConfiguration.maxConcurrentDefenseActions - activeDefenseActions.count) {
+        for threat in highPriorityThreats.prefix(DetectionConfiguration.maxConcurrentDetectionActions - activeDetectionActions.count) {
             let actionId = UUID().uuidString
-            activeDefenseActions.insert(actionId)
+            activeDetectionActions.insert(actionId)
             
             Task {
                 defer {
                     Task { @MainActor in
-                        self.activeDefenseActions.remove(actionId)
+                        self.activeDetectionActions.remove(actionId)
                     }
                 }
                 
-                await executeDefenseAction(for: threat)
+                await executeDetectionAction(for: threat)
             }
         }
     }
     
-    private func executeDefenseAction(for threat: EclipseThreat) async {
+    private func executeDetectionAction(for threat: EclipseThreat) async {
         #if DEBUG
         print("🛡️ 執行針對 \(threat.type) 的防禦動作")
         #endif
@@ -342,7 +342,7 @@ class EclipseDefenseCoordinator: ObservableObject {
         )
         
         detectedThreats.append(threat)
-        await executeDefenseAction(for: threat)
+        await executeDetectionAction(for: threat)
     }
     
     private func calculateAverageResponseTime() -> TimeInterval {
@@ -350,7 +350,7 @@ class EclipseDefenseCoordinator: ObservableObject {
         return 0.5
     }
     
-    private func calculateDefenseEffectiveness() -> Double {
+    private func calculateDetectionEffectiveness() -> Double {
         // 簡化實現
         let recentThreats = detectedThreats.filter {
             Date().timeIntervalSince($0.timestamp) < 300
@@ -363,7 +363,7 @@ class EclipseDefenseCoordinator: ObservableObject {
         return max(0.0, 1.0 - Double(recentThreats.count) / 10.0)
     }
     
-    private func generateDefenseRecommendations() -> [String] {
+    private func generateDetectionRecommendations() -> [String] {
         var recommendations: [String] = []
         
         if detectedThreats.count > 5 {
@@ -385,12 +385,12 @@ class EclipseDefenseCoordinator: ObservableObject {
     // ⚡ 性能優化師：性能優化方法
     private func shouldPerformOptimizedCheck() -> Bool {
         let timeSinceLastOptimization = Date().timeIntervalSince(lastOptimizationTime)
-        return timeSinceLastOptimization > DefenseConfiguration.coordinatedCheckInterval
+        return timeSinceLastOptimization > DetectionConfiguration.coordinatedCheckInterval
     }
     
-    private func optimizeDefensePerformance() {
+    private func optimizeDetectionPerformance() {
         // 清理過期的性能指標
-        let _ = Date().addingTimeInterval(-DefenseConfiguration.threatRetentionPeriod)
+        let _ = Date().addingTimeInterval(-DetectionConfiguration.threatRetentionPeriod)
         performanceMetrics = performanceMetrics.filter { _ in
             // 簡化實現：保留所有指標
             return true
@@ -402,7 +402,7 @@ class EclipseDefenseCoordinator: ObservableObject {
 
 // MARK: - Supporting Types
 
-enum DefenseStatus: String {
+enum DetectionStatus: String {
     case initializing = "initializing"
     case active = "active"
     case inactive = "inactive"
@@ -434,7 +434,7 @@ struct EclipseThreat {
     }
 }
 
-struct DefenseMetrics {
+struct DetectionMetrics {
     let totalChecks: Int
     let threatsDetected: Int
     let lastUpdate: Date
@@ -458,11 +458,11 @@ struct DefenseMetrics {
     }
 }
 
-struct EclipseDefenseReport {
-    let status: DefenseStatus
+struct EclipseDetectionReport {
+    let status: DetectionStatus
     let lastCheck: Date
     let activeThreats: [EclipseThreat]
-    let metrics: DefenseMetrics
+    let metrics: DetectionMetrics
     let recommendations: [String]
     
     var isSystemHealthy: Bool {

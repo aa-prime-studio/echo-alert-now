@@ -1,5 +1,6 @@
 import Foundation
 
+@MainActor
 class LanguageService: ObservableObject {
     @Published var currentLanguage: Language = .chinese
     

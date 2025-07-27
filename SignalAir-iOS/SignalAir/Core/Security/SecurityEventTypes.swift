@@ -4,7 +4,7 @@ import Foundation
 // SecurityEventTypes.swift
 // SignalAir
 //
-// 安全事件類型定義 - 支援 AutomaticSecurityMonitor
+// 安全事件類型定義 - 支援 AutomaticSystemMonitor
 //
 
 /// 安全事件結構體
@@ -36,7 +36,7 @@ struct SecurityEvent: Codable, Identifiable {
 
 /// 安全事件類型列舉
 enum SecurityEventType: String, Codable, CaseIterable {
-    case floodProtection = "flood_protection"
+    case connectionRateProtection = "connection_rate_protection"
     case unauthorizedAccess = "unauthorized_access"
     case dataAccess = "data_access"
     case securityWarning = "security_warning"
@@ -49,8 +49,8 @@ enum SecurityEventType: String, Codable, CaseIterable {
     
     var displayName: String {
         switch self {
-        case .floodProtection:
-            return "洪水攻擊保護"
+        case .connectionRateProtection:
+            return "連線速率保護"
         case .unauthorizedAccess:
             return "未授權存取"
         case .dataAccess:
@@ -111,15 +111,15 @@ enum SecuritySeverity: String, Codable, CaseIterable, Comparable {
 typealias SecurityEventHandler = (SecurityEvent) -> Void
 
 /// 安全監控設定
-struct SecurityMonitorConfig {
-    let enableFloodProtection: Bool
+struct SystemHealthMonitorConfig {
+    let enableConnectionRateProtection: Bool
     let enableBotDetection: Bool
     let enableAnomalyDetection: Bool
     let maxEventsPerMinute: Int
     let criticalEventThreshold: Int
     
-    static let `default` = SecurityMonitorConfig(
-        enableFloodProtection: true,
+    static let `default` = SystemHealthMonitorConfig(
+        enableConnectionRateProtection: true,
         enableBotDetection: true,
         enableAnomalyDetection: true,
         maxEventsPerMinute: 60,
@@ -151,8 +151,8 @@ extension SecurityEvent {
             eventType = .networkAnomaly
         case .unauthorizedAccess:
             eventType = .unauthorizedAccess
-        case .floodAttack:
-            eventType = .floodProtection
+        case .highConnectionRate:
+            eventType = .connectionRateProtection
         case .dataCorruption:
             eventType = .dataAccess
         case .none:

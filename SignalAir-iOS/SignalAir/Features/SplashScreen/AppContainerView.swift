@@ -13,14 +13,22 @@ struct AppContainerView: View {
             
             if showSplash {
                 SplashScreenView {
-                    // 動畫完成回調 - 無縫切換
-                    showSplash = false
+                    // 1秒後開始過渡動畫
+                    withAnimation(.easeInOut(duration: 0.8)) {
+                        showSplash = false
+                    }
                 }
-                .transition(.identity) // 無過渡動畫
+                .transition(.asymmetric(
+                    insertion: .opacity,
+                    removal: .scale(scale: 1.2).combined(with: .opacity)
+                ))
             } else {
                 // 主應用程式界面
                 MainAppContentView()
-                    .transition(.identity) // 無過渡動畫
+                    .transition(.asymmetric(
+                        insertion: .scale(scale: 0.8).combined(with: .opacity),
+                        removal: .opacity
+                    ))
             }
         }
         .onAppear {

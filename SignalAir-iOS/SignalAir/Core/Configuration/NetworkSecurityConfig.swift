@@ -9,8 +9,8 @@ import Foundation
 
 /// 網路安全配置結構
 struct NetworkSecurityConfig {
-    // MARK: - 洪水防護配置
-    let floodProtection: FloodProtectionConfig
+    // MARK: - 連線速率管理配置
+    let connectionRateManager: ConnectionRateManagerConfig
     
     // MARK: - 網路層配置
     let maxDataPacketSize: Int
@@ -35,7 +35,7 @@ struct NetworkSecurityConfig {
     
     // MARK: - 預設配置
     static let `default` = NetworkSecurityConfig(
-        floodProtection: FloodProtectionConfig.default,
+        connectionRateManager: ConnectionRateManagerConfig.default,
         maxDataPacketSize: 1024 * 1024, // 1MB
         connectionTimeout: 30.0,
         maxConnections: 15,
@@ -53,7 +53,7 @@ struct NetworkSecurityConfig {
     
     // MARK: - 災難環境配置（更嚴格的安全設定）
     static let disaster = NetworkSecurityConfig(
-        floodProtection: FloodProtectionConfig(
+        connectionRateManager: ConnectionRateManagerConfig(
             maxMessagesPerSecond: 5,  // 更嚴格的速率限制
             maxMessagesPerMinute: 50,
             maxBurstSize: 10,
@@ -77,7 +77,7 @@ struct NetworkSecurityConfig {
     
     // MARK: - 測試環境配置（較寬鬆的設定）
     static let testing = NetworkSecurityConfig(
-        floodProtection: FloodProtectionConfig(
+        connectionRateManager: ConnectionRateManagerConfig(
             maxMessagesPerSecond: 20,
             maxMessagesPerMinute: 200,
             maxBurstSize: 50,
@@ -146,7 +146,7 @@ struct NetworkSecurityConfig {
     func summary() -> String {
         return """
         NetworkSecurityConfig Summary:
-        - Flood Protection: \(floodProtection.maxMessagesPerSecond)msg/s, \(floodProtection.maxMessagesPerMinute)msg/min
+        - Connection Rate Manager: \(connectionRateManager.maxMessagesPerSecond)msg/s, \(connectionRateManager.maxMessagesPerMinute)msg/min
         - Max Packet Size: \(maxDataPacketSize / 1024)KB
         - Max Connections: \(maxConnections)
         - Malicious Detection: \(enableMaliciousContentDetection ? "ON" : "OFF")

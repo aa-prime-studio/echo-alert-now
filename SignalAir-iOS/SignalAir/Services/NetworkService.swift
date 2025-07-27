@@ -57,18 +57,7 @@ actor ConnectionStateManager {
 }
 
 // MARK: - NetworkService Protocol (forward declaration)
-@MainActor
-protocol NetworkServiceProtocol: AnyObject, Sendable {
-    var myPeerID: MCPeerID { get }
-    var connectedPeers: [MCPeerID] { get }
-    var onDataReceived: ((Data, String) -> Void)? { get set }
-    var onPeerConnected: ((String) -> Void)? { get set }
-    var onPeerDisconnected: ((String) -> Void)? { get set }
-    
-    func send(_ data: Data, to peers: [MCPeerID]) async throws
-    func sendMessage(_ data: Data, toPeer peer: String, messageType: MeshMessageType)
-    func getConnectedPeers() -> [String]
-}
+// NetworkServiceProtocol moved to ServiceProtocols.swift to avoid duplication
 
 // MARK: - NetworkService
 @MainActor
@@ -98,7 +87,7 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     private var streamChannelUsageCount = 0
     private var lastChannelError: (operation: String, error: Error, timestamp: Date)?
     
-    // MARK: - Eclipse Attack Defense
+    // MARK: - Eclipse Defense
     private var eclipseProbe = EclipseDefenseRandomProbe()
     
     // 連接狀態管理器 (使用Actor模式)
@@ -301,6 +290,17 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
         
         print("📤 NetworkService: 準備發送 \(data.count) bytes 到 \(finalValidPeers.count) 個 peers")
         
+        // 🔍 調試：記錄發送的數據
+        #if DEBUG
+        let peerNames = finalValidPeers.map { $0.displayName }.joined(separator: ", ")
+        print("📤 NetworkService: 發送數據到 \(peerNames): \(data.count) bytes")
+        
+        // 如果是密鑰交換，進行特別記錄
+        if data.count >= 2 && data[1] == 0x05 { // keyExchange type
+            print("🔑 NetworkService: 發送密鑰交換訊息 \(data.count) bytes")
+        }
+        #endif
+        
         // 3. 帶有連接狀態保護的重試發送機制
         try await sendWithConnectionProtection(data, to: finalValidPeers, maxRetries: 3)
     }
@@ -421,8 +421,35 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         case .connecting:
             print("🔄 Connecting to: \(peerID.displayName)")
             
+            // 檢查連接時的網路狀態
+            let currentPeers = session.connectedPeers.count
+            print("📊 當前連接統計: \(currentPeers) 個設備, 正在連接: \(peerID.displayName)")
+            
         case .connected:
             print("✅ Connected to: \(peerID.displayName)")
+            
+            // 🛡️ 更寬容的 Behavior Analysis 檢查 - 只阻止明確的危險行為
+            let threatLevel = ServiceContainer.shared.behaviorAnalysisSystem.analyzeConnection(from: peerID.displayName)
+            let trustScore = ServiceContainer.shared.trustScoreManager.getTrustScore(for: peerID.displayName)
+            
+            // 只有信任分數極低 (<10) 且有明確惡意歷史的才斷開連接
+            if threatLevel == .dangerous && trustScore < 10 {
+                print("🚫 Behavior Analysis 防護：拒絕已知惡意連線 - \(peerID.displayName) (分數: \(trustScore))")
+                session.disconnect()
+                
+                DispatchQueue.main.async {
+                    NotificationCenter.default.post(
+                        name: NSNotification.Name("ShowSecurityWarning"),
+                        object: nil,
+                        userInfo: ["message": "檢測到可疑連線，已自動斷開以保護您的安全"]
+                    )
+                }
+                return
+            } else if threatLevel == .dangerous {
+                print("⚠️ 新設備被標記為可疑但允許連接 - \(peerID.displayName) (分數: \(trustScore))")
+                // 新設備給予機會，但密切監控
+            }
+            
             // 連接成功，清理重試記錄
             Task {
                 await connectionStateManager.removeRetryRecord(peerID.displayName)
@@ -444,6 +471,12 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
             }
             
         case .notConnected:
+            print("❌ Disconnected from: \(peerID.displayName)")
+            
+            // 檢查斷開時的狀態
+            let remainingPeers = session.connectedPeers.count
+            print("📊 斷開後統計: \(remainingPeers) 個設備, 斷開: \(peerID.displayName)")
+            
             // 立即更新連接狀態
             updateConnectionStatus()
             
@@ -492,9 +525,61 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         print("📥 Received \(data.count) bytes from: \(peerID.displayName)")
         
-        // 🛡️ 安全檢查：檢測攻擊數據
+        // 🔍 調試：記錄接收到的數據
+        #if DEBUG
+        print("📥 NetworkService: 接收數據來自 \(peerID.displayName): \(data.count) bytes")
+        
+        // 如果是密鑰交換，進行特別記錄
+        if data.count >= 2 && data[1] == 0x05 { // keyExchange type
+            print("🔑 NetworkService: 收到密鑰交換訊息 \(data.count) bytes")
+        }
+        #endif
+        
+        // 🚫 1. 臨時黑名單檢查 - 拒絕來自黑名單設備的消息
+        if ServiceContainer.shared.trustScoreManager.checkTemporaryBlacklist(for: peerID.displayName) {
+            print("⛔️ NetworkService: 拒絕來自臨時黑名單設備的消息 - \(peerID.displayName)")
+            return
+        }
+        
+        // 2. Behavior Analysis 防護：分析訊息內容
+        if let messageContent = String(data: data, encoding: .utf8) {
+            let threatLevel = ServiceContainer.shared.behaviorAnalysisSystem.analyzeMessage(
+                from: peerID.displayName,
+                content: messageContent
+            )
+            
+            // 3. 根據威脅等級採取行動
+            let strategy = ServiceContainer.shared.behaviorAnalysisSystem.getResponseStrategy(for: threatLevel)
+            
+            if !strategy.allowConnection {
+                print("🚫 Behavior Analysis 防護：阻止危險訊息 - \(peerID.displayName)")
+                
+                // 顯示友善警告
+                NotificationCenter.default.post(
+                    name: NSNotification.Name("ShowSecurityWarning"),
+                    object: nil,
+                    userInfo: ["message": threatLevel.userMessage]
+                )
+                return
+            }
+            
+            // 如果需要延遲處理（可疑連線）
+            if strategy.messageDelay > 0 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + strategy.messageDelay) { [weak self] in
+                    self?.processReceivedData(data, fromPeer: peerID)
+                }
+                return
+            }
+        }
+        
+        // 4. 🛡️ 安全檢查：檢測攻擊數據
         checkForSecurityThreats(data: data, fromPeer: peerID)
         
+        // 正常處理訊息
+        processReceivedData(data, fromPeer: peerID)
+    }
+    
+    private func processReceivedData(_ data: Data, fromPeer peerID: MCPeerID) {
         // 調用新的協議回調
         self.onDataReceived?(data, peerID.displayName)
         
@@ -512,9 +597,9 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         }
         
         // 🛡️ 基礎惡意內容檢測
-        let maliciousContentDetector = ServiceContainer.shared.maliciousContentDetector
+        let maliciousContentDetector = ServiceContainer.shared.contentValidator
         let contentString = String(data: data, encoding: .utf8) ?? ""
-        if maliciousContentDetector.isObviouslyMalicious(contentString) {
+        if maliciousContentDetector.isObviouslyInappropriate(contentString) {
             print("⚠️ Malicious content detected from \(peerID.displayName)")
             ServiceContainer.shared.securityLogManager.logEntry(
                 eventType: "malicious_content_detected",
@@ -527,15 +612,15 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         
         // 原有的 JSON 攻擊類型檢測
         guard let jsonObject = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let attackType = jsonObject["type"] as? String else {
+              let messageType = jsonObject["type"] as? String else {
             return // 不是攻擊數據，正常處理
         }
         
-        // 只對真正的攻擊類型觸發警告，排除正常的遊戲和聊天消息
+        // 只對真正的惡意類型觸發警告，排除正常的遊戲和聊天消息
         let maliciousTypes = [
-            "attack", "exploit", "injection", "malware", "virus", 
+            "hostile", "exploit", "injection", "malware", "virus", 
             "breach", "compromise", "intrusion", "backdoor", "trojan",
-            "ddos", "flood", "spam", "phishing", "social_engineering"
+            "ddos", "excessive_traffic", "spam", "phishing", "social_engineering"
         ]
         
         let normalGameTypes = [
@@ -545,15 +630,15 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         ]
         
         // 檢查是否為已知的正常類型
-        if normalGameTypes.contains(attackType.lowercased()) {
+        if normalGameTypes.contains(messageType.lowercased()) {
             return // 正常遊戲消息，不觸發警告
         }
         
         // 檢查是否為已知的惡意類型
-        if maliciousTypes.contains(attackType.lowercased()) {
+        if maliciousTypes.contains(messageType.lowercased()) {
             // 記錄真正的安全威脅檢測
             #if DEBUG
-            print("🚨 檢測到惡意數據類型: \(attackType)")
+            print("🚨 檢測到惡意數據類型: \(messageType)")
             #endif
             
             // 觸發安全警報
@@ -564,7 +649,7 @@ extension NetworkService: @preconcurrency MCSessionDelegate {
         
         // 對於未知類型，只記錄但不觸發警告
         #if DEBUG
-        print("ℹ️ 收到未知數據類型: \(attackType)")
+        print("ℹ️ 收到未知數據類型: \(messageType)")
         #endif
     }
     
@@ -811,7 +896,7 @@ extension NetworkService {
         return connectedPeers.map { $0.displayName }
     }
     
-    // MARK: - Eclipse Attack Defense - Lightweight Random Probe
+    // MARK: - Eclipse Defense - Lightweight Random Probe
     
     private struct EclipseDefenseRandomProbe {
         private let probeInterval: TimeInterval = 30.0
@@ -899,24 +984,37 @@ extension NetworkService {
     
     // MARK: - Enhanced Retry Mechanism with Connection Protection
     
-    /// 線程安全的 session.send() 包裝器
+    /// 線程安全的 session.send() 包裝器 - 原子性操作防止狀態不一致
     @MainActor
     private func safeSessionSend(_ data: Data, to peers: [MCPeerID]) async throws {
-        // 在 MainActor 上下文中執行，確保線程安全
-        let validPeers = peers.filter { session.connectedPeers.contains($0) }
-        guard !validPeers.isEmpty else {
-            throw NetworkError.notConnected
-        }
-        
-        do {
-            // 🔍 追蹤 Data Channel 使用
-            trackDataChannelUsage()
-            try session.send(data, toPeers: validPeers, with: .reliable)
-        } catch {
-            // 🔍 追蹤 Channel 錯誤
-            trackChannelError(operation: "session.send", error: error)
-            throw error
-        }
+        // 原子性檢查和發送，減少 "Not in connected state" 警告
+        try await Task { @MainActor in
+            let currentConnectedPeers = session.connectedPeers
+            let validPeers = peers.filter { currentConnectedPeers.contains($0) }
+            
+            guard !validPeers.isEmpty else {
+                throw NetworkError.notConnected
+            }
+            
+            // 立即發送，減少狀態變化窗口
+            do {
+                // 🔍 追蹤 Data Channel 使用
+                trackDataChannelUsage()
+                try session.send(data, toPeers: validPeers, with: .reliable)
+            } catch let error as NSError {
+                // 特殊處理 "Not in connected state" 錯誤
+                if error.localizedDescription.contains("Not in connected state") {
+                    print("⚠️ MCSession 狀態不同步 - 忽略此錯誤並重新檢查連接")
+                    // 強制更新連接狀態
+                    await MainActor.run { updateConnectionStatus() }
+                    throw NetworkError.connectionStateInconsistent
+                } else {
+                    // 🔍 追蹤 Channel 錯誤
+                    trackChannelError(operation: "session.send", error: error)
+                    throw error
+                }
+            }
+        }.value
     }
     
     /// 帶有連接狀態保護的發送方法
@@ -1130,6 +1228,75 @@ extension NetworkService {
         }
         
         return isConsistent
+    }
+    
+    // MARK: - 高性能優化消息處理
+    
+    /// 發送帶信任資訊的優化消息
+    func sendOptimizedMessage(_ message: OptimizedBinaryProtocol.OptimizedBinaryMessage, 
+                            to peer: MCPeerID) async throws {
+        let data = OptimizedBinaryProtocol.encode(message: message)
+        try await send(data, to: [peer])
+    }
+    
+    /// 接收並解碼優化消息
+    func processOptimizedMessage(_ data: Data, from peer: MCPeerID) async {
+        let startTime = CFAbsoluteTimeGetCurrent()
+        
+        do {
+            let message = try OptimizedBinaryProtocol.decode(data: data)
+            
+            // 快速信任檢查
+            let trustScore = OptimizedBinaryProtocol.expandTrustScore(message.senderTrustLevel)
+            let flags = OptimizedBinaryProtocol.decodeBehaviorFlags(message.behaviorFlags)
+            
+            // 根據信任等級快速決策
+            if trustScore > 80 && flags.contains(.verified) {
+                // 高信任快速通道
+                await fastTrackProcessMessage(message, from: peer)
+            } else if trustScore < 30 {
+                // 低信任直接拒絕
+                logSecurityEvent("Low trust message rejected", from: peer.displayName)
+            } else {
+                // 中等信任，進入完整檢查
+                await handleMessage(message.payload, from: peer.displayName)
+            }
+            
+            let elapsedTime = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+            print("⚡ 優化消息處理完成: \(String(format: "%.1f", elapsedTime))ms")
+            
+        } catch {
+            print("❌ Failed to decode optimized message: \(error)")
+        }
+    }
+    
+    /// 快速通道處理（跳過部分安全檢查）
+    private func fastTrackProcessMessage(_ message: OptimizedBinaryProtocol.OptimizedBinaryMessage, 
+                                       from peer: MCPeerID) async {
+        // 記錄快速通道使用
+        print("🚀 使用快速通道處理來自 \(peer.displayName) 的高信任消息")
+        
+        // 跳過部分安全檢查，直接處理
+        await handleMessage(message.payload, from: peer.displayName)
+        
+        // 更新信任統計
+        ServiceContainer.shared.trustCacheOptimizer.updateCache(
+            peer: peer.displayName,
+            score: OptimizedBinaryProtocol.expandTrustScore(message.senderTrustLevel),
+            threat: "safe",
+            behavior: [Float](repeating: 0.9, count: 10)
+        )
+    }
+    
+    /// 處理解碼後的消息
+    private func handleMessage(_ data: Data, from peerName: String) async {
+        // 調用現有的消息處理邏輯
+        processReceivedData(data, fromPeer: MCPeerID(displayName: peerName))
+    }
+    
+    /// 記錄安全事件
+    private func logSecurityEvent(_ message: String, from peerName: String) {
+        print("⚠️ Security Event: \(message) from \(peerName)")
     }
     
 } 

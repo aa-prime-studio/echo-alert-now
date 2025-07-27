@@ -1,0 +1,36 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Performance/OptimizedBinaryProtocol.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/OptimizedBinaryProtocol.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/OptimizedBinaryProtocol.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/OptimizedBinaryProtocol.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/OptimizedBinaryProtocol.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/OptimizedBinaryProtocol.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Protocol/ProtocolVersionManager.swift":
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ProtocolVersionManager.swiftdeps"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ProtocolVersionManager.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ProtocolVersionManager.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ProtocolVersionManager.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/ProtocolVersionManager.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Performance/NetworkOptimizations.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkOptimizations.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkOptimizations.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkOptimizations.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkOptimizations.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/NetworkOptimizations.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/DerivedSources/GeneratedAssetSymbols.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GeneratedAssetSymbols.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/UnifiedTimerManager.swift":
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UnifiedTimerManager.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UnifiedTimerManager.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UnifiedTimerManager.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UnifiedTimerManager.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UnifiedTimerManager.d"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Performance/StartupPerformanceMonitor.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/StartupPerformanceMonitor.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/StartupPerformanceMonitor.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/StartupPerformanceMonitor.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/StartupPerformanceMonitor.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/StartupPerformanceMonitor.o"

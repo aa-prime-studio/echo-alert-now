@@ -5,6 +5,11 @@ import Foundation
 
 class BinaryGameProtocol {
     
+    // MARK: - 🔧 FIX: 優雅降級配置
+    private static let enableGracefulDegradation = true
+    private static let maxDecodingRetries = 3
+    private static let fallbackToPlaintext = true
+    
     // MARK: - 遊戲訊息類型
     enum GameMessageTypeBinary: UInt8 {
         case playerJoined = 0x01
@@ -30,8 +35,43 @@ class BinaryGameProtocol {
     
     // MARK: - 編碼方法
     
-    /// 編碼遊戲訊息為二進制格式
+    /// 🔧 FIX: 編碼遊戲訊息為標準MeshMessage格式
     static func encodeGameMessage(
+        type: GameMessageType,
+        senderID: String,
+        senderName: String,
+        gameRoomID: String,
+        data: Data
+    ) -> Data? {
+        // 🔧 FIX: 創建遊戲內部數據格式
+        let gameInternalData = encodeGameInternalData(
+            type: type,
+            senderID: senderID,
+            senderName: senderName,
+            gameRoomID: gameRoomID,
+            data: data
+        )
+        
+        // 🔧 FIX: 使用標準MeshMessage包裝
+        let meshMessage = MeshMessage(
+            id: UUID().uuidString,
+            type: .game,  // 使用統一的.game類型
+            data: gameInternalData
+        )
+        
+        // 🔧 FIX: 使用標準BinaryMessageEncoder編碼
+        do {
+            let encodedData = try BinaryMessageEncoder.encode(meshMessage)
+            print("✅ BinaryGameProtocol: 成功編碼遊戲消息 - 類型: \(type.stringValue), 大小: \(encodedData.count) bytes")
+            return encodedData
+        } catch {
+            print("❌ BinaryGameProtocol: 編碼失敗 - \(error)")
+            return nil
+        }
+    }
+    
+    /// 編碼遊戲內部數據格式
+    private static func encodeGameInternalData(
         type: GameMessageType,
         senderID: String,
         senderName: String,
@@ -40,39 +80,33 @@ class BinaryGameProtocol {
     ) -> Data {
         var binaryData = Data()
         
-        // 1. 協議版本 (1 byte)
-        binaryData.append(BinaryProtocolConstants.VERSION)
+        // 1. 遊戲訊息子類型 (1 byte)
+        binaryData.append(type.rawValue)
         
-        // 2. MeshMessage 類型 (1 byte) - 使用標準遊戲類型
-        binaryData.append(MeshMessageType.game.rawValue)
-        
-        // 3. 遊戲訊息子類型 (1 byte)
-        binaryData.append(gameMessageTypeToBinary(type).rawValue)
-        
-        // 4. 時間戳 (4 bytes)
+        // 2. 時間戳 (4 bytes)
         let timestamp = UInt32(Date().timeIntervalSince1970)
         binaryData.append(contentsOf: withUnsafeBytes(of: timestamp.littleEndian) { Array($0) })
         
-        // 5. 發送者ID長度 + 內容
+        // 3. 發送者ID長度 + 內容
         let senderIDData = senderID.data(using: .utf8) ?? Data()
         let safeSenderIDLength = min(senderIDData.count, 255)
         binaryData.append(UInt8(safeSenderIDLength))
         binaryData.append(senderIDData.prefix(safeSenderIDLength))
         
-        // 6. 發送者名稱長度 + 內容 (使用清理後的暱稱)
+        // 4. 發送者名稱長度 + 內容 (使用清理後的暱稱)
         let cleanSenderName = NicknameFormatter.cleanNickname(senderName)
         let senderNameData = cleanSenderName.data(using: .utf8) ?? Data()
         let safeSenderNameLength = min(senderNameData.count, 255)
         binaryData.append(UInt8(safeSenderNameLength))
         binaryData.append(senderNameData.prefix(safeSenderNameLength))
         
-        // 7. 遊戲房間ID長度 + 內容
+        // 5. 遊戲房間ID長度 + 內容
         let roomIDData = gameRoomID.data(using: .utf8) ?? Data()
         let safeRoomIDLength = min(roomIDData.count, 255)
         binaryData.append(UInt8(safeRoomIDLength))
         binaryData.append(roomIDData.prefix(safeRoomIDLength))
         
-        // 8. 數據長度 (2 bytes) + 內容
+        // 6. 數據長度 (2 bytes) + 內容
         let dataLength = UInt16(data.count)
         binaryData.append(contentsOf: withUnsafeBytes(of: dataLength.littleEndian) { Array($0) })
         binaryData.append(data)
@@ -80,34 +114,89 @@ class BinaryGameProtocol {
         return binaryData
     }
     
-    /// 解碼二進制遊戲訊息
+    /// 🔧 FIX: 解碼標準MeshMessage格式的遊戲訊息 - 優雅降級版本
     static func decodeGameMessage(_ data: Data) -> GameMessage? {
-        guard data.count >= 11 else { return nil } // 最小長度檢查（增加1個字節）
+        print("🎮 BinaryGameProtocol: 開始解碼遊戲消息 - 大小: \(data.count) bytes")
+        
+        // 🔧 FIX: 優雅降級 - 多次重試解碼
+        for attempt in 1...maxDecodingRetries {
+            do {
+                let meshMessage = try BinaryMessageDecoder.decode(data)
+                print("🎮 解碼MeshMessage成功 (嘗試 \(attempt)) - 類型: \(meshMessage.type), ID: \(meshMessage.id)")
+                
+                // 確保是遊戲消息類型
+                guard meshMessage.type == .game else {
+                    if enableGracefulDegradation && attempt < maxDecodingRetries {
+                        print("⚠️ 非遊戲消息類型，嘗試降級處理...")
+                        continue
+                    }
+                    print("❌ BinaryGameProtocol: 不是遊戲消息類型，實際: \(meshMessage.type)")
+                    return nil
+                }
+                
+                // 解碼遊戲內部數據
+                if let result = decodeGameInternalData(meshMessage.data, messageID: meshMessage.id) {
+                    return result
+                } else if enableGracefulDegradation && attempt < maxDecodingRetries {
+                    print("⚠️ 遊戲數據解碼失敗，準備重試...")
+                    continue
+                }
+                
+            } catch {
+                if enableGracefulDegradation && attempt < maxDecodingRetries {
+                    print("⚠️ 解碼失敗 (嘗試 \(attempt)/\(maxDecodingRetries)): \(error) - 準備重試")
+                    // 短暫延遲後重試
+                    Thread.sleep(forTimeInterval: 0.1 * Double(attempt))
+                    continue
+                } else {
+                    print("❌ BinaryGameProtocol: 所有解碼嘗試失敗 - \(error)")
+                }
+            }
+        }
+        
+        // 🔧 FIX: 最終降級策略 - 創建錯誤報告消息
+        if enableGracefulDegradation {
+            print("🔄 使用降級策略創建錯誤報告消息")
+            return GameMessage(
+                id: "error_\(Date().timeIntervalSince1970)",
+                type: .errorReport,
+                data: Data(data.prefix(100)),
+                senderID: "system",
+                senderName: "系統",
+                roomID: "unknown",
+                timestamp: Date()
+            )
+        }
+        
+        return nil
+    }
+    
+    /// 解碼遊戲內部數據格式 - 🔧 FIX: 添加容錯機制
+    private static func decodeGameInternalData(_ data: Data, messageID: String) -> GameMessage? {
+        guard data.count >= 7 else { // 最小長度：1 + 4 + 1 + 1 = 7
+            print("❌ BinaryGameProtocol: 遊戲內部數據太短 - \(data.count) bytes")
+            return nil
+        }
         
         var offset = 0
         
-        // 1. 協議版本
-        let version = data[offset]
-        guard version == BinaryProtocolConstants.VERSION else { return nil }
+        // 1. 遊戲訊息子類型 - 🔧 FIX: 容錯處理未知類型
+        let rawType = data[offset]
+        let gameType = GameMessageType(rawValue: rawType) ?? .unknown
+        
+        if gameType == .unknown {
+            print("⚠️ BinaryGameProtocol: 未知消息類型 0x\(String(format: "%02X", rawType)) - 使用容錯處理")
+            // 不直接返回 nil，而是使用 .unknown 類型繼續處理
+        }
         offset += 1
         
-        // 2. MeshMessage 類型 - 必須是遊戲類型
-        let meshType = data[offset]
-        guard meshType == MeshMessageType.game.rawValue else { return nil }
-        offset += 1
-        
-        // 3. 遊戲訊息子類型
-        guard let binaryType = GameMessageTypeBinary(rawValue: data[offset]) else { return nil }
-        let type = binaryToGameMessageType(binaryType)
-        offset += 1
-        
-        // 4. 時間戳
+        // 2. 時間戳
         let timestamp = data.subdata(in: offset..<offset+4).withUnsafeBytes {
             $0.load(as: UInt32.self).littleEndian
         }
         offset += 4
         
-        // 5. 發送者ID
+        // 3. 發送者ID
         guard offset < data.count else { return nil }
         let senderIDLength = Int(data[offset])
         offset += 1
@@ -116,7 +205,7 @@ class BinaryGameProtocol {
         let senderID = String(data: data.subdata(in: offset..<offset+senderIDLength), encoding: .utf8) ?? ""
         offset += senderIDLength
         
-        // 6. 發送者名稱
+        // 4. 發送者名稱
         guard offset < data.count else { return nil }
         let senderNameLength = Int(data[offset])
         offset += 1
@@ -125,7 +214,7 @@ class BinaryGameProtocol {
         let senderName = String(data: data.subdata(in: offset..<offset+senderNameLength), encoding: .utf8) ?? ""
         offset += senderNameLength
         
-        // 7. 遊戲房間ID
+        // 5. 遊戲房間ID
         guard offset < data.count else { return nil }
         let roomIDLength = Int(data[offset])
         offset += 1
@@ -134,7 +223,7 @@ class BinaryGameProtocol {
         let gameRoomID = String(data: data.subdata(in: offset..<offset+roomIDLength), encoding: .utf8) ?? ""
         offset += roomIDLength
         
-        // 8. 數據
+        // 6. 數據
         guard offset + 2 <= data.count else { return nil }
         let dataLength = data.subdata(in: offset..<offset+2).withUnsafeBytes {
             $0.load(as: UInt16.self).littleEndian
@@ -144,21 +233,80 @@ class BinaryGameProtocol {
         guard offset + Int(dataLength) <= data.count else { return nil }
         let messageData = data.subdata(in: offset..<offset+Int(dataLength))
         
+        print("✅ BinaryGameProtocol: 成功解碼遊戲消息 - 類型: \(gameType.stringValue), 發送者: \(senderName)")
+        
         return GameMessage(
-            type: type,
-            senderID: senderID,
-            senderName: NicknameFormatter.cleanNickname(senderName), // 使用統一的暱稱清理邏輯
+            id: "msg_\(Date().timeIntervalSince1970)",
+            type: gameType,
             data: messageData,
-            timestamp: Date(timeIntervalSince1970: Double(timestamp)),
-            gameRoomID: gameRoomID
+            senderID: senderID,
+            senderName: NicknameFormatter.cleanNickname(senderName),
+            roomID: gameRoomID,
+            timestamp: Date(timeIntervalSince1970: Double(timestamp))
         )
     }
     
     // MARK: - 特定訊息類型編碼
     
-    /// 編碼玩家加入訊息
+    /// 【FIXED】編碼玩家加入訊息 - 真正的二進制格式
     static func encodePlayerJoined(playerID: String, playerName: String) -> Data {
-        return "\(playerID)|\(playerName)".data(using: .utf8) ?? Data()
+        var data = Data()
+        
+        // 編碼 playerID (使用長度前綴)
+        let playerIDData = playerID.data(using: .utf8) ?? Data()
+        let safePlayerIDLength = min(playerIDData.count, 255)
+        data.append(UInt8(safePlayerIDLength))
+        data.append(playerIDData.prefix(safePlayerIDLength))
+        
+        // 編碼 playerName (使用長度前綴)
+        let playerNameData = playerName.data(using: .utf8) ?? Data()
+        let safePlayerNameLength = min(playerNameData.count, 255)
+        data.append(UInt8(safePlayerNameLength))
+        data.append(playerNameData.prefix(safePlayerNameLength))
+        
+        return data
+    }
+    
+    /// 【FIXED】解碼玩家加入訊息 - 真正的二進制格式
+    static func decodePlayerJoined(from data: Data) throws -> (playerID: String, playerName: String) {
+        guard data.count >= 2 else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        
+        var offset = 0
+        
+        // 解碼 playerID
+        let playerIDLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + playerIDLength <= data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        
+        let playerIDData = data.subdata(in: offset..<(offset + playerIDLength))
+        guard let playerID = String(data: playerIDData, encoding: .utf8) else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        offset += playerIDLength
+        
+        // 解碼 playerName
+        guard offset < data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        
+        let playerNameLength = Int(data[offset])
+        offset += 1
+        
+        guard offset + playerNameLength <= data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        
+        let playerNameData = data.subdata(in: offset..<(offset + playerNameLength))
+        guard let playerName = String(data: playerNameData, encoding: .utf8) else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        
+        return (playerID: playerID, playerName: playerName)
     }
     
     /// 編碼房間同步狀態
@@ -508,11 +656,24 @@ class BinaryGameProtocol {
         case .gameEnd: return .gameEnd
         case .heartbeat: return .heartbeat
         case .emote: return .emote
+        case .roomStateRequest: return .roomSync // 映射到現有的類型
+        case .roomStateUpdate: return .roomSync  // 映射到現有的類型  
+        case .bingoWon: return .winnerAnnouncement // 映射到現有的類型
+        // 🔧 FIX: 處理新增的類型
+        case .keyExchangeRequest: return .heartbeat // 映射到現有類型
+        case .keyExchangeResponse: return .heartbeat
+        case .stateSync: return .roomSync
+        case .errorReport: return .heartbeat
+        case .compatibilityCheck: return .heartbeat
+        case .reserved15, .reserved16, .reserved17, .reserved18, .reserved19,
+             .reserved1A, .reserved1B, .reserved1C, .reserved1D, .reserved1E, .reserved1F:
+            return .heartbeat // 預留類型映射到心跳
         case .weeklyLeaderboardUpdate: return .weeklyLeaderboardUpdate
         case .weeklyLeaderboardSync: return .weeklyLeaderboardSync
         case .weeklyLeaderboardRequest: return .weeklyLeaderboardRequest
         case .winnerAnnouncement: return .winnerAnnouncement
         case .gameRestart: return .gameRestart
+        case .unknown: return .heartbeat // 未知類型映射到心跳
         }
     }
     
@@ -555,5 +716,218 @@ class BinaryGameProtocol {
         case 3: return .finished
         default: return .waitingForPlayers
         }
+    }
+    
+    // MARK: - WinnerAnnouncement 二進制編碼/解碼
+    
+    /// 編碼 WinnerAnnouncement 為二進制格式
+    static func encodeWinnerAnnouncement(_ announcement: WinnerAnnouncement) -> Data {
+        var data = Data()
+        
+        // winnerPlayerID (長度 + 內容)
+        let playerIDData = announcement.winnerPlayerID.data(using: .utf8) ?? Data()
+        let safePlayerIDLength = min(playerIDData.count, 255)
+        data.append(UInt8(safePlayerIDLength))
+        data.append(playerIDData.prefix(safePlayerIDLength))
+        
+        // winnerName (長度 + 內容)
+        let nameData = announcement.winnerName.data(using: .utf8) ?? Data()
+        let safeNameLength = min(nameData.count, 255)
+        data.append(UInt8(safeNameLength))
+        data.append(nameData.prefix(safeNameLength))
+        
+        // completedLines (4 bytes, Big-Endian)
+        let completedLines = UInt32(announcement.completedLines)
+        data.append(contentsOf: withUnsafeBytes(of: completedLines.bigEndian, Array.init))
+        
+        // gameEndTime (8 bytes, Big-Endian Unix timestamp)
+        let timestamp = UInt64(announcement.gameEndTime.timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: timestamp.bigEndian, Array.init))
+        
+        // restartCountdown (4 bytes, Big-Endian)
+        let countdown = UInt32(announcement.restartCountdown)
+        data.append(contentsOf: withUnsafeBytes(of: countdown.bigEndian, Array.init))
+        
+        return data
+    }
+    
+    /// 解碼 WinnerAnnouncement 從二進制格式
+    static func decodeWinnerAnnouncement(_ data: Data) -> WinnerAnnouncement? {
+        guard data.count >= 18 else { return nil } // 最小長度檢查
+        
+        var offset = 0
+        
+        // winnerPlayerID
+        let playerIDLength = Int(data[offset])
+        offset += 1
+        guard offset + playerIDLength <= data.count else { return nil }
+        let playerIDData = data.subdata(in: offset..<offset+playerIDLength)
+        let winnerPlayerID = String(data: playerIDData, encoding: .utf8) ?? ""
+        offset += playerIDLength
+        
+        // winnerName
+        guard offset < data.count else { return nil }
+        let nameLength = Int(data[offset])
+        offset += 1
+        guard offset + nameLength <= data.count else { return nil }
+        let nameData = data.subdata(in: offset..<offset+nameLength)
+        let winnerName = String(data: nameData, encoding: .utf8) ?? ""
+        offset += nameLength
+        
+        // completedLines
+        guard offset + 4 <= data.count else { return nil }
+        let completedLines = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            Int($0.load(as: UInt32.self).bigEndian)
+        }
+        offset += 4
+        
+        // gameEndTime
+        guard offset + 8 <= data.count else { return nil }
+        let timestamp = data.subdata(in: offset..<offset+8).withUnsafeBytes {
+            $0.load(as: UInt64.self).bigEndian
+        }
+        let gameEndTime = Date(timeIntervalSince1970: TimeInterval(timestamp))
+        offset += 8
+        
+        // restartCountdown
+        guard offset + 4 <= data.count else { return nil }
+        let restartCountdown = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            Int($0.load(as: UInt32.self).bigEndian)
+        }
+        
+        return WinnerAnnouncement(
+            winnerPlayerID: winnerPlayerID,
+            winnerName: winnerName,
+            completedLines: completedLines,
+            gameEndTime: gameEndTime,
+            restartCountdown: restartCountdown
+        )
+    }
+    
+    // MARK: - 🔧 FIX: 解耦狀態同步機制
+    
+    /// 解耦的狀態同步 - 不依賴密鑰交換
+    static func encodeStateSyncMessage(
+        roomID: String,
+        playerCount: Int,
+        isActive: Bool,
+        senderID: String,
+        senderName: String
+    ) -> Data? {
+        // 創建狀態同步專用數據
+        var syncData = Data()
+        
+        // 房間ID (長度 + 內容)
+        let roomIDData = roomID.data(using: .utf8) ?? Data()
+        let safeRoomIDLength = min(roomIDData.count, 255)
+        syncData.append(UInt8(safeRoomIDLength))
+        syncData.append(roomIDData.prefix(safeRoomIDLength))
+        
+        // 玩家數量 (4 bytes)
+        let playerCountValue = UInt32(playerCount)
+        syncData.append(contentsOf: withUnsafeBytes(of: playerCountValue.littleEndian) { Array($0) })
+        
+        // 活躍狀態 (1 byte)
+        syncData.append(isActive ? 0x01 : 0x00)
+        
+        // 🔧 FIX: 使用 .stateSync 類型，獨立於密鑰交換
+        return encodeGameMessage(
+            type: .stateSync,
+            senderID: senderID,
+            senderName: senderName,
+            gameRoomID: roomID,
+            data: syncData
+        )
+    }
+    
+    /// 解碼狀態同步消息
+    static func decodeStateSyncMessage(_ data: Data) -> (roomID: String, playerCount: Int, isActive: Bool)? {
+        guard data.count >= 6 else { return nil } // 最小長度檢查
+        
+        var offset = 0
+        
+        // 房間ID
+        let roomIDLength = Int(data[offset])
+        offset += 1
+        guard offset + roomIDLength <= data.count else { return nil }
+        let roomID = String(data: data.subdata(in: offset..<offset+roomIDLength), encoding: .utf8) ?? ""
+        offset += roomIDLength
+        
+        // 玩家數量
+        guard offset + 4 <= data.count else { return nil }
+        let playerCount = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            Int($0.load(as: UInt32.self).littleEndian)
+        }
+        offset += 4
+        
+        // 活躍狀態
+        guard offset < data.count else { return nil }
+        let isActive = data[offset] == 0x01
+        
+        return (roomID, playerCount, isActive)
+    }
+    
+    // MARK: - RoomStateData 二進制編碼/解碼
+    
+    /// 編碼 RoomStateData 為二進制格式
+    static func encodeRoomStateData(_ roomState: RoomStateData) -> Data {
+        var data = Data()
+        
+        // roomId (4 bytes, Big-Endian)
+        let roomId = UInt32(roomState.roomId)
+        data.append(contentsOf: withUnsafeBytes(of: roomId.bigEndian, Array.init))
+        
+        // playerCount (4 bytes, Big-Endian)
+        let playerCount = UInt32(roomState.playerCount)
+        data.append(contentsOf: withUnsafeBytes(of: playerCount.bigEndian, Array.init))
+        
+        // isActive (1 byte)
+        data.append(roomState.isActive ? 0x01 : 0x00)
+        
+        // action (長度 + 內容)
+        let actionData = roomState.action.data(using: .utf8) ?? Data()
+        let safeActionLength = min(actionData.count, 255)
+        data.append(UInt8(safeActionLength))
+        data.append(actionData.prefix(safeActionLength))
+        
+        return data
+    }
+    
+    /// 解碼 RoomStateData 從二進制格式
+    static func decodeRoomStateData(_ data: Data) -> RoomStateData? {
+        guard data.count >= 10 else { return nil } // 最小長度檢查
+        
+        var offset = 0
+        
+        // roomId
+        let roomId = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            Int($0.load(as: UInt32.self).bigEndian)
+        }
+        offset += 4
+        
+        // playerCount
+        let playerCount = data.subdata(in: offset..<offset+4).withUnsafeBytes {
+            Int($0.load(as: UInt32.self).bigEndian)
+        }
+        offset += 4
+        
+        // isActive
+        let isActive = data[offset] == 0x01
+        offset += 1
+        
+        // action
+        guard offset < data.count else { return nil }
+        let actionLength = Int(data[offset])
+        offset += 1
+        guard offset + actionLength <= data.count else { return nil }
+        let actionData = data.subdata(in: offset..<offset+actionLength)
+        let action = String(data: actionData, encoding: .utf8) ?? ""
+        
+        return RoomStateData(
+            roomId: roomId,
+            playerCount: playerCount,
+            isActive: isActive,
+            action: action
+        )
     }
 }

@@ -1,0 +1,42 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/Components/GameRulesView.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameRulesView.o"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/LanguageService.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LanguageService.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Legal/HelpView.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.d"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HelpView.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/GameView.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.swiftdeps"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.d"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/GameView.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/BinaryMessageEncoder.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageEncoder.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/BinaryMessageDecoder.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BinaryMessageDecoder.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Shared/Models/SharedTypes.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.d"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SharedTypes.swiftconstvalues"

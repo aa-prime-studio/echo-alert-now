@@ -1,0 +1,48 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/PurchaseOptionsView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "15% OFF",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 119
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ 功能",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 234
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 訂閱將在當前期間結束時自動續費",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 251
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 可隨時在設定中取消訂閱",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 252
+        }
+      },
+      {
+        "comment": "",
+        "key": "• 付款將在確認購買時從您的Apple ID帳戶收取",
+        "location": {
+          "startingColumn": 18,
+          "startingLine": 253
+        }
+      }
+    ]
+  },
+  "version": 1
+}

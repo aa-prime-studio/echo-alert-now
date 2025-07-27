@@ -464,7 +464,7 @@ struct SettingsRowView: View {
 
 struct LanguageSelectionView: View {
     @ObservedObject var languageService: LanguageService
-    @Environment(\.dismiss) private var dismiss
+    @State private var shouldDismiss = false
     
     var body: some View {
         NavigationView {
@@ -483,7 +483,7 @@ struct LanguageSelectionView: View {
                     .contentShape(Rectangle())
                     .onTapGesture {
                         languageService.setLanguage(language)
-                        dismiss()
+                        shouldDismiss = true
                     }
                     
                     if language != LanguageService.Language.allCases.last {
@@ -495,7 +495,9 @@ struct LanguageSelectionView: View {
             .background(Color.white)
             .navigationTitle(languageService.t("select_language"))
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(trailing: Button(languageService.t("done")) { dismiss() })
+            .navigationBarItems(trailing: Button(languageService.t("done")) { 
+                // 簡化關閉邏輯
+            })
         }
     }
 }

@@ -95,6 +95,7 @@ struct GameView: View {
         .onAppear {
             setupLeaderboard()
             startRoomMonitoring()
+            setupNotificationObservers()
         }
         .onDisappear {
             // 清理所有 Timer 防止記憶體洩漏
@@ -102,10 +103,10 @@ struct GameView: View {
             roomMonitoringTimer = nil
             print("🧹 GameView: 已清理房間監控 Timer")
         }
-        .onChange(of: currentRoomID) { newRoomID in
+        .onChange(of: currentRoomID) { _, newRoomID in
             if newRoomID > 0 {
                 // 更新現有 ViewModel 的房間
-                bingoViewModel.updateRoom(newRoomID)
+                bingoViewModel.joinRoom("\(newRoomID)")
             } else {
             }
         }
@@ -148,14 +149,101 @@ struct GameView: View {
         roomMonitoringTimer?.invalidate()
         roomMonitoringTimer = nil
         
+        print("🔍 GameView: 開始房間監控 - 監聽其他設備的房間廣播")
+        
         // 監聽來自其他房間的玩家數量廣播 - 安全的 Timer 管理
         roomMonitoringTimer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { timer in
-            // 實際實現時這裡會監聽網路廣播
-            // 暫時保持現有邏輯
+            
+            // 掃描網路中其他設備的房間狀態
+            self.scanForNetworkRooms()
         }
         
         // 檢查是否需要重置本週排行榜
         checkAndResetWeeklyLeaderboard()
+    }
+    
+    /// 掃描網路中其他設備的房間狀態
+    private func scanForNetworkRooms() {
+        // 檢查網路連接狀態並獲取已連接的設備
+        let connectedPeers = bingoViewModel.connectedPeers
+        
+        if !connectedPeers.isEmpty {
+            print("🌐 GameView: 發現 \(connectedPeers.count) 個連接的設備，請求房間狀態")
+            
+            // 向所有連接的設備廣播房間狀態請求
+            broadcastRoomStateRequest()
+            
+            // 同時廣播本設備的房間狀態
+            broadcastMyRoomState()
+        } else {
+            // 如果沒有連接的設備，重置房間玩家數量
+            let currentRoomCount = (currentRoomID > 0) ? 1 : 0
+            for i in 1...3 {
+                if i == currentRoomID {
+                    roomPlayerCounts[i] = currentRoomCount
+                } else {
+                    roomPlayerCounts[i] = 0
+                }
+            }
+        }
+    }
+    
+    /// 廣播房間狀態請求
+    private func broadcastRoomStateRequest() {
+        let roomStateData = RoomStateData(
+            roomId: 0,
+            playerCount: 0,
+            isActive: false,
+            action: "request"
+        )
+        
+        Task {
+            // 使用二進制格式編碼
+            let binaryData = BinaryGameProtocol.encodeRoomStateData(roomStateData)
+            await bingoViewModel.broadcastRoomStateMessage(
+                type: .roomStateRequest,
+                roomStateData: binaryData
+            )
+        }
+    }
+    
+    /// 廣播本設備的房間狀態
+    private func broadcastMyRoomState() {
+        guard currentRoomID > 0 else { return }
+        
+        let roomStateData = RoomStateData(
+            roomId: currentRoomID,
+            playerCount: 1, // 本設備在房間中
+            isActive: true,
+            action: "update"
+        )
+        
+        Task {
+            // 使用二進制格式編碼
+            let binaryData = BinaryGameProtocol.encodeRoomStateData(roomStateData)
+            await bingoViewModel.broadcastRoomStateMessage(
+                type: .roomStateUpdate,
+                roomStateData: binaryData
+            )
+        }
+    }
+    
+    /// 設置通知觀察者
+    private func setupNotificationObservers() {
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("RoomPlayerCountUpdated"),
+            object: nil,
+            queue: .main
+        ) { notification in
+            guard let userInfo = notification.userInfo,
+                  let roomId = userInfo["roomId"] as? Int,
+                  let playerCount = userInfo["playerCount"] as? Int else { return }
+            
+            print("📬 GameView: 收到房間 \(roomId) 玩家數量更新: \(playerCount)")
+            
+            // 更新房間玩家數量
+            roomPlayerCounts[roomId] = playerCount
+        }
     }
     
     /// 檢查並重置本週排行榜（如果跨週了）
@@ -313,13 +401,16 @@ struct GameView: View {
     /// 廣播本週排行榜更新
     private func broadcastWeeklyLeaderboardUpdate(data: Data) {
         // 通過BinaryGameProtocol發送排行榜更新消息
-        let gameMessage = BinaryGameProtocol.encodeGameMessage(
+        guard let gameMessage = BinaryGameProtocol.encodeGameMessage(
             type: .weeklyLeaderboardUpdate,
             senderID: nicknameService.nickname,
             senderName: nicknameService.nickname,
             gameRoomID: "global", // 排行榜是全局的
             data: data
-        )
+        ) else {
+            print("❌ GameView: 排行榜更新消息編碼失敗")
+            return
+        }
         
         // 通過網路服務廣播排行榜更新
         Task {
@@ -554,7 +645,7 @@ struct BingoGameView: View {
                 
                 // Player List
                 PlayerListView(players: viewModel.roomPlayers.map { player in
-                    RoomPlayer(name: player.name, completedLines: player.completedLines, hasWon: player.hasWon)
+                    RoomPlayer(name: player.name, playerID: player.playerID, completedLines: player.completedLines, hasWon: player.hasWon)
                 }, deviceName: viewModel.deviceName)
                 
                 // Drawn Numbers Display
@@ -648,8 +739,7 @@ struct BingoGameView: View {
                 }
             }
             
-            // 請求其他玩家的排行榜數據
-            viewModel.requestWeeklyLeaderboardData()
+            // 【移除】不存在的方法調用
         }
         .onDisappear {
             viewModel.leaveGameRoom()

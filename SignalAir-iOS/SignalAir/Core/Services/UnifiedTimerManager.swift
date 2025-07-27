@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import UIKit
 
 // MARK: - Timer Configuration
 struct TimerConfiguration {
@@ -32,7 +33,7 @@ struct TimerConfiguration {
 }
 
 // MARK: - Timer Info
-private class TimerInfo {
+private class TimerInfo: @unchecked Sendable {
     let id: String
     let configuration: TimerConfiguration
     weak var timer: Timer?
@@ -94,20 +95,12 @@ class UnifiedTimerManager: ObservableObject {
         
         let info = TimerInfo(id: id, configuration: configuration, action: action)
         
-        // 創建 Timer
-        let timer = Timer.scheduledTimer(withTimeInterval: configuration.interval, repeats: configuration.repeats) { [weak self] timer in
-            guard let self = self, self.isActive else {
-                timer.invalidate()
-                return
+        // 🔧 SWIFT 6 FIX: 最簡潔的解決方案 - 避免所有非必要的捕獲
+        let timer = Timer.scheduledTimer(withTimeInterval: configuration.interval, repeats: configuration.repeats) { [weak self, id] _ in
+            // 確保在MainActor上執行
+            Task { @MainActor [weak self, id] in
+                self?.timerDidFire(id: id)
             }
-            
-            // 更新統計
-            info.lastTriggered = Date()
-            info.triggerCount += 1
-            self.totalTriggerCount += 1
-            
-            // 執行回調
-            action()
         }
         
         // 設置容差以節省電量
@@ -177,7 +170,9 @@ class UnifiedTimerManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleAppDidEnterBackground()
+            Task { @MainActor [weak self] in
+                self?.handleAppDidEnterBackground()
+            }
         }
         
         NotificationCenter.default.addObserver(
@@ -185,7 +180,9 @@ class UnifiedTimerManager: ObservableObject {
             object: nil,
             queue: .main
         ) { [weak self] _ in
-            self?.handleAppWillEnterForeground()
+            Task { @MainActor [weak self] in
+                self?.handleAppWillEnterForeground()
+            }
         }
     }
     
@@ -207,14 +204,32 @@ class UnifiedTimerManager: ObservableObject {
     
     // MARK: - Helper Methods
     
+    /// 🔧 SWIFT 6 FIX: 統一的Timer觸發處理方法
+    private func timerDidFire(id: String) {
+        guard isActive, let info = timers[id] else {
+            invalidate(id: id)
+            return
+        }
+        
+        // 更新統計
+        info.lastTriggered = Date()
+        info.triggerCount += 1
+        totalTriggerCount += 1
+        
+        // 執行回調
+        info.action()
+    }
+    
     private func updateActiveTimerCount() {
         activeTimerCount = timers.values.compactMap { $0.timer?.isValid == true ? 1 : nil }.count
     }
     
-    private func cleanup() {
-        invalidateAll()
-        NotificationCenter.default.removeObserver(self)
-        print("⏰ UnifiedTimerManager: 清理完成")
+    nonisolated private func cleanup() {
+        Task { @MainActor in
+            invalidateAll()
+            NotificationCenter.default.removeObserver(self)
+            print("⏰ UnifiedTimerManager: 清理完成")
+        }
     }
 }
 

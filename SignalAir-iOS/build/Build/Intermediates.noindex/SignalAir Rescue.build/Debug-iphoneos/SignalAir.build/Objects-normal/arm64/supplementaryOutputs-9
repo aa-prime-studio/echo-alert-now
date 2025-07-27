@@ -1,0 +1,36 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Performance/TrustCacheOptimizer.swift":
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustCacheOptimizer.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustCacheOptimizer.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustCacheOptimizer.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustCacheOptimizer.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/TrustCacheOptimizer.d"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Security/DataTransferMonitor.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DataTransferMonitor.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DataTransferMonitor.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DataTransferMonitor.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DataTransferMonitor.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/DataTransferMonitor.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Performance/HybridPerformanceEngine.swift":
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HybridPerformanceEngine.swiftdeps"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HybridPerformanceEngine.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HybridPerformanceEngine.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HybridPerformanceEngine.dia"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/HybridPerformanceEngine.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Security/SecurityAlertBannerDemo.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.swiftdeps"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.d"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SecurityAlertBannerDemo.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Services/LocalBlacklistManager.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LocalBlacklistManager.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LocalBlacklistManager.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LocalBlacklistManager.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LocalBlacklistManager.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/LocalBlacklistManager.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Settings/BlacklistManagementView.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BlacklistManagementView.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BlacklistManagementView.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BlacklistManagementView.swiftconstvalues"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BlacklistManagementView.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/BlacklistManagementView.swiftdeps"

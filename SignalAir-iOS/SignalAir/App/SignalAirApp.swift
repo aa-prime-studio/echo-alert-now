@@ -3,9 +3,10 @@ import StoreKit
 
 @main
 struct SignalAirApp: App {
-    // Service Container
-    @StateObject private var serviceContainer = ServiceContainer.shared
+    // Service Container - 延遲初始化
+    @State private var serviceContainer: ServiceContainer?
     @State private var showSplash = true
+    @State private var isServicesReady = false
     
     var body: some Scene {
         WindowGroup {
@@ -16,94 +17,132 @@ struct SignalAirApp: App {
                 
                 if showSplash {
                     SplashScreenView {
-                        // 動畫完成回調 - 無縫切換
-                        showSplash = false
+                        // 1秒後開始過渡動畫
+                        withAnimation(.easeInOut(duration: 0.8)) {
+                            showSplash = false
+                        }
                     }
-                    .transition(.identity) // 無過渡動畫
-                } else {
-                    // 主應用程式界面
+                    .transition(.asymmetric(
+                        insertion: .opacity,
+                        removal: .scale(scale: 1.2).combined(with: .opacity)
+                    ))
+                } else if let serviceContainer = serviceContainer, isServicesReady {
+                    // 主應用程式界面 - 只有當服務準備好時才顯示
                     ContentView()
                         .environmentObject(serviceContainer)
                         .environmentObject(serviceContainer.languageService)
                         .environmentObject(serviceContainer.nicknameService)
                         .environmentObject(serviceContainer.purchaseService)
-                        .transition(.identity) // 無過渡動畫
+                        .transition(.asymmetric(
+                            insertion: .scale(scale: 0.8).combined(with: .opacity),
+                            removal: .opacity
+                        ))
+                } else {
+                    // 服務加載中
+                    ServiceLoadingView()
                 }
             }
             .background(Color(red: 40/255, green: 62/255, blue: 228/255))
+            .onAppear {
+                // 立即開始異步初始化服務，1ms藍屏後即開始
+                if serviceContainer == nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.001) {
+                        Task {
+                            await initializeServices()
+                        }
+                    }
+                }
+            }
         }
+    }
+    
+    // MARK: - 異步服務初始化
+    @MainActor
+    private func initializeServices() async {
+        print("🚀 開始異步初始化服務...")
+        
+        // 在背景線程初始化 ServiceContainer
+        let container = await Task {
+            return ServiceContainer.shared
+        }.value
+        
+        // 等待关鍵服務初始化完成
+        while !container.isInitialized {
+            try? await Task.sleep(nanoseconds: 100_000_000) // 0.1秒
+        }
+        
+        self.serviceContainer = container
+        self.isServicesReady = true
+        
+        print("✅ 服務初始化完成")
     }
 }
 
-/// 完全獨立的啟動畫面，不影響現有的 Signal 系統
-struct SplashScreenView: View {
-    @State private var isFlashing = false
-    @State private var isComplete = false
-    @State private var canProceed = false
-    @State private var shouldProceed = false
-    
-    private let animationDuration: Double = 2.0 // 2秒動畫時長 - 優化啟動速度
-    
-    var onComplete: () -> Void
+// MARK: - 服務加載畫面
+struct ServiceLoadingView: View {
+    @State private var isLoading = false
     
     var body: some View {
         GeometryReader { geometry in
             ZStack {
-                // 藍色背景，確保無白色過渡
                 Color(red: 40/255, green: 62/255, blue: 228/255)
                     .ignoresSafeArea(.all)
                 
-                // 中央閃爍 logo (400x400，置中畫面中心點)
+                VStack(spacing: 30) {
+                    Image("loading")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 300, height: 300)
+                        .opacity(isLoading ? 1.0 : 0.4)
+                    
+                    Text("🚀 正在啟動...")
+                        .foregroundColor(.white)
+                        .font(.title2)
+                        .fontWeight(.medium)
+                }
+                .position(x: geometry.size.width / 2, 
+                         y: geometry.size.height / 2)
+            }
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+                isLoading = true
+            }
+        }
+    }
+}
+
+// MARK: - 快速啟動畫面
+/// 快速啟動畫面 - 優化版
+struct SplashScreenView: View {
+    @State private var isFlashing = false
+    let onComplete: () -> Void
+    
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                Color(red: 40/255, green: 62/255, blue: 228/255)
+                    .ignoresSafeArea(.all)
+                
                 Image("loading")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 400, height: 400) // 400x400
+                    .frame(width: 400, height: 400)
                     .opacity(isFlashing ? 1.0 : 0.3)
                     .position(x: geometry.size.width / 2, 
-                             y: geometry.size.height / 2) // 確保置中畫面中心點
+                             y: geometry.size.height / 2)
             }
         }
-        .background(Color(red: 40/255, green: 62/255, blue: 228/255)) // 確保背景無白色
         .onAppear {
-            startAnimation()
-        }
-        .onChange(of: shouldProceed) { newValue in
-            if newValue {
-                completeAnimation()
+            // 立即開始閃電動畫
+            withAnimation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
+                isFlashing = true
             }
-        }
-    }
-    
-    private func startAnimation() {
-        // 持續閃爍動畫直到加載完成 - 優化頻率
-        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
-            isFlashing = true
-        }
-        
-        // 模擬載入完成 (1.5秒後可以提前進入)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-            canProceed = true
-        }
-        
-        // 完整動畫結束 (2秒)
-        DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
-            if !shouldProceed {
-                completeAnimation()
+            
+            // 2.5秒logo動畫，給足夠服務初始化時間
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
+                onComplete()
             }
-        }
-    }
-    
-    private func handleEarlyEntry() {
-        shouldProceed = true
-    }
-    
-    private func completeAnimation() {
-        guard !isComplete else { return }
-        isComplete = true
-        
-        // 停止閃爍動畫，直接切換
-        withAnimation(.easeOut(duration: 0.3)) {
-            onComplete()
         }
     }
 }

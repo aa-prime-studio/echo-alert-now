@@ -22,8 +22,8 @@ class AutonomousSystemManager: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Sub-systems
-    private let automaticSecurityMonitor = AutomaticSecurityMonitor()
-    private let automaticBanSystem = AutomaticBanSystem()
+    private let automaticSystemMonitor = AutomaticSystemMonitor()
+    private let userAccessManager = UserAccessManager()
     private let automaticSystemMaintenance = AutomaticSystemMaintenance()
     private let systemHealthMonitor = SystemHealthMonitor()
     
@@ -76,7 +76,7 @@ class AutonomousSystemManager: ObservableObject {
         // 配置安全監控
         securityMonitorTimer = Timer.scheduledTimer(withTimeInterval: securityCheckInterval, repeats: true) { [weak self] _ in
             Task {
-                await self?.performSecurityMonitoring()
+                await self?.performSecurityHealthMonitoring()
             }
         }
         
@@ -103,7 +103,7 @@ class AutonomousSystemManager: ObservableObject {
         
         // 同時執行所有檢查
         async let healthResult = systemHealthMonitor.performHealthCheck()
-        async let securityResult = automaticSecurityMonitor.performSecurityScan()
+        async let securityResult = automaticSystemMonitor.performSecurityScan()
         async let maintenanceResult = automaticSystemMaintenance.checkMaintenanceNeeds()
         
         // 等待所有結果
@@ -135,8 +135,8 @@ class AutonomousSystemManager: ObservableObject {
         }
     }
     
-    private func performSecurityMonitoring() async {
-        let securityResult = await automaticSecurityMonitor.performSecurityScan()
+    private func performSecurityHealthMonitoring() async {
+        let securityResult = await automaticSystemMonitor.performSecurityScan()
         
         await MainActor.run {
             securityThreatLevel = securityResult.threatLevel
@@ -168,13 +168,13 @@ class AutonomousSystemManager: ObservableObject {
     private func handleHighThreatSituation(_ securityResult: SecurityScanResult) async {
         print("🚨 AutonomousSystemManager: 檢測到高威脅情況，執行自動防護")
         
-        // 自動執行封禁
+        // 自動執行存取控制
         for threat in securityResult.threats {
-            await automaticBanSystem.evaluateAndExecuteBan(threat)
+            await userAccessManager.evaluateAndExecuteAccessControl(threat)
         }
         
         // 增強安全監控頻率
-        adjustSecurityMonitoringFrequency(multiplier: 3.0)
+        adjustSecurityHealthMonitoringFrequency(multiplier: 3.0)
     }
     
     private func attemptAutoRecovery(_ healthResult: HealthCheckResult) async {
@@ -185,13 +185,13 @@ class AutonomousSystemManager: ObservableObject {
         }
     }
     
-    private func adjustSecurityMonitoringFrequency(multiplier: Double) {
+    private func adjustSecurityHealthMonitoringFrequency(multiplier: Double) {
         securityMonitorTimer?.invalidate()
         
         let newInterval = securityCheckInterval / multiplier
         securityMonitorTimer = Timer.scheduledTimer(withTimeInterval: newInterval, repeats: true) { [weak self] _ in
             Task {
-                await self?.performSecurityMonitoring()
+                await self?.performSecurityHealthMonitoring()
             }
         }
         
@@ -257,7 +257,7 @@ struct SecurityThreat {
 }
 
 enum ThreatType {
-    case floodAttack
+    case highConnectionRate
     case suspiciousBehavior
     case unauthorizedAccess
     case dataCorruption

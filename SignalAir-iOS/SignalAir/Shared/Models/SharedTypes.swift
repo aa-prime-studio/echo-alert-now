@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import MultipeerConnectivity
 
 // MARK: - 共享的基本類型定義
 
@@ -145,45 +146,8 @@ struct ChatMessage: Identifiable {
     }
 }
 
-// MARK: - ChatMessage 向後兼容的 Codable 實現
-extension ChatMessage {
-    private enum CodingKeys: String, CodingKey {
-        case id, message, deviceName, timestamp, isOwn, isEncrypted, messageHash
-        case mentions, mentionsMe
-    }
-    
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        // 必需的舊版本欄位
-        id = try container.decode(String.self, forKey: .id)
-        message = try container.decode(String.self, forKey: .message)
-        deviceName = try container.decode(String.self, forKey: .deviceName)
-        timestamp = try container.decode(TimeInterval.self, forKey: .timestamp)
-        isOwn = try container.decode(Bool.self, forKey: .isOwn)
-        isEncrypted = try container.decode(Bool.self, forKey: .isEncrypted)
-        messageHash = try container.decode(String.self, forKey: .messageHash)
-        
-        // 新版本欄位（提供默認值以支援向後兼容）
-        mentions = try container.decodeIfPresent([String].self, forKey: .mentions) ?? []
-        mentionsMe = try container.decodeIfPresent(Bool.self, forKey: .mentionsMe) ?? false
-    }
-    
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        // 編碼所有欄位
-        try container.encode(id, forKey: .id)
-        try container.encode(message, forKey: .message)
-        try container.encode(deviceName, forKey: .deviceName)
-        try container.encode(timestamp, forKey: .timestamp)
-        try container.encode(isOwn, forKey: .isOwn)
-        try container.encode(isEncrypted, forKey: .isEncrypted)
-        try container.encode(messageHash, forKey: .messageHash)
-        try container.encode(mentions, forKey: .mentions)
-        try container.encode(mentionsMe, forKey: .mentionsMe)
-    }
-}
+// MARK: - ChatMessage Codable 實現
+extension ChatMessage: Codable {}
 
 // 房間聊天訊息
 struct RoomChatMessage: Identifiable, Codable {
@@ -192,13 +156,29 @@ struct RoomChatMessage: Identifiable, Codable {
     let playerName: String
     let timestamp: TimeInterval
     let isOwn: Bool
+    let isEmote: Bool
+    let emoteType: EmoteType?
     
+    // 兼容性初始化器
     init(message: String, playerName: String, timestamp: TimeInterval = Date().timeIntervalSince1970, isOwn: Bool = false) {
         self.id = UUID()
         self.message = message
         self.playerName = playerName
         self.timestamp = timestamp
         self.isOwn = isOwn
+        self.isEmote = false
+        self.emoteType = nil
+    }
+    
+    // 新的表情支持初始化器
+    init(id: String, sender: String, content: String, timestamp: Date, isLocal: Bool, isEmote: Bool = false, emoteType: EmoteType? = nil) {
+        self.id = UUID(uuidString: id) ?? UUID()
+        self.message = content
+        self.playerName = sender
+        self.timestamp = timestamp.timeIntervalSince1970
+        self.isOwn = isLocal
+        self.isEmote = isEmote
+        self.emoteType = emoteType
     }
     
     var formattedTime: String {
@@ -279,12 +259,14 @@ struct WeeklyScore: Identifiable, Codable {
 struct RoomPlayer: Identifiable, Codable {
     let id: UUID
     let name: String
+    let playerID: String  // 設備ID，用於主機選舉
     let completedLines: Int
     let hasWon: Bool
     
-    init(name: String, completedLines: Int = 0, hasWon: Bool = false) {
+    init(name: String, playerID: String, completedLines: Int = 0, hasWon: Bool = false) {
         self.id = UUID()
         self.name = name
+        self.playerID = playerID
         self.completedLines = completedLines
         self.hasWon = hasWon
     }
@@ -306,6 +288,7 @@ struct BingoRoom: Identifiable, Codable, Equatable {
         self.isActive = isActive
     }
 }
+
 
 // 時間格式化工具
 struct TimeFormatter {
@@ -351,13 +334,25 @@ struct BingoCard {
 
 // MARK: - 協議常數定義
 
-/// 二進制協議共享常數
+/// 二進制協議共享常數 - 🔧 FIX: 添加版本控制
 struct BinaryProtocolConstants {
-    static let VERSION: UInt8 = 1
+    static let VERSION: UInt8 = 2                    // 🔧 FIX: 升級至版本2
+    static let MIN_SUPPORTED_VERSION: UInt8 = 1      // 最低支持版本
+    static let MAX_SUPPORTED_VERSION: UInt8 = 2      // 最高支持版本
     static let HEADER_SIZE = 12
     static let MIN_HEADER_SIZE = 10
     static let ENCRYPTED_FLAG: UInt8 = 1
     static let UNENCRYPTED_FLAG: UInt8 = 0
+    
+    // 🔧 FIX: 版本兼容性檢查
+    static func isVersionSupported(_ version: UInt8) -> Bool {
+        return version >= MIN_SUPPORTED_VERSION && version <= MAX_SUPPORTED_VERSION
+    }
+    
+    // 🔧 FIX: 獲取兼容的協議版本
+    static func getCompatibleVersion(for peerVersion: UInt8) -> UInt8 {
+        return min(VERSION, min(peerVersion, MAX_SUPPORTED_VERSION))
+    }
 }
 
 // MARK: - 網路和服務相關類型
@@ -369,35 +364,6 @@ enum ConnectionStatus {
     case disconnected
 }
 
-// 網路錯誤
-enum NetworkError: Error {
-    case notConnected
-    case peerNotFound
-    case sendFailed
-    case connectionFailed
-    case invalidData
-    case timeout
-    case sessionError(String)
-    
-    var localizedDescription: String {
-        switch self {
-        case .notConnected:
-            return "Not connected to any peers"
-        case .peerNotFound:
-            return "Peer not found"
-        case .sendFailed:
-            return "Failed to send data"
-        case .connectionFailed:
-            return "Failed to establish connection"
-        case .invalidData:
-            return "Invalid data format"
-        case .timeout:
-            return "Operation timed out"
-        case .sessionError(let message):
-            return "Session error: \(message)"
-        }
-    }
-}
 
 // 連線的對等裝置
 struct ConnectedPeer {
@@ -414,6 +380,8 @@ enum MeshMessageType: UInt8, Codable {
     case game = 0x06            // 遊戲訊息
     case topology = 0x07        // 網路拓撲
     case keyExchangeResponse = 0x08 // 密鑰交換響應
+    case heartbeat = 0x09       // 心跳訊息
+    case routingUpdate = 0x0A   // 路由更新
     
     var stringValue: String {
         switch self {
@@ -425,8 +393,15 @@ enum MeshMessageType: UInt8, Codable {
         case .game: return "game"
         case .topology: return "topology"
         case .keyExchangeResponse: return "keyExchangeResponse"
+        case .heartbeat: return "heartbeat"
+        case .routingUpdate: return "routingUpdate"
         }
     }
+    
+    var isEmergency: Bool {
+        return self == .emergency
+    }
+    
 }
 
 // Mesh 訊息
@@ -434,6 +409,12 @@ struct MeshMessage {
     let id: String
     let type: MeshMessageType
     let data: Data
+    var sourceID: String?
+    var targetID: String?
+    var ttl: Int = 10
+    var routePath: [String] = []
+    var forwarded: Bool = false
+    let timestamp: Date = Date()
     
     // 為二進制協議添加便利初始化器
     init(type: MeshMessageType, data: Data) {
@@ -448,41 +429,156 @@ struct MeshMessage {
         self.type = type
         self.data = data
     }
+    
+    // 完整初始化器
+    init(type: MeshMessageType, sourceID: String? = nil, targetID: String? = nil, data: Data, ttl: Int = 10) {
+        self.id = UUID().uuidString
+        self.type = type
+        self.sourceID = sourceID
+        self.targetID = targetID
+        self.data = data
+        self.ttl = ttl
+    }
+    
+    var isExpired: Bool {
+        return ttl <= 0
+    }
 }
 
 // MARK: - 遊戲相關類型
 
 // 遊戲訊息類型
-enum GameMessageType: String, Codable, CaseIterable {
-    case playerJoined = "player_joined"
-    case playerLeft = "player_left"
-    case gameStateUpdate = "game_state_update"
-    case numberDrawn = "number_drawn"
-    case playerProgress = "player_progress"
-    case chatMessage = "chat_message"
-    case gameStart = "game_start"
-    case gameEnd = "game_end"
-    case roomSync = "room_sync"
-    case reconnectRequest = "reconnect_request"
-    case heartbeat = "heartbeat"
-    case emote = "emote"
-    // 本週排行榜相關訊息
-    case weeklyLeaderboardUpdate = "weekly_leaderboard_update"
-    case weeklyLeaderboardSync = "weekly_leaderboard_sync"
-    case weeklyLeaderboardRequest = "weekly_leaderboard_request"
-    // 冠軍廣播相關訊息
-    case winnerAnnouncement = "winner_announcement"
-    case gameRestart = "game_restart"
+// 🔧 FIX: 連續性枚舉設計，避免解碼空隙問題
+enum GameMessageType: UInt8, Codable, CaseIterable {
+    // 基礎遊戲訊息 (0x01-0x0F)
+    case playerJoined = 0x01
+    case playerLeft = 0x02
+    case roomSync = 0x03
+    case reconnectRequest = 0x04
+    case gameStateUpdate = 0x05
+    case numberDrawn = 0x06
+    case playerProgress = 0x07
+    case chatMessage = 0x08
+    case gameStart = 0x09
+    case gameEnd = 0x0A
+    case heartbeat = 0x0B
+    case emote = 0x0C
+    case roomStateRequest = 0x0D
+    case roomStateUpdate = 0x0E
+    case bingoWon = 0x0F
+    
+    // 擴展遊戲訊息 (0x10-0x1F) - 填補空隙
+    case keyExchangeRequest = 0x10      // 🔧 FIX: 添加遺失的類型
+    case keyExchangeResponse = 0x11     // 🔧 FIX: 解決0x11無法解碼問題
+    case stateSync = 0x12               // 狀態同步（解耦版本）
+    case errorReport = 0x13             // 錯誤報告
+    case compatibilityCheck = 0x14      // 兼容性檢查
+    case reserved15 = 0x15              // 預留
+    case reserved16 = 0x16              // 預留
+    case reserved17 = 0x17              // 預留
+    case reserved18 = 0x18              // 預留
+    case reserved19 = 0x19              // 預留
+    case reserved1A = 0x1A              // 預留
+    case reserved1B = 0x1B              // 預留
+    case reserved1C = 0x1C              // 預留
+    case reserved1D = 0x1D              // 預留
+    case reserved1E = 0x1E              // 預留
+    case reserved1F = 0x1F              // 預留
+    
+    // 排行榜訊息 (0x20-0x2F)
+    case weeklyLeaderboardUpdate = 0x20
+    case weeklyLeaderboardSync = 0x21
+    case weeklyLeaderboardRequest = 0x22
+    
+    // 冠軍廣播訊息 (0x30-0x3F)
+    case winnerAnnouncement = 0x30
+    case gameRestart = 0x31
+    
+    // 🔧 FIX: 未知類型處理
+    case unknown = 0xFF                 // 未知或不支持的類型
+    
+    // 向後兼容性支援 - 字符串值
+    var stringValue: String {
+        switch self {
+        case .playerJoined: return "player_joined"
+        case .playerLeft: return "player_left"
+        case .gameStateUpdate: return "game_state_update"
+        case .numberDrawn: return "number_drawn"
+        case .playerProgress: return "player_progress"
+        case .chatMessage: return "chat_message"
+        case .gameStart: return "game_start"
+        case .gameEnd: return "game_end"
+        case .roomSync: return "room_sync"
+        case .reconnectRequest: return "reconnect_request"
+        case .heartbeat: return "heartbeat"
+        case .emote: return "emote"
+        case .roomStateRequest: return "room_state_request"
+        case .roomStateUpdate: return "room_state_update"
+        case .bingoWon: return "bingo_won"
+        // 🔧 FIX: 新增類型的字符串值
+        case .keyExchangeRequest: return "key_exchange_request"
+        case .keyExchangeResponse: return "key_exchange_response"
+        case .stateSync: return "state_sync"
+        case .errorReport: return "error_report"
+        case .compatibilityCheck: return "compatibility_check"
+        case .reserved15, .reserved16, .reserved17, .reserved18, .reserved19,
+             .reserved1A, .reserved1B, .reserved1C, .reserved1D, .reserved1E, .reserved1F:
+            return "reserved_\(String(format: "%02X", rawValue))"
+        case .weeklyLeaderboardUpdate: return "weekly_leaderboard_update"
+        case .weeklyLeaderboardSync: return "weekly_leaderboard_sync"
+        case .weeklyLeaderboardRequest: return "weekly_leaderboard_request"
+        case .winnerAnnouncement: return "winner_announcement"
+        case .gameRestart: return "game_restart"
+        case .unknown: return "unknown_type"
+        }
+    }
 }
 
 // 遊戲訊息
 struct GameMessage: Codable {
+    let id: String
     let type: GameMessageType
+    let data: Data
     let senderID: String
     let senderName: String
-    let data: Data
+    let roomID: String
     let timestamp: Date
-    let gameRoomID: String
+}
+
+// 房間狀態數據（用於編碼到 GameMessage.data 中）
+struct RoomStateData: Codable {
+    let roomId: Int
+    let playerCount: Int
+    let isActive: Bool
+    let action: String // "request" 或 "update"
+    let players: [RoomPlayerData]? // 玩家列表（可選，為了兼容性）
+    let drawnNumbers: [Int]? // 【NEW】歷史抽中號碼（用於斷線重連後同步）
+    let gameState: String? // 【NEW】遊戲狀態（waiting/countdown/playing/finished）
+    
+    init(roomId: Int, playerCount: Int, isActive: Bool, action: String, players: [RoomPlayerData]? = nil, drawnNumbers: [Int]? = nil, gameState: String? = nil) {
+        self.roomId = roomId
+        self.playerCount = playerCount
+        self.isActive = isActive
+        self.action = action
+        self.players = players
+        self.drawnNumbers = drawnNumbers
+        self.gameState = gameState
+    }
+}
+
+// 房間玩家數據（用於網絡傳輸）
+struct RoomPlayerData: Codable {
+    let playerID: String
+    let name: String
+    let completedLines: Int
+    let hasWon: Bool
+    
+    init(playerID: String, name: String, completedLines: Int = 0, hasWon: Bool = false) {
+        self.playerID = playerID
+        self.name = name
+        self.completedLines = completedLines
+        self.hasWon = hasWon
+    }
 }
 
 // 冠軍廣播訊息
@@ -542,11 +638,6 @@ enum MessageType: String {
 }
 
 // 訊息優先級
-enum MessagePriority: String {
-    case normal = "normal"
-    case high = "high"
-    case emergency = "emergency"
-}
 
 // MARK: - 暱稱處理工具
 struct NicknameFormatter {
@@ -590,13 +681,11 @@ protocol MeshManagerProtocol: Sendable {
     
     // 回調屬性
     var onMessageReceived: ((MeshMessage) -> Void)? { get set }
+    var onGameMessageReceived: ((MeshMessage) -> Void)? { get set }
     var onPeerConnected: ((String) -> Void)? { get set }
     var onPeerDisconnected: ((String) -> Void)? { get set }
 }
 
-protocol FloodProtectionProtocol {
-    func shouldAcceptMessage(from deviceID: String, content: Data, size: Int, priority: MessagePriority) -> Bool
-}
 
 class SelfDestructManager {
     init() {}
@@ -604,26 +693,46 @@ class SelfDestructManager {
     func removeMessage(_ messageID: String) {}
 }
 
-// MARK: - Simple FloodProtection Implementation
-class FloodProtection: FloodProtectionProtocol {
-    init() {}
-    func shouldAcceptMessage(from deviceID: String, content: Data, size: Int, priority: MessagePriority) -> Bool {
-        return true
-    }
+
+// MARK: - Protocol Definitions
+@MainActor
+protocol NetworkServiceProtocol: AnyObject {
+    var isConnected: Bool { get }
+    var myPeerID: MCPeerID { get }
+    var connectedPeers: [MCPeerID] { get }
+    var onDataReceived: ((Data, String) -> Void)? { get set }
+    var onPeerConnected: ((String) -> Void)? { get set }
+    var onPeerDisconnected: ((String) -> Void)? { get set }
+    
+    func startNetworking()
+    func stopNetworking()
+    func send(_ data: Data, to peers: [MCPeerID]) async throws
+}
+
+protocol SecurityServiceProtocol: AnyObject {
+    func generateSessionKey() -> Data?
+    func encryptData(_ data: Data) -> Data?
+    func decryptData(_ data: Data) -> Data?
+    func hasSessionKey(for peerID: String) async -> Bool
+    func encrypt(_ data: Data, for peerID: String) throws -> Data
+    func decrypt(_ data: Data, from peerID: String) throws -> Data
+    func getPublicKey() throws -> Data
+    func removeSessionKey(for peerID: String)
 }
 
 // MARK: - Fallback MeshManager Implementation
 // 注意：這是備用版本，優先使用 SignalAir/Core/Network/MeshManager.swift
 @MainActor
-class MeshManager: MeshManagerProtocol, @unchecked Sendable {
+class MeshManagerFallback: MeshManagerProtocol, @unchecked Sendable {
     var onMessageReceived: ((MeshMessage) -> Void)?
+    var onGameMessageReceived: ((MeshMessage) -> Void)?
     var onPeerConnected: ((String) -> Void)?
     var onPeerDisconnected: ((String) -> Void)?
     
     // 基本版本使用簡化的屬性（協議不能使用 weak）
     var networkService: NetworkServiceProtocol?
-    var securityService: SecurityServiceProtocol?
-    var floodProtection: FloodProtectionProtocol?
+    var securityService: SecurityService?
+    var connectionRateManager: ConnectionRateManagerProtocol?
     
     // 無參數初始化（兼容性）
     init() {
@@ -632,11 +741,11 @@ class MeshManager: MeshManagerProtocol, @unchecked Sendable {
     
     // 完整初始化
     init(networkService: NetworkServiceProtocol, 
-         securityService: SecurityServiceProtocol,
-         floodProtection: FloodProtectionProtocol) {
+         securityService: SecurityService,
+         connectionRateManager: ConnectionRateManagerProtocol) {
         self.networkService = networkService
         self.securityService = securityService
-        self.floodProtection = floodProtection
+        self.connectionRateManager = connectionRateManager
         print("🕸️ MeshManager: 已初始化並連接到實際的網路服務")
     }
     
@@ -687,6 +796,7 @@ class MeshManager: MeshManagerProtocol, @unchecked Sendable {
     }
 }
 
+@MainActor
 class SettingsViewModel: ObservableObject {
     @Published var userNickname: String = "使用者"
     init() {}
@@ -755,4 +865,116 @@ struct TopologyMessage: Codable {
     let timestamp: Date                     // 時間戳
     let sequenceNumber: Int                 // 序列號
     let ttl: Int                           // 生存時間(跳數)
+}
+
+// MARK: - 表情符號系統
+
+// 表情符號類型
+enum EmoteType: String, Codable, Hashable, CaseIterable {
+    // 文字表情 (5個)
+    case bingo     // 🎉 - "玩家 喊出 BINGO!"
+    case nen       // 🤔 - "玩家 說你嫩！"
+    case wow       // 😱 - "玩家 大叫太扯！"
+    case dizzy     // 😵‍💫 - "玩家 頭暈了"
+    case ring      // 💍 - "玩家 問你要不要嫁給他"
+    
+    // 純Emoji表情 (20個)
+    case boom      // 💥
+    case pirate    // 🏴‍☠️
+    case bug       // 🐛
+    case fly       // 🪰
+    case fire      // 🔥
+    case poop      // 💩
+    case clown     // 🤡
+    case mindBlown // 🤯
+    case pinch     // 🤏
+    case eyeRoll   // 🙄
+    case rockOn    // 🤟
+    case bottle    // 🍼
+    case skull     // 💀
+    case juggler   // 🤹‍♂️
+    case burger    // 🍔
+    case battery   // 🔋
+    case rocket    // 🚀
+    case mouse     // 🐭
+    case pray      // 🙏
+    case love      // 💕
+    case happy     // 預設表情 😊
+    
+    var emoji: String {
+        switch self {
+        // 文字表情 (5個)
+        case .bingo: return "🎉"
+        case .nen: return "🤔"
+        case .wow: return "😱"
+        case .dizzy: return "😵‍💫"
+        case .ring: return "💍"
+        
+        // 純Emoji表情 (20個)
+        case .boom: return "💥"
+        case .pirate: return "🏴‍☠️"
+        case .bug: return "🐛"
+        case .fly: return "🪰"
+        case .fire: return "🔥"
+        case .poop: return "💩"
+        case .clown: return "🤡"
+        case .mindBlown: return "🤯"
+        case .pinch: return "🤏"
+        case .eyeRoll: return "🙄"
+        case .rockOn: return "🤟"
+        case .bottle: return "🍼"
+        case .skull: return "💀"
+        case .juggler: return "🤹‍♂️"
+        case .burger: return "🍔"
+        case .battery: return "🔋"
+        case .rocket: return "🚀"
+        case .mouse: return "🐭"
+        case .pray: return "🙏"
+        case .love: return "💕"
+        case .happy: return "😊"
+        }
+    }
+    
+    var template: String {
+        switch self {
+        // 文字表情 (5個 - 有動作描述)
+        case .bingo: return "%@ 喊出 BINGO!"
+        case .nen: return "%@ 說你嫩！"
+        case .wow: return "%@ 大叫太扯！"
+        case .dizzy: return "%@ 頭暈了"
+        case .ring: return "%@ 問你要不要嫁給他"
+        
+        // 純Emoji表情 (20個 - 僅顯示emoji)
+        case .boom: return "%@ 💥"
+        case .pirate: return "%@ 🏴‍☠️"
+        case .bug: return "%@ 🐛"
+        case .fly: return "%@ 🪰"
+        case .fire: return "%@ 🔥"
+        case .poop: return "%@ 💩"
+        case .clown: return "%@ 🤡"
+        case .mindBlown: return "%@ 🤯"
+        case .pinch: return "%@ 🤏"
+        case .eyeRoll: return "%@ 🙄"
+        case .rockOn: return "%@ 🤟"
+        case .bottle: return "%@ 🍼"
+        case .skull: return "%@ 💀"
+        case .juggler: return "%@ 🤹‍♂️"
+        case .burger: return "%@ 🍔"
+        case .battery: return "%@ 🔋"
+        case .rocket: return "%@ 🚀"
+        case .mouse: return "%@ 🐭"
+        case .pray: return "%@ 🙏"
+        case .love: return "%@ 💕"
+        case .happy: return "%@ 😊"
+        }
+    }
+    
+    var isPureEmoji: Bool {
+        switch self {
+        case .boom, .pirate, .bug, .fly, .fire, .poop, .clown, .mindBlown, .pinch, .eyeRoll, .rockOn, .bottle, .skull, .juggler, .burger, .pray, .love, .happy:
+            return true
+        case .bingo, .nen, .wow, .rocket, .battery, .dizzy, .mouse, .ring:
+            return false
+        }
+    }
 }

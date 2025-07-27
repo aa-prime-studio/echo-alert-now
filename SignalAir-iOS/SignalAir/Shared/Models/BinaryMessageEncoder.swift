@@ -9,16 +9,8 @@ public class BinaryMessageEncoder {
     private static let PROTOCOL_VERSION: UInt8 = 1
     private static let HEADER_SIZE = 12
     
-    // MARK: - 訊息類型映射 (與現有MeshMessageType兼容)
-    private enum BinaryMessageType: UInt8 {
-        case signal = 1     // 0x01 - 對應 MeshMessageType.signal
-        case emergency = 2  // 0x02 - 對應 MeshMessageType.emergency
-        case chat = 3       // 0x03 - 對應 MeshMessageType.chat
-        case system = 4     // 0x04 - 對應 MeshMessageType.system
-        case keyExchange = 5 // 0x05 - 對應 MeshMessageType.keyExchange
-        case game = 6       // 0x06 - 對應 MeshMessageType.game
-        case topology = 7   // 0x07 - 內部拓撲協議
-    }
+    // MARK: - 使用統一的 MeshMessageType
+    // 不再定義重複的 BinaryMessageType，直接使用 MeshMessageType
     
     // MARK: - MeshMessage編碼 (核心功能，替換JSON)
     static func encode(_ message: MeshMessage) throws -> Data {
@@ -27,12 +19,20 @@ public class BinaryMessageEncoder {
         // 協議版本 (1 byte)
         binaryData.append(PROTOCOL_VERSION)
         
-        // 訊息類型 (1 byte)
-        let binaryType = meshTypeToBinary(message.type)
-        binaryData.append(binaryType.rawValue)
+        // 訊息類型 (1 byte) - 直接使用 MeshMessageType
+        binaryData.append(message.type.rawValue)
         
-        // 訊息ID長度和內容 (1 byte + ID data)
-        let idData = message.id.data(using: .utf8) ?? Data()
+        // 🔧 FIX: 統一UUID處理 - 確保始終為純UUID格式
+        let normalizedID = normalizeUUID(message.id)
+        guard !normalizedID.isEmpty else {
+            throw BinaryEncodingError.stringEncodingFailed
+        }
+        
+        let idData = normalizedID.data(using: .utf8) ?? Data()
+        guard idData.count <= 64 else {
+            throw BinaryEncodingError.dataTooLarge
+        }
+        
         binaryData.append(UInt8(idData.count))
         binaryData.append(idData)
         
@@ -51,12 +51,12 @@ public class BinaryMessageEncoder {
     }
     
     // MARK: - 拓撲數據專用編碼 (30萬用戶優化)
-    static func encodeTopology(_ topology: [String: Set<String>]) throws -> Data {
+    static func encodeTopology(_ topology: [String: Set<String>], messageType: MeshMessageType = .topology) throws -> Data {
         var binaryData = Data()
         
         // 協議版本和類型
         binaryData.append(PROTOCOL_VERSION)
-        binaryData.append(BinaryMessageType.topology.rawValue)
+        binaryData.append(messageType.rawValue)
         
         // 節點數量 (4 bytes)
         let nodeCount = UInt32(topology.count)
@@ -94,7 +94,7 @@ public class BinaryMessageEncoder {
         
         // 基礎頭部
         binaryData.append(PROTOCOL_VERSION)
-        binaryData.append(BinaryMessageType.chat.rawValue)
+        binaryData.append(MeshMessageType.chat.rawValue)
         
         // 訊息內容
         let messageData = message.message.data(using: .utf8) ?? Data()
@@ -122,46 +122,65 @@ public class BinaryMessageEncoder {
     }
     
     // MARK: - 工具方法
-    private static func meshTypeToBinary(_ meshType: MeshMessageType) -> BinaryMessageType {
-        switch meshType {
-        case .signal:
-            return .signal
-        case .emergency:
-            return .emergency
-        case .chat:
-            return .chat
-        case .system:
-            return .system
-        case .keyExchange:
-            return .keyExchange
-        case .game:
-            return .game
-        case .topology:
-            return .topology
-        case .keyExchangeResponse:
-            return .keyExchange  // 使用相同的二進制類型
+    // meshTypeToBinary 方法已移除 - 直接使用統一的 MeshMessageType.rawValue
+    
+    // MARK: - 性能優化：線程安全的預分配緩衝區 (大規模網路優化)
+    private static let bufferQueue = DispatchQueue(label: "com.signalAir.encoder.buffer", qos: .utility)
+    private static var sharedBuffer = Data(capacity: 1024) // 重用緩衝區減少分配
+    
+    static func encodeOptimized(_ message: MeshMessage) async throws -> Data {
+        return await withCheckedContinuation { continuation in
+            bufferQueue.async {
+                sharedBuffer.removeAll(keepingCapacity: true)
+                
+                // 使用預分配緩衝區提升性能
+                sharedBuffer.append(PROTOCOL_VERSION)
+                sharedBuffer.append(message.type.rawValue)
+                
+                // 訊息ID長度和內容 - 統一UUID處理
+                let normalizedID = normalizeUUID(message.id)
+                let idData = normalizedID.data(using: .utf8) ?? Data()
+                sharedBuffer.append(UInt8(idData.count))
+                sharedBuffer.append(idData)
+                
+                let dataLength = UInt32(message.data.count)
+                sharedBuffer.append(contentsOf: withUnsafeBytes(of: dataLength.littleEndian, Array.init))
+                
+                let timestamp = UInt32(Date().timeIntervalSince1970)
+                sharedBuffer.append(contentsOf: withUnsafeBytes(of: timestamp.littleEndian, Array.init))
+                
+                sharedBuffer.append(message.data)
+                
+                let result = Data(sharedBuffer) // 復制返回，保護共享緩衝區
+                continuation.resume(returning: result)
+            }
         }
     }
     
-    // MARK: - 性能優化：預分配緩衝區 (大規模網路優化)
-    private static var sharedBuffer = Data(capacity: 1024) // 重用緩衝區減少分配
-    
-    static func encodeOptimized(_ message: MeshMessage) throws -> Data {
-        sharedBuffer.removeAll(keepingCapacity: true)
+    // MARK: - UUID正規化處理
+    /// 統一UUID格式處理，確保向後相容性
+    static func normalizeUUID(_ uuid: String) -> String {
+        var cleanUUID = uuid.trimmingCharacters(in: .whitespacesAndNewlines)
         
-        // 使用預分配緩衝區提升性能
-        sharedBuffer.append(PROTOCOL_VERSION)
-        sharedBuffer.append(meshTypeToBinary(message.type).rawValue)
+        // 移除任何可能的$前綴
+        if cleanUUID.hasPrefix("$") {
+            cleanUUID = String(cleanUUID.dropFirst())
+            print("🔧 UUID正規化：移除$前綴，原始=\(uuid)，清理後=\(cleanUUID)")
+        }
         
-        let dataLength = UInt32(message.data.count)
-        sharedBuffer.append(contentsOf: withUnsafeBytes(of: dataLength.littleEndian, Array.init))
-        
-        let timestamp = UInt32(Date().timeIntervalSince1970)
-        sharedBuffer.append(contentsOf: withUnsafeBytes(of: timestamp.littleEndian, Array.init))
-        
-        sharedBuffer.append(message.data)
-        
-        return Data(sharedBuffer) // 復制返回，保護共享緩衝區
+        // 驗證UUID格式（36字符標準UUID或其他有效格式）
+        if cleanUUID.count == 36 && cleanUUID.contains("-") {
+            // 標準UUID格式 (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+            return cleanUUID
+        } else if cleanUUID.count >= 1 && cleanUUID.count <= 64 {
+            // 其他有效ID格式
+            return cleanUUID  
+        } else {
+            // 無效格式，使用備用UUID
+            let backupUUID = UUID().uuidString
+            print("⚠️ UUID格式無效，使用備用UUID: \(backupUUID)")
+            return backupUUID
+        }
     }
 }
 
@@ -171,6 +190,7 @@ enum BinaryEncodingError: Error {
     case dataTooLarge
     case stringEncodingFailed
     case topologyTooLarge
+    case invalidUUIDFormat
     
     var localizedDescription: String {
         switch self {
@@ -182,6 +202,8 @@ enum BinaryEncodingError: Error {
             return "字符串編碼失敗"
         case .topologyTooLarge:
             return "拓撲數據過大"
+        case .invalidUUIDFormat:
+            return "UUID格式無效"
         }
     }
 }

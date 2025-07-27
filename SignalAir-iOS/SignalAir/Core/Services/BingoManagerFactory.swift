@@ -3,14 +3,14 @@ import Foundation
 class BingoManagerFactory {
     enum ManagerType {
         case timer
-        case network(meshManager: MeshManagerProtocol, timerManager: TimerManager, settings: SettingsViewModel, language: LanguageService)
-        case gameState(timerManager: TimerManager, networkManager: BingoNetworkManager)
+        case network(meshManager: MeshManagerProtocol, timerManager: UnifiedTimerManager, settings: SettingsViewModel, language: LanguageService)
+        case gameState(timerManager: UnifiedTimerManager, networkManager: BingoNetworkManager)
     }
     
     static func createManager(type: ManagerType) -> Any {
         switch type {
         case .timer:
-            return TimerManager()
+            return UnifiedTimerManager.shared
             
         case .network(let meshManager, let timerManager, let settings, let language):
             return BingoNetworkManager(
@@ -32,10 +32,10 @@ class BingoManagerFactory {
         meshManager: MeshManagerProtocol,
         settingsViewModel: SettingsViewModel,
         languageService: LanguageService
-    ) -> (TimerManager, BingoNetworkManager, BingoGameStateManager) {
+    ) -> (UnifiedTimerManager, BingoNetworkManager, BingoGameStateManager) {
         
-        guard let timerManager = createManager(type: .timer) as? TimerManager else {
-            fatalError("Failed to create TimerManager")
+        guard let timerManager = createManager(type: .timer) as? UnifiedTimerManager else {
+            fatalError("Failed to create UnifiedTimerManager")
         }
         
         guard let networkManager = createManager(type: .network(

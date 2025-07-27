@@ -1,0 +1,42 @@
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Network/MeshManager.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MeshManager.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MeshManager.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MeshManager.dia"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MeshManager.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MeshManager.d"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/AutonomousSystemManager.swift":
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.swiftconstvalues"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutonomousSystemManager.o"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/SystemHealthMonitor.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.o"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.swiftdeps"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/SystemHealthMonitor.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Chat/Components/MentionAutocompleteView.swift":
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MentionAutocompleteView.swiftconstvalues"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MentionAutocompleteView.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MentionAutocompleteView.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MentionAutocompleteView.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/MentionAutocompleteView.swiftdeps"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Services/AutomaticSystemMaintenance.swift":
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.d"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.o"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.swiftdeps"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMaintenance.dia"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/AutomaticSystemMonitor.swift":
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMonitor.dia"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMonitor.swiftdeps"
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMonitor.o"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMonitor.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/AutomaticSystemMonitor.swiftconstvalues"
+"/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Core/Security/UserAccessManager.swift":
+  object: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UserAccessManager.o"
+  diagnostics: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UserAccessManager.dia"
+  dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UserAccessManager.d"
+  const-values: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UserAccessManager.swiftconstvalues"
+  swift-dependencies: "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/build/Build/Intermediates.noindex/SignalAir Rescue.build/Debug-iphoneos/SignalAir.build/Objects-normal/arm64/UserAccessManager.swiftdeps"

@@ -208,6 +208,12 @@ class SecurityAlertBannerSystem: ObservableObject {
     private let alertDisplayDuration: TimeInterval = 8.0
     private let languageService = LanguageService.shared
     
+    deinit {
+        alertTimer?.invalidate()
+        alertTimer = nil
+        print("🧹 SecurityAlertBannerSystem: deinit 完成，Timer已清理")
+    }
+    
     func showSecurityAlert(for attackType: SecurityAlertType, deviceName: String) {
         let alert = createMockAlert(for: attackType, deviceName: deviceName)
         

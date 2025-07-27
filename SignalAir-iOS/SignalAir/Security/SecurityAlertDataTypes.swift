@@ -83,7 +83,7 @@ enum SecurityAlertLevel: String, CaseIterable {
 enum SecurityAlertType: String, CaseIterable {
     case trustAnomaly = "trust_anomaly"
     case nodeAnomaly = "node_anomaly"
-    case aptThreat = "apt_threat"
+    case behaviorAnomaly = "apt_threat"
     case connectionLimit = "connection_limit"
     case authenticationFailure = "authentication_failure"
     case dataExfiltration = "data_exfiltration"
@@ -94,7 +94,7 @@ enum SecurityAlertType: String, CaseIterable {
         switch self {
         case .trustAnomaly: return "信任異常"
         case .nodeAnomaly: return "節點異常"
-        case .aptThreat: return "APT威脅"
+        case .behaviorAnomaly: return "行為異常"
         case .connectionLimit: return "連接限制"
         case .authenticationFailure: return "認證失敗"
         case .dataExfiltration: return "數據外洩"
@@ -107,7 +107,7 @@ enum SecurityAlertType: String, CaseIterable {
         switch self {
         case .trustAnomaly: return 0.6
         case .nodeAnomaly: return 0.7
-        case .aptThreat: return 1.0
+        case .behaviorAnomaly: return 1.0
         case .connectionLimit: return 0.4
         case .authenticationFailure: return 0.5
         case .dataExfiltration: return 0.9
@@ -120,7 +120,7 @@ enum SecurityAlertType: String, CaseIterable {
         switch self {
         case .trustAnomaly: return 0.5
         case .nodeAnomaly: return 0.6
-        case .aptThreat: return 0.9
+        case .behaviorAnomaly: return 0.9
         case .connectionLimit: return 0.3
         case .authenticationFailure: return 0.4
         case .dataExfiltration: return 0.7
@@ -133,7 +133,7 @@ enum SecurityAlertType: String, CaseIterable {
         switch self {
         case .trustAnomaly: return 0.3
         case .nodeAnomaly: return 0.4
-        case .aptThreat: return 0.8
+        case .behaviorAnomaly: return 0.8
         case .connectionLimit: return 0.2
         case .authenticationFailure: return 0.3
         case .dataExfiltration: return 0.9

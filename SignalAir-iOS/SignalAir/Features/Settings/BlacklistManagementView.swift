@@ -5,7 +5,7 @@ struct BlacklistManagementView: View {
     @State private var showingClearAllDialog = false
     @State private var userToRemove: String?
     @State private var showingRemoveDialog = false
-    @Environment(\.dismiss) private var dismiss
+    @SwiftUI.Environment(\.presentationMode) var presentationMode: Binding<PresentationMode>
     
     var body: some View {
         VStack(spacing: 0) {
@@ -44,7 +44,7 @@ struct BlacklistManagementView: View {
             HStack {
                 Button(action: {
                     // 返回上一頁
-                    dismiss()
+                    presentationMode.wrappedValue.dismiss()
                 }) {
                     Image(systemName: "chevron.left")
                         .font(.title2)
@@ -209,6 +209,4 @@ struct BlacklistUserCard: View {
     }
 }
 
-#Preview {
-    BlacklistManagementView()
-}
+// Preview removed to avoid initialization issues

@@ -45,7 +45,7 @@ struct MentionAutocompleteView: View {
     }
 }
 
-struct MentionTextField: View {
+struct AutocompleteMentionTextField: View {
     @Binding var text: String
     @State private var showingMentionList = false
     @State private var filteredUsers: [String] = []
@@ -80,7 +80,7 @@ struct MentionTextField: View {
                 .onSubmit {
                     onSubmit()
                 }
-                .onChange(of: text) { newValue in
+                .onChange(of: text) { _, newValue in
                     handleTextChange(newValue)
                 }
                 .onTapGesture {
@@ -181,7 +181,7 @@ struct MentionTextField: View {
 
 #Preview {
     VStack {
-        MentionTextField(
+        AutocompleteMentionTextField(
             text: .constant("Hello @"),
             placeholder: "輸入訊息...",
             availableUsers: ["小明", "小華", "小美", "阿強"],
@@ -191,5 +191,5 @@ struct MentionTextField: View {
         
         Spacer()
     }
-    .background(Color.gray.opacity(0.1))
+    .background(Color.gray.opacity(0.1) as Color)
 }

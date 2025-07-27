@@ -1,4 +1,5 @@
 import Foundation
+import MultipeerConnectivity
 
 // MARK: - 服務協議定義
 // 為了支持依賴注入和測試，我們為主要服務定義協議
@@ -6,8 +7,15 @@ import Foundation
 // MARK: - 網路服務協議
 protocol NetworkServiceProtocol: AnyObject {
     var isConnected: Bool { get }
+    var myPeerID: MCPeerID { get }
+    var connectedPeers: [MCPeerID] { get }
+    var onDataReceived: ((Data, String) -> Void)? { get set }
+    var onPeerConnected: ((String) -> Void)? { get set }
+    var onPeerDisconnected: ((String) -> Void)? { get set }
+    
     func startNetworking()
     func stopNetworking()
+    func send(_ data: Data, to peers: [MCPeerID]) async throws
 }
 
 // MARK: - 安全服務協議
@@ -15,6 +23,11 @@ protocol SecurityServiceProtocol: AnyObject {
     func generateSessionKey() -> Data?
     func encryptData(_ data: Data) -> Data?
     func decryptData(_ data: Data) -> Data?
+    func hasSessionKey(for peerID: String) async -> Bool
+    func encrypt(_ data: Data, for peerID: String) throws -> Data
+    func decrypt(_ data: Data, from peerID: String) throws -> Data
+    func getPublicKey() throws -> Data
+    func removeSessionKey(for peerID: String)
 }
 
 // MARK: - 語言服務協議
@@ -111,7 +124,7 @@ protocol CoreServicesProtocol {
 
 // MARK: - 遊戲服務協議
 protocol GameServicesProtocol {
-    var timerManager: TimerManager { get }
+    var timerManager: UnifiedTimerManager { get }
     var networkManager: BingoNetworkManager { get }
     var stateManager: BingoGameStateManager { get }
 }

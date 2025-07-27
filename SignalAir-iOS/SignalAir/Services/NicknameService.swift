@@ -104,6 +104,7 @@ class NicknameService: ObservableObject {
         return remainingChanges > 0
     }
     
+    @MainActor
     func getRemainingChangesText(languageService: LanguageService? = nil) -> String {
         if remainingChanges > 0 {
             if let languageService = languageService {

@@ -5,8 +5,8 @@ import CoreLocation
 import Combine
 import CryptoKit // Added for SHA256
 
-// MARK: - 內聯二進制編碼器（已啟用）
-struct InlineBinaryEncoder {
+// MARK: - 信號二進制編解碼器（已啟用）
+struct SignalBinaryCodec {
     static func encodeSignalData(
         id: String,
         type: SignalType,
@@ -152,14 +152,14 @@ struct InlineBinaryEncoder {
         data.append(1)
         
         // 1 byte: 消息類型（信號）
-        data.append(3) // Signal = 3 (統一映射)
+        data.append(MeshMessageType.signal.rawValue) // Signal = 0x01
         
         // 1 byte: 加密標誌
         data.append(1)
         
-        // 4 bytes: 時間戳
-        let ts = UInt32(timestamp.timeIntervalSince1970)
-        data.append(contentsOf: withUnsafeBytes(of: ts.littleEndian) { Array($0) })
+        // 4 bytes: 時間戳（修復：使用當前時間而非過期時間）
+        let currentTimestamp = UInt32(Date().timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: currentTimestamp.littleEndian) { Array($0) })
         
         // 16 bytes: UUID
         if let uuid = UUID(uuidString: id) {
@@ -168,10 +168,12 @@ struct InlineBinaryEncoder {
             data.append(Data(repeating: 0, count: 16))
         }
         
-        // 發送者ID
-        if let senderData = senderID.data(using: .utf8) {
-            data.append(UInt8(min(senderData.count, 255)))
-            data.append(senderData.prefix(255))
+        // 發送者ID（統一編碼格式）
+        let cleanSenderID = NicknameFormatter.cleanNickname(senderID)
+        if let senderData = cleanSenderID.data(using: .utf8) {
+            let safeLength = min(senderData.count, 255)
+            data.append(UInt8(safeLength))
+            data.append(senderData.prefix(safeLength))
         } else {
             data.append(0)
         }
@@ -333,7 +335,7 @@ struct InlineBinaryEncoder {
 }
 
 // MARK: - 緊急信號流控制系統（防止網路風暴）
-class EmergencyFloodControl {
+class EmergencyConnectionRateControl {
     private var messageHashes: Set<String> = []
     private var messageTimestamps: [String: Date] = [:]
     private let maxMessagesPerMinute = 5
@@ -559,13 +561,23 @@ class SignalViewModel: ObservableObject {
     // MARK: - 安全和性能組件
     private let securityLogger = SecurityLogger()
     private let messageDeduplicator = MessageDeduplicator()
-    private lazy var floodControl = EmergencyFloodControl()
+    private lazy var connectionRateControl = EmergencyConnectionRateControl()
     
     // MARK: - 內部狀態
     private let locationManager = CLLocationManager()
     private var locationDelegate: LocationDelegate?
     private var cancellables = Set<AnyCancellable>()
     private var statusUpdateTimer: Timer?
+    
+    // MARK: - 防抖機制
+    private var lastSignalTime: [SignalType: Date] = [:]
+    private let signalCooldownDuration: TimeInterval = 2.0 // 2秒防抖
+    private var isSendingSignal: Bool = false // 防止並發發送
+    
+    // MARK: - 信號去重機制
+    private var recentReceivedSignals = Set<String>()
+    private let signalDeduplicationWindow: TimeInterval = 1.0 // 1秒內的重複信號視為重複
+    private let deduplicationQueue = DispatchQueue(label: "com.signalAir.signal.deduplication")
     
     // MARK: - 初始化
     init(
@@ -663,67 +675,122 @@ class SignalViewModel: ObservableObject {
     
     /// 發送緊急信號
     func sendEmergencySignal(type: SignalType) {
-        // 使用 NicknameService 的純暱稱，而不是 SettingsViewModel
-        let userNickname = ServiceContainer.shared.nicknameService.userNickname
+        // 🚫 防抖檢查 + 狀態檢查
+        let now = Date()
+        if let lastTime = lastSignalTime[type] {
+            let timeSinceLastSignal = now.timeIntervalSince(lastTime)
+            if timeSinceLastSignal < signalCooldownDuration {
+                print("⏳ 信號冷卻中，請稍後再試 (剩餘: \(String(format: "%.1f", signalCooldownDuration - timeSinceLastSignal))秒)")
+                return
+            }
+        }
         
+        // 🔧 原子性狀態檢查和設置（解決競態條件）
         Task {
-            do {
-                // 創建信號數據（暫時不加密，先確保基本通訊正常）
-                let signalID = UUID().uuidString
-                let deviceID = ServiceContainer.shared.temporaryIDManager.deviceID
-                let gridCode = getCurrentGridCode() ?? ""
-                
-                // 1. 編碼內部信號數據
-                let signalData = InlineBinaryEncoder.encodeSignalData(
-                    id: signalID,
-                    type: type,
-                    deviceName: userNickname,
-                    deviceID: deviceID,
-                    gridCode: gridCode
-                )
-                
-                // 2. 添加協議頭部以便正確路由
-                var binaryPacket = Data()
-                binaryPacket.append(1) // 協議版本
-                binaryPacket.append(MeshMessageType.signal.rawValue) // 訊息類型
-                binaryPacket.append(signalData) // 信號數據
-                
-                print("📡 發送純二進制信號包：類型=\(type.rawValue), 內部=\(signalData.count)bytes, 總大小=\(binaryPacket.count)bytes")
-                
-                // 獲取連接的設備並廣播
-                let connectedPeers = networkService.connectedPeers
-                guard !connectedPeers.isEmpty else {
-                    print("⚠️ 沒有連接的設備，無法發送信號")
+            await MainActor.run {
+                // 在 MainActor 中進行原子性檢查
+                if self.isSendingSignal {
+                    print("⚠️ 正在發送信號中，跳過重複請求")
                     return
                 }
                 
-                // 廣播給所有連接的設備
-                try await networkService.send(binaryPacket, to: connectedPeers)
-                print("✅ 信號廣播完成，發送給 \(connectedPeers.count) 個設備")
+                // 原子性設置狀態
+                self.lastSignalTime[type] = now
+                self.isSendingSignal = true
                 
-                await MainActor.run {
-                    // 本地顯示發送的信號
-                    let localMessage = SignalMessage(
-                        type: type,
-                        deviceName: "\(userNickname) (我)",
-                        distance: 0,
-                        direction: nil,
-                        timestamp: Date(),
-                        gridCode: getCurrentGridCode()
-                    )
-                    
-                    messages.insert(localMessage, at: 0)
-                    
-                    // 限制訊息數量
-                    if messages.count > 50 {
-                        messages = Array(messages.prefix(50))
-                    }
-                    
-                    // 追蹤信號以便自毀
-                    selfDestructManager.trackMessage(localMessage.id.uuidString, type: .signal, priority: .emergency)
-                    
-                    print("📡 SignalViewModel: 發送緊急信號 - \(type.rawValue)")
+                // 在背景線程執行實際發送
+                Task {
+                    await self.performSignalSending(type: type)
                 }
+            }
+        }
+    }
+    
+    /// 執行實際的信號發送操作
+    private func performSignalSending(type: SignalType) async {
+        
+        // 使用 NicknameService 的純暱稱，而不是 SettingsViewModel
+        let userNickname = ServiceContainer.shared.nicknameService.userNickname
+        
+        do {
+            // 創建信號數據（暫時不加密，先確保基本通訊正常）
+            let signalID = UUID().uuidString
+            let deviceID = ServiceContainer.shared.temporaryIDManager.deviceID
+            let gridCode = getCurrentGridCode() ?? ""
+            
+            // 1. 編碼內部信號數據
+            let signalData = SignalBinaryCodec.encodeSignalData(
+                id: signalID,
+                type: type,
+                deviceName: userNickname,
+                deviceID: deviceID,
+                gridCode: gridCode
+            )
+            
+            // 2. 使用標準的BinaryMessageEncoder編碼
+            let message = MeshMessage(
+                id: UUID().uuidString,
+                type: .signal,
+                data: signalData
+            )
+            
+            guard let binaryPacket = try? BinaryMessageEncoder.encode(message) else {
+                await MainActor.run {
+                    print("❌ 信號編碼失敗")
+                    self.isSendingSignal = false
+                }
+                return
+            }
+            
+            print("📡 發送純二進制信號包：類型=\(type.rawValue), 內部=\(signalData.count)bytes, 總大小=\(binaryPacket.count)bytes")
+            
+            // 獲取連接的設備並廣播
+            let connectedPeers = networkService.connectedPeers
+            guard !connectedPeers.isEmpty else {
+                await MainActor.run {
+                    print("⚠️ 沒有連接的設備，無法發送信號")
+                    self.isSendingSignal = false
+                }
+                return
+            }
+            
+            // 廣播給所有連接的設備
+            try await networkService.send(binaryPacket, to: connectedPeers)
+            print("✅ 信號廣播完成，發送給 \(connectedPeers.count) 個設備")
+            
+            await MainActor.run {
+                // 本地顯示發送的信號
+                let localMessage = SignalMessage(
+                    type: type,
+                    deviceName: "\(userNickname) (我)",
+                    distance: 0,
+                    direction: nil,
+                    timestamp: Date(),
+                    gridCode: getCurrentGridCode()
+                )
+                
+                messages.insert(localMessage, at: 0)
+                
+                // 限制訊息數量
+                if messages.count > 50 {
+                    messages = Array(messages.prefix(50))
+                }
+                
+                // 追蹤信號以便自毀
+                selfDestructManager.trackMessage(localMessage.id.uuidString, type: .signal, priority: .emergency)
+                
+                print("📡 SignalViewModel: 發送緊急信號 - \(type.rawValue)")
+                
+                // 🔧 重置發送狀態
+                self.isSendingSignal = false
+            }
+            
+        } catch {
+            await MainActor.run {
+                print("❌ SignalViewModel: 信號發送失敗 - \(error)")
+                
+                // 🔧 錯誤時也要重置發送狀態
+                self.isSendingSignal = false
             }
         }
     }
@@ -756,8 +823,52 @@ class SignalViewModel: ObservableObject {
     
     /// 處理純二進制信號
     private func handlePureBinarySignal(_ data: Data) async {
-        guard let decodedSignal = InlineBinaryEncoder.decodeInlineSignalData(data) else {
-            print("❌ 純二進制信號解碼失敗")
+        // 使用統一的完整 MeshMessage 解碼（新版本格式）
+        do {
+            let meshMessage = try BinaryMessageDecoder.decode(data)
+            guard meshMessage.type == .signal || meshMessage.type == .emergency else {
+                print("❌ SignalViewModel: 不是信號訊息類型，實際類型: \(meshMessage.type)")
+                return
+            }
+            
+            guard let decodedSignal = SignalBinaryCodec.decodeInlineSignalData(meshMessage.data) else {
+                print("❌ SignalViewModel: 純二進制信號解碼失敗")
+                return
+            }
+            
+            // 信號解碼成功，繼續處理
+            await processDecodedSignal(decodedSignal)
+            
+        } catch {
+            print("❌ SignalViewModel: MeshMessage 解碼失敗: \(error)")
+            return
+        }
+    }
+    
+    /// 處理已解碼的信號
+    private func processDecodedSignal(_ decodedSignal: (type: SignalType, deviceName: String, deviceID: String, gridCode: String?, timestamp: Date)) async {
+        let signalKey = "\(decodedSignal.deviceName)-\(decodedSignal.type.rawValue)-\(Int(decodedSignal.timestamp.timeIntervalSince1970))"
+        
+        let isDuplicate = deduplicationQueue.sync { () -> Bool in
+            if recentReceivedSignals.contains(signalKey) {
+                print("🚫 忽略重複信號: \(signalKey)")
+                return true
+            }
+            
+            // 添加到最近接收集合
+            recentReceivedSignals.insert(signalKey)
+            
+            // 設定過期清理
+            let window = self.signalDeduplicationWindow
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(nanoseconds: UInt64(window * 1_000_000_000))
+                self?.recentReceivedSignals.remove(signalKey)
+            }
+            
+            return false
+        }
+        
+        if isDuplicate {
             return
         }
         
@@ -796,7 +907,7 @@ class SignalViewModel: ObservableObject {
     private func handleBinarySignalMessage(_ data: Data) async {
         do {
             // 解析外層加密包
-            guard let encryptedSignal = InlineBinaryEncoder.decodeEncryptedSignal(data) else {
+            guard let encryptedSignal = SignalBinaryCodec.decodeEncryptedSignal(data) else {
                 print("❌ 二進制信號解析失敗")
                 return
             }
@@ -805,10 +916,10 @@ class SignalViewModel: ObservableObject {
             let senderID = encryptedSignal.senderID
             
             // 嘗試解密內部數據
-            let decryptedData = try securityService.decrypt(encryptedSignal.encryptedPayload, from: senderID)
+            let decryptedData = try await securityService.decrypt(encryptedSignal.encryptedPayload, from: senderID)
             
             // 解析內部信號數據
-            if let signalData = InlineBinaryEncoder.decodeSignalData(decryptedData) {
+            if let signalData = SignalBinaryCodec.decodeSignalData(decryptedData) {
                 let (distance, direction) = calculateDistanceAndDirection(gridCode: signalData.gridCode)
                 
                 let displayMessage = SignalMessage(
@@ -916,7 +1027,7 @@ class SignalViewModel: ObservableObject {
     
     /// 更新連線狀態
     private func updateConnectionStatus() {
-        let connectedPeers = networkService.getConnectedPeers()
+        let connectedPeers = networkService.connectedPeers
         isOnline = !connectedPeers.isEmpty
         
         if isOnline {
@@ -1037,7 +1148,7 @@ class SignalViewModel: ObservableObject {
             if let encryptedBase64 = encryptedForPeersBase64[myPeerID],
                let encryptedData = Data(base64Encoded: encryptedBase64) {
                 // 找到針對我的加密數據
-                let _ = try securityService.decrypt(encryptedData, from: senderID)
+                let _ = try await securityService.decrypt(encryptedData, from: senderID)
                 
                 // 如果需要處理解密後的數據，在這裡添加邏輯
                 print("✅ SignalViewModel: 成功解密來自 \(senderID) 的信號")
@@ -1149,7 +1260,12 @@ class SignalViewModel: ObservableObject {
         let x = max(0, min(25, xIndex))
         let y = max(1, min(99, yIndex + 1))
         
-        let letter = Character(UnicodeScalar(65 + x)!)
+        // 安全的 UnicodeScalar 創建，避免強制解包崩潰
+        guard let scalar = UnicodeScalar(65 + x) else {
+            print("⚠️ SignalViewModel: UnicodeScalar 創建失敗，x=\(x)")
+            return "A\(y)" // 預設返回 A 字母
+        }
+        let letter = Character(scalar)
         return "\(letter)\(y)"
     }
     

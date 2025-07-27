@@ -7,7 +7,7 @@ struct SplashScreenView: View {
     @State private var canProceed = false
     @State private var shouldProceed = false
     
-    private let animationDuration: Double = 2.0 // 2秒動畫時長 - 優化啟動速度
+    private let animationDuration: Double = 1.8 // 1.8秒總時長 - 1秒藍屏 + 0.8秒過渡動畫
     
     var onComplete: () -> Void
     
@@ -30,6 +30,13 @@ struct SplashScreenView: View {
         }
         .background(Color(red: 40/255, green: 62/255, blue: 228/255)) // 確保背景無白色
         .onAppear {
+            // 立即啟動性能監控（非阻塞）
+            Task {
+                StartupPerformanceMonitor.shared.startMonitoring()
+                StartupPerformanceMonitor.shared.recordCheckpoint("splash_screen_appear")
+            }
+            
+            // 立即開始閃電動畫
             startAnimation()
         }
         .onChange(of: shouldProceed) { newValue in
@@ -40,17 +47,20 @@ struct SplashScreenView: View {
     }
     
     private func startAnimation() {
-        // 持續閃爍動畫直到加載完成 - 優化頻率
-        withAnimation(.easeInOut(duration: 0.6).repeatForever(autoreverses: true)) {
+        // 立即開始閃爍動畫 - 無延遲啟動
+        withAnimation(.easeInOut(duration: 0.4).repeatForever(autoreverses: true)) {
             isFlashing = true
         }
         
-        // 模擬載入完成 (1.5秒後可以提前進入)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+        // 1秒後可以開始過渡動畫
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
             canProceed = true
+            if !shouldProceed {
+                completeAnimation()
+            }
         }
         
-        // 完整動畫結束 (2秒)
+        // 完整動畫結束 (1.8秒)
         DispatchQueue.main.asyncAfter(deadline: .now() + animationDuration) {
             if !shouldProceed {
                 completeAnimation()
@@ -66,8 +76,13 @@ struct SplashScreenView: View {
         guard !isComplete else { return }
         isComplete = true
         
+        // 記錄啟動完成時間
+        Task {
+            StartupPerformanceMonitor.shared.recordCheckpoint("splash_screen_complete")
+        }
+        
         // 停止閃爍動畫，直接切換
-        withAnimation(.easeOut(duration: 0.3)) {
+        withAnimation(.easeOut(duration: 0.2)) {
             onComplete()
         }
     }

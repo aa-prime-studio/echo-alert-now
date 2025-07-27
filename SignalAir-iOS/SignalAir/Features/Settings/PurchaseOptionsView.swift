@@ -3,7 +3,7 @@ import SwiftUI
 struct PurchaseOptionsView: View {
     @ObservedObject var purchaseService: PurchaseService
     @EnvironmentObject var languageService: LanguageService
-    @Environment(\.dismiss) private var dismiss
+    @SwiftUI.Environment(\.dismiss) private var dismiss
     @State private var selectedTier: PurchaseService.PurchaseTier = .vip
     @State private var selectedSubscriptionType: PurchaseService.SubscriptionType = .yearly
     @State private var showPurchaseConfirmation: Bool = false
@@ -341,7 +341,7 @@ struct PurchaseOptionsView: View {
         switch tier {
         case .basicVIP:
             return [
-                Feature(icon: "message.fill", title: "無限聊天", description: "不受每日30則訊息限制"),
+                Feature(icon: "message.fill", title: "無限聊天", description: "不受每日50則訊息限制"),
                 Feature(icon: "shield.fill", title: "基礎會員", description: "享受基本進階功能")
             ]
         case .vip:

@@ -4,6 +4,7 @@ import MultipeerConnectivity
 import SwiftUI
 
 // 設定 ViewModel - 管理應用程式設定
+@MainActor
 class SettingsViewModel: ObservableObject {
     // MARK: - Published Properties
     @Published var userNickname: String = "使用者"

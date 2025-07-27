@@ -69,7 +69,7 @@ class DiagnosticManager: ObservableObject {
     }
     
     private func checkTimerManager() -> (DiagnosticResult.DiagnosticStatus, String) {
-        let timerManager = TimerManager.shared
+        let timerManager = UnifiedTimerManager.shared
         let activeCount = timerManager.activeTimerCount
         
         if activeCount == 0 {

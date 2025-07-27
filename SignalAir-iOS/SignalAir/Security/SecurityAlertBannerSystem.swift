@@ -417,13 +417,13 @@ class SecurityAlertIntegration {
         }
         
         NotificationCenter.default.addObserver(
-            forName: .aptThreatDetected,
+            forName: .behaviorAnomalyDetected,
             object: nil,
             queue: .main
         ) { notification in
-            if let alert = notification.object as? APTAlert {
+            if let alert = notification.object as? BehaviorAlert {
                 triggerSecurityAlert(
-                    attackType: .aptThreat,
+                    attackType: .behaviorAnomaly,
                     deviceName: alert.affectedNodes.first ?? "未知設備"
                 )
             }

@@ -1,6 +1,6 @@
 import Foundation
+import Combine
 import MultipeerConnectivity
-import Observation
 
 // MARK: - Message Priority
 enum MessagePriority: String, CaseIterable, Codable {
@@ -11,6 +11,7 @@ enum MessagePriority: String, CaseIterable, Codable {
 }
 
 // MARK: - Mesh Network Protocol
+@MainActor
 protocol MeshNetworkProtocol {
     func broadcastMessage(_ data: Data, messageType: MeshMessageType)
     func sendDirectMessage(_ data: Data, to peerID: String, messageType: MeshMessageType)
@@ -151,7 +152,7 @@ class SimpleIntelligentRouter {
     
     // 尋找最佳路由（優先考慮緊急訊息）
     func findBestRoute(from source: String, to destination: String, 
-                      topology: NetworkTopology, isEmergency: Bool = false) -> [String]? {
+                      topology: LocalNetworkTopology, isEmergency: Bool = false) -> [String]? {
         
         // 1. 如果是緊急訊息，先檢查快取的緊急路徑
         if isEmergency, let emergencyPath = routeCache.getEmergencyPath(to: destination) {
@@ -176,7 +177,7 @@ class SimpleIntelligentRouter {
     
     // 尋找多條路徑（最多3條，避免過度計算）
     private func findMultiplePaths(from source: String, to destination: String, 
-                                  topology: NetworkTopology) -> [[String]] {
+                                  topology: LocalNetworkTopology) -> [[String]] {
         var paths: [[String]] = []
         var excludeNodes: Set<String> = failedNodes
         
@@ -332,10 +333,11 @@ class SimpleIntelligentRouter {
     }
 }
 
-// MARK: - Mesh Message Structure
+// MARK: - Extended Mesh Message Structure
+// 擴展 MeshMessage 以支援路由功能
 struct ExtendedMeshMessage: Codable {
     let id: String
-    let type: MeshMessageType
+    let type: ExtendedMeshMessageType
     let sourceID: String
     let targetID: String? // nil for broadcast
     let data: Data
@@ -344,7 +346,7 @@ struct ExtendedMeshMessage: Codable {
     let hopCount: Int
     let routePath: [String] // 記錄路由路徑
     
-    init(type: MeshMessageType, sourceID: String, targetID: String? = nil, data: Data, ttl: Int? = nil) {
+    init(type: ExtendedMeshMessageType, sourceID: String, targetID: String? = nil, data: Data, ttl: Int? = nil) {
         self.id = UUID().uuidString
         self.type = type
         self.sourceID = sourceID
@@ -358,7 +360,7 @@ struct ExtendedMeshMessage: Codable {
     }
     
     // 私有初始化器用於轉發
-    private init(type: MeshMessageType, sourceID: String, targetID: String?, data: Data, 
+    private init(type: ExtendedMeshMessageType, sourceID: String, targetID: String?, data: Data, 
                 timestamp: Date, ttl: Int, hopCount: Int, routePath: [String]) {
         self.id = UUID().uuidString
         self.type = type
@@ -372,8 +374,8 @@ struct ExtendedMeshMessage: Codable {
     }
     
     // 創建轉發副本
-    func forwarded(through peerID: String) -> MeshMessage {
-        return MeshMessage(
+    func forwarded(through peerID: String) -> ExtendedMeshMessage {
+        return ExtendedMeshMessage(
             type: self.type,
             sourceID: self.sourceID,
             targetID: self.targetID,
@@ -389,10 +391,23 @@ struct ExtendedMeshMessage: Codable {
         let maxAge: TimeInterval = type.isEmergency ? 600 : 300  // 緊急訊息10分鐘，一般5分鐘
         return ttl <= 0 || Date().timeIntervalSince(timestamp) > maxAge
     }
+    
+    private init(type: MeshMessageType, sourceID: String, targetID: String? = nil, 
+                 data: Data, timestamp: Date, ttl: Int, hopCount: Int, routePath: [String]) {
+        self.id = UUID().uuidString
+        self.type = ExtendedMeshMessageType(rawValue: type.stringValue) ?? .system
+        self.sourceID = sourceID
+        self.targetID = targetID
+        self.data = data
+        self.timestamp = timestamp
+        self.ttl = ttl
+        self.hopCount = hopCount
+        self.routePath = routePath
+    }
 }
 
 // MARK: - Network Topology (簡化版)
-class NetworkTopology {
+class LocalNetworkTopology {
     private var connections: [String: Set<String>] = [:]
     private let lock = NSLock()
     
@@ -480,6 +495,18 @@ class MessageQueue {
     private let lock = NSLock()
     private let maxSize = 500  // 減少記憶體使用
     
+    // 獲取訊息優先級
+    private func getMessagePriority(for type: MeshMessageType) -> MessagePriority {
+        switch type {
+        case .emergency:
+            return .emergency
+        case .system, .keyExchange, .keyExchangeResponse:
+            return .high
+        default:
+            return .normal
+        }
+    }
+    
     func enqueue(_ message: MeshMessage) {
         lock.lock()
         defer { lock.unlock() }
@@ -493,7 +520,11 @@ class MessageQueue {
             }
         } else {
             // 一般訊息按優先級插入
-            let insertIndex = normalQueue.firstIndex { $0.type.priority < message.type.priority } ?? normalQueue.count
+            let messagePriority = getMessagePriority(for: message.type)
+            let insertIndex = normalQueue.firstIndex { 
+                let otherPriority = getMessagePriority(for: $0.type)
+                return otherPriority.rawValue < messagePriority.rawValue 
+            } ?? normalQueue.count
             normalQueue.insert(message, at: insertIndex)
             
             // 限制一般隊列大小
@@ -549,41 +580,26 @@ struct NetworkStats {
     var connectedPeersCount: Int = 0
     var averageRouteLength: Double = 0.0
     var networkReliability: Float = 1.0
+    var blockedConnections: Int = 0
     
     // 洪水防護統計
     var blockedMessages: Int = 0
     var lastBlockedPeer: String = ""
     var lastBlockedTime: Date = Date()
-    var floodProtectionEnabled: Bool = true
+    var connectionRateProtectionEnabled: Bool = true
 }
 
-// MARK: - Flood Protection Protocol
-protocol FloodProtectionProtocol {
+// MARK: - Connection Rate Manager Protocol
+protocol ConnectionRateManagerProtocol {
     func shouldBlock(_ message: MeshMessage, from peerID: String) -> Bool
 }
 
-// MARK: - Network Service Protocol  
-protocol NetworkServiceProtocol: AnyObject {
-    var myPeerID: MCPeerID { get }
-    var connectedPeers: [MCPeerID] { get }
-    var onDataReceived: ((Data, String) -> Void)? { get set }
-    var onPeerConnected: ((String) -> Void)? { get set }
-    var onPeerDisconnected: ((String) -> Void)? { get set }
-    
-    func send(_ data: Data, to peers: [MCPeerID]) async throws
-}
+// NetworkServiceProtocol 定義已移至 ServiceProtocols.swift
 
-// MARK: - Security Service Protocol
-protocol SecurityServiceProtocol {
-    func hasSessionKey(for peerID: String) -> Bool
-    func encrypt(_ data: Data, for peerID: String) throws -> Data
-    func decrypt(_ data: Data, from peerID: String) throws -> Data
-    func getPublicKey() throws -> Data
-    func removeSessionKey(for peerID: String)
-}
+// SecurityServiceProtocol 定義已移至 ServiceProtocols.swift
 
-// MARK: - Simple Flood Protection
-class SimpleFloodProtection: FloodProtectionProtocol {
+// MARK: - Simple Connection Rate Manager
+class SimpleConnectionRateManager: ConnectionRateManagerProtocol {
     private var messageHistory: [String: [Date]] = [:]
     private let lock = NSLock()
     private let maxMessagesPerMinute = 60
@@ -605,7 +621,7 @@ class SimpleFloodProtection: FloodProtectionProtocol {
         // 檢查是否超過限制
         let recentCount = messageHistory[peerID]?.count ?? 0
         if recentCount >= maxMessagesPerMinute {
-            print("🚫 Blocking flood from \(peerID): \(recentCount) messages in last minute")
+            print("🚫 Blocking excessive connections from \(peerID): \(recentCount) messages in last minute")
             return true
         }
         
@@ -616,22 +632,28 @@ class SimpleFloodProtection: FloodProtectionProtocol {
 }
 
 // MARK: - Mesh Manager (智能路由整合版)
-@Observable
-class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
+@MainActor
+class MeshManager: MeshNetworkProtocol, MeshManagerProtocol, ObservableObject {
     // MARK: - Dependencies
     private let networkService: NetworkServiceProtocol
-    private let securityService: SecurityServiceProtocol
-    private let floodProtection: FloodProtectionProtocol
+    private let securityService: SecurityService
+    private let connectionRateManager: ConnectionRateManagerProtocol
+    private let advancedConnectionRateManager: ConnectionRateManager?
+    private let trustScoreManager: TrustScoreManager
     
     // MARK: - Core Components
-    private var topology = NetworkTopology()
+    private var topology = LocalNetworkTopology()
     private let messageQueue = MessageQueue()
     private let intelligentRouter = SimpleIntelligentRouter()
+    private let emergencyRateLimiter = EmergencyRateLimiter()
     
     // 線程安全的 processedMessages 管理
     private let processedMessagesQueue = DispatchQueue(label: "com.signalair.meshmanager.messages", attributes: .concurrent)
     private var _processedMessages: Set<String> = []
     private let processedMessagesLimit = 1000  // 減少記憶體使用從5000降到1000
+    
+    // 【NEW】遊戲消息接收回調
+    var onGameMessageReceived: ((MeshMessage) -> Void)?
     
     // 線程安全的 processedMessages 存取
     private var processedMessages: Set<String> {
@@ -639,8 +661,10 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
             return processedMessagesQueue.sync { _processedMessages }
         }
         set {
-            processedMessagesQueue.async(flags: .barrier) {
-                self._processedMessages = newValue
+            processedMessagesQueue.async(flags: .barrier) { [weak self] in
+                Task { @MainActor in
+                    self?._processedMessages = newValue
+                }
             }
         }
     }
@@ -664,13 +688,29 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     // 線程安全的失敗計數訪問
     private var sendFailureCounts: [String: Int] {
-        get { failureTrackingQueue.sync { _sendFailureCounts } }
-        set { failureTrackingQueue.async(flags: .barrier) { self._sendFailureCounts = newValue } }
+        get { 
+            return failureTrackingQueue.sync { _sendFailureCounts } 
+        }
+        set { 
+            failureTrackingQueue.async(flags: .barrier) { [weak self] in
+                Task { @MainActor in
+                    self?._sendFailureCounts = newValue
+                }
+            }
+        }
     }
     
     private var lastFailureTime: [String: Date] {
-        get { failureTrackingQueue.sync { _lastFailureTime } }
-        set { failureTrackingQueue.async(flags: .barrier) { self._lastFailureTime = newValue } }
+        get { 
+            return failureTrackingQueue.sync { _lastFailureTime } 
+        }
+        set { 
+            failureTrackingQueue.async(flags: .barrier) { [weak self] in
+                Task { @MainActor in
+                    self?._lastFailureTime = newValue
+                }
+            }
+        }
     }
     
     // MARK: - Published State
@@ -691,11 +731,24 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     // MARK: - Initialization
     init(networkService: NetworkServiceProtocol, 
-         securityService: SecurityServiceProtocol,
-         floodProtection: FloodProtectionProtocol? = nil) {
+         securityService: SecurityService,
+         trustScoreManager: TrustScoreManager,
+         connectionRateManager: ConnectionRateManagerProtocol? = nil,
+         advancedConnectionRateManager: ConnectionRateManager? = nil) {
         self.networkService = networkService
         self.securityService = securityService
-        self.floodProtection = floodProtection ?? SimpleFloodProtection()
+        self.trustScoreManager = trustScoreManager
+        
+        // 優先使用高級洪水防護，回退到簡單版本
+        if let advancedProtection = advancedConnectionRateManager {
+            self.connectionRateManager = advancedProtection
+            self.advancedConnectionRateManager = advancedProtection
+            print("🛡️ Using advanced connection rate manager system")
+        } else {
+            self.connectionRateManager = connectionRateManager ?? SimpleConnectionRateManager()
+            self.advancedConnectionRateManager = nil
+            print("🛡️ Using simple connection rate manager system")
+        }
         
         setupNetworkCallbacks()
         startServices()
@@ -707,18 +760,15 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         // 線程安全的 Timer 清理
         DispatchQueue.main.async { [weak self] in
             self?.heartbeatTimer?.invalidate()
-            self?.heartbeatTimer = nil
             self?.queueProcessingTimer?.invalidate()
-            self?.queueProcessingTimer = nil
             self?.metricsCleanupTimer?.invalidate()
-            self?.metricsCleanupTimer = nil
         }
         
         // 停止網路服務
-        stopMeshNetwork()
-        
-        // 清理 processedMessages
-        clearProcessedMessages()
+        Task { @MainActor [weak self] in
+            self?.stopMeshNetwork()
+            self?.clearProcessedMessages()
+        }
         
         print("🧹 MeshManager: 所有資源已清理")
     }
@@ -726,7 +776,7 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     // MARK: - Security Integration
     
     /// 通知安全監控系統
-    private func notifySecurityMonitor(event: SecurityEventType, peerID: String, details: String) async {
+    private func notifySecurityHealthMonitor(event: SecurityEventType, peerID: String, details: String) async {
         // 使用 NotificationCenter 通知安全監控系統
         DispatchQueue.main.async {
             NotificationCenter.default.post(
@@ -745,16 +795,54 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         print("⚠️ Security event reported: \(event.rawValue) from \(peerID)")
     }
     
-    /// 檢查緊急訊息是否應該繞過洪水防護
-    private func shouldBypassFloodProtection(message: MeshMessage) -> Bool {
-        // 緊急訊息類型繞過防護
+    /// 檢查緊急訊息是否應該繞過連線速率保護
+    /// 🔧 FIX: 整合緊急訊息專用速率限制器
+    private func shouldBypassConnectionRateProtection(message: MeshMessage, from peerID: String) -> Bool {
+        // 🚨 緊急訊息現在有專門的速率限制器
         if message.type.isEmergency {
+            // 緊急訊息仍然需要通過專門的緊急速率檢查
+            let allowed = emergencyRateLimiter.shouldAllowEmergencyMessage(from: peerID)
+            if !allowed {
+                print("🚫 緊急訊息被緊急速率限制器阻止: \(peerID)")
+                // 記錄統計
+                networkStats.blockedMessages += 1
+                networkStats.lastBlockedPeer = peerID
+                networkStats.lastBlockedTime = Date()
+            }
+            return allowed
+        }
+        
+        // 系統關鍵訊息繞過連線速率保護
+        if message.type == .system || message.type == .keyExchange {
             return true
         }
         
-        // 系統關鍵訊息繞過防護
-        if message.type == .system || message.type == .keyExchange {
+        return false
+    }
+    
+    /// 檢查是否為遊戲通訊（白名單機制）
+    private func isGameCommunication(message: MeshMessage) -> Bool {
+        // 遊戲相關訊息類型白名單
+        let gameMessageTypes: [MeshMessageType] = [
+            .game,           // 賓果遊戲消息
+            .routingUpdate,  // 路由更新
+            .signal         // 信號消息
+        ]
+        
+        // 檢查消息類型
+        if gameMessageTypes.contains(message.type) {
             return true
+        }
+        
+        // 檢查消息內容中的遊戲關鍵字
+        if let messageContent = String(data: message.data, encoding: .utf8) {
+            let gameKeywords = [
+                "room_sync", "game_start", "number_drawn", "game_restart",
+                "player_join", "player_leave", "bingo_card", "reconnect_request",
+                "weekly_leaderboard", "host_promotion", "game_state"
+            ]
+            
+            return gameKeywords.contains { messageContent.contains($0) }
         }
         
         return false
@@ -780,38 +868,38 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         // 🚨 災難通信優化：防止消息風暴的廣播機制
         let connectedPeers = networkService.connectedPeers
         
-        // 1. 檢查是否有連接的設備
+        // 2. 檢查是否有連接的設備
         guard !connectedPeers.isEmpty else {
             print("📱 無連接設備，跳過廣播 \(messageType.rawValue)")
             return
         }
         
-        // 2. 對緊急消息給予優先處理
+        // 3. 對緊急消息給予優先處理
         let isEmergency = messageType.isEmergency
         if isEmergency {
             print("🚨 緊急消息廣播: \(messageType.rawValue)")
         }
         
-        // 3. 創建優化的MeshMessage
+        // 4. 創建優化的MeshMessage
         let message = MeshMessage(
             id: UUID().uuidString,
             type: messageType,
             data: data
         )
         
-        // 4. 二進制編碼（災難場景優化）
+        // 5. 二進制編碼（災難場景優化）
         do {
             let binaryData = try BinaryMessageEncoder.encode(message)
             let dataSize = binaryData.count
             
-            // 5. 檢查數據大小（防止大數據包阻塞）
+            // 6. 檢查數據大小（防止大數據包阻塞）
             if dataSize > 1024 && !isEmergency {
                 print("⚠️ 非緊急消息過大 (\(dataSize) bytes)，考慮分片")
             }
             
             print("📦 廣播 \(messageType.rawValue): \(dataSize) bytes → \(connectedPeers.count) 設備")
             
-            // 6. 異步並發發送（提高效率）
+            // 7. 異步並發發送（提高效率）
             Task {
                 await withTaskGroup(of: Void.self) { group in
                     for peer in connectedPeers {
@@ -849,7 +937,8 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     }
     
     func getConnectedPeers() -> [String] {
-        return Array(topology.getConnections().keys)
+        // 🔧 修復：返回實際連接的設備ID，不是拓撲圖中的所有節點
+        return networkService.connectedPeers.map { $0.displayName }
     }
     
     func getNetworkTopology() -> [String: Set<String>] {
@@ -864,8 +953,68 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
             return
         }
         
+        // 檢查自己是否可以發送緊急訊息
+        let myPeerID = networkService.myPeerID.displayName
+        guard emergencyRateLimiter.shouldAllowEmergencyMessage(from: myPeerID) else {
+            print("🚫 Emergency message blocked by rate limiter for self: \(myPeerID)")
+            return
+        }
+        
         broadcastMessage(data, messageType: type)
         print("🚨 Emergency \(type.rawValue) message sent")
+    }
+    
+    
+    // MARK: - Advanced Connection Rate Manager API
+    
+    /// 獲取高級連線速率管理統計
+    func getAdvancedConnectionRateStats() -> ConnectionRateStats? {
+        return advancedConnectionRateManager?.getStats()
+    }
+    
+    /// 手動封禁節點
+    func banPeer(_ peerID: String, duration: TimeInterval? = nil) {
+        advancedConnectionRateManager?.banPeer(peerID, duration: duration)
+        print("🚫 Manually banned peer: \(peerID)")
+    }
+    
+    /// 解封節點
+    func unbanPeer(_ peerID: String) {
+        advancedConnectionRateManager?.unbanPeer(peerID)
+        print("✅ Manually unbanned peer: \(peerID)")
+    }
+    
+    /// 獲取已封禁的節點
+    func getBannedPeers() -> [String: Date] {
+        return advancedConnectionRateManager?.getBannedPeers() ?? [:]
+    }
+    
+    /// 獲取節點封禁歷史
+    func getBanHistory(for peerID: String) -> Int {
+        return advancedConnectionRateManager?.getBanHistory(for: peerID) ?? 0
+    }
+    
+    /// 獲取封禁統計
+    func getBanStatistics() -> BanStatistics? {
+        return advancedConnectionRateManager?.getBanStatistics()
+    }
+    
+    /// 啟用/停用連線速率保護
+    func setConnectionRateProtectionActive(_ active: Bool) {
+        advancedConnectionRateManager?.setActive(active)
+        print("🛡️ Connection rate protection \(active ? "enabled" : "disabled")")
+    }
+    
+    /// 清除所有封禁
+    func clearAllBans() {
+        advancedConnectionRateManager?.clearAllBans()
+        print("🧹 All bans cleared")
+    }
+    
+    /// 重置連線速率管理統計
+    func resetConnectionRateStats() {
+        advancedConnectionRateManager?.resetStats()
+        print("📊 Connection rate manager stats reset")
     }
     
     // MARK: - Route Management
@@ -935,10 +1084,31 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     // MARK: - Private Methods
     
-    private func setupNetworkCallbacks() {
-        networkService.onDataReceived = { [weak self] data, peerID in
-            self?.handleIncomingData(data, from: peerID)
+    private func convertToMeshMessageType(_ extendedType: ExtendedMeshMessageType) -> MeshMessageType {
+        switch extendedType {
+        case .emergencyMedical, .emergencyDanger:
+            return .emergency
+        case .signal:
+            return .signal
+        case .chat:
+            return .chat
+        case .game:
+            return .game
+        case .heartbeat:
+            return .heartbeat
+        case .routingUpdate:
+            return .routingUpdate
+        case .keyExchange:
+            return .keyExchange
+        case .system:
+            return .system
         }
+    }
+    
+    private func setupNetworkCallbacks() {
+        // 🔧 FIX: 移除onDataReceived回調設置，避免與ServiceContainer衝突
+        // ServiceContainer現在是唯一的數據處理入口，會分發消息給MeshManager
+        // networkService.onDataReceived - 不再設置，由ServiceContainer統一處理
         
         networkService.onPeerConnected = { [weak self] peerID in
             self?.handlePeerConnected(peerID)
@@ -955,19 +1125,25 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         // 啟動心跳計時器（修復循環引用）
         heartbeatTimer = Timer.scheduledTimer(withTimeInterval: heartbeatInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            self.sendHeartbeat()
+            Task { @MainActor in
+                self.sendHeartbeat()
+            }
         }
         
         // 啟動訊息佇列處理（修復循環引用）
         queueProcessingTimer = Timer.scheduledTimer(withTimeInterval: queueProcessingInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            self.processMessageQueue()
+            Task { @MainActor in
+                self.processMessageQueue()
+            }
         }
         
         // 啟動清理計時器（修復循環引用）
         metricsCleanupTimer = Timer.scheduledTimer(withTimeInterval: metricsCleanupInterval, repeats: true) { [weak self] _ in
             guard let self = self else { return }
-            self.performCleanup()
+            Task { @MainActor in
+                self.performCleanup()
+            }
         }
         
         print("🚀 MeshManager services started")
@@ -991,23 +1167,48 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         print("🛑 MeshManager services stopped")
     }
     
-    private func handleIncomingData(_ data: Data, from peerID: String) {
+    private func handleIncomingData(_ data: Data, from peerID: String) async {
         do {
             // 解密數據（如果需要）
             let decryptedData: Data
-            if securityService.hasSessionKey(for: peerID) {
-                decryptedData = try securityService.decrypt(data, from: peerID)
+            let hasKey = await securityService.hasSessionKey(for: peerID)
+            if hasKey {
+                decryptedData = try await securityService.decrypt(data, from: peerID)
             } else {
                 decryptedData = data
             }
             
-            // 解析訊息 (使用二進制協議替換JSON)
-            let message = try BinaryMessageDecoder.decode(decryptedData)
+            // 解析訊息 (使用二進制協議替換JSON) - 增強診斷
+            let message: MeshMessage
+            do {
+                message = try BinaryMessageDecoder.decode(decryptedData)
+            } catch {
+                // 🔍 詳細診斷失敗的數據
+                let analysis = BinaryMessageDecoder.analyzeFailedData(decryptedData)
+                print("❌ 解碼失敗詳細分析:")
+                print(analysis)
+                let hasSessionKey = await securityService.hasSessionKey(for: peerID)
+                print("🔍 加密狀態: hasSessionKey = \(hasSessionKey)")
+                print("🔍 原始數據大小: \(data.count) bytes")
+                print("🔍 解密後數據大小: \(decryptedData.count) bytes")
+                
+                // 嘗試不同的解碼策略
+                if let signalTuple = SignalBinaryCodec.decodeInlineSignalData(decryptedData) {
+                    print("✅ 成功解碼為信號數據: 類型=\(signalTuple.type), 設備=\(signalTuple.deviceName)")
+                    // 將信號數據轉發到適當的處理器
+                    Task {
+                        await handleInlineSignalTuple(signalTuple, from: peerID)
+                    }
+                    return
+                }
+                
+                throw error
+            }
             
-            // 🛡️ 增強洪水攻擊防護檢查（緊急訊息繞過）
-            if !shouldBypassFloodProtection(message: message) {
-                if floodProtection.shouldBlock(message, from: peerID) {
-                    print("🚫 Flood protection: Blocked message from \(peerID) (ID: \(message.id), Type: \(message.type.rawValue))")
+            // 🛡️ 增強連線速率保護檢查（緊急訊息有專門限制器）
+            if !shouldBypassConnectionRateProtection(message: message, from: peerID) {
+                if connectionRateManager.shouldBlock(message, from: peerID) {
+                    print("🚫 Connection rate protection: Blocked message from \(peerID) (ID: \(message.id), Type: \(message.type.rawValue))")
                     
                     // 記錄攻擊統計
                     networkStats.blockedMessages += 1
@@ -1015,25 +1216,54 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
                     networkStats.lastBlockedTime = Date()
                     
                     // 記錄到安全日誌
-                    ServiceContainer.shared.securityLogManager.logEntry(
-                        eventType: "flood_protection_triggered",
-                        source: "MeshManager",
-                        severity: SecurityLogSeverity.error,
-                        details: "洪水攻擊防護觸發 - PeerID: \(peerID), 訊息類型: \(message.type.rawValue)"
-                    )
+                    Task { @MainActor in
+                        ServiceContainer.shared.securityLogManager.logEntry(
+                            eventType: "connection_rate_exceeded",
+                            source: "MeshManager",
+                            severity: SecurityLogSeverity.error,
+                            details: "連線速率保護觸發 - PeerID: \(peerID), 訊息類型: \(message.type.rawValue)"
+                        )
+                    }
                     
                     // 通知安全監控系統
                     Task {
-                        await notifySecurityMonitor(
-                            event: .floodProtection,
+                        await notifySecurityHealthMonitor(
+                            event: .connectionRateProtection,
                             peerID: peerID,
-                            details: "Message blocked by flood protection (Type: \(message.type.rawValue))"
+                            details: "Message blocked by connection rate protection (Type: \(message.type.rawValue))"
                         )
                     }
                     return
                 }
             } else {
                 print("🚨 Emergency/System message bypass: \(message.type.rawValue) from \(peerID)")
+            }
+            
+            // 🧠 APT 防禦系統分析（緊急訊息和遊戲訊息繞過）
+            if !shouldBypassConnectionRateProtection(message: message, from: peerID) && !isGameCommunication(message: message) {
+                let anomalyLevel = await MainActor.run {
+                    ServiceContainer.shared.behaviorAnalysisSystem.analyzeMessage(
+                        from: peerID,
+                        content: String(data: message.data, encoding: .utf8) ?? ""
+                    )
+                }
+                
+                if anomalyLevel == .dangerous {
+                    print("🛡️ APT Defence: Blocked dangerous connection from \(peerID)")
+                    
+                    // 記錄統計
+                    networkStats.blockedMessages += 1
+                    networkStats.lastBlockedPeer = peerID
+                    networkStats.lastBlockedTime = Date()
+                    
+                    // 記錄到安全日誌（已在 BehaviorAnalysisSystem 中自動記錄）
+                    
+                    return
+                } else if anomalyLevel == .suspicious {
+                    print("⚠️ Behavior Analysis: Suspicious activity detected from \(peerID) - monitoring")
+                }
+            } else if isGameCommunication(message: message) {
+                print("🎮 遊戲通訊白名單：跳過行為分析 - \(message.type.rawValue) from \(peerID)")
             }
             
             // 重複訊息檢查（線程安全）
@@ -1045,8 +1275,17 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
             // 記錄已處理訊息（線程安全）
             addToProcessedMessages(message.id)
             
+            // 轉換為 ExtendedMeshMessage
+            let extendedMessage = ExtendedMeshMessage(
+                type: ExtendedMeshMessageType(rawValue: message.type.stringValue) ?? .system,
+                sourceID: message.sourceID ?? peerID,
+                targetID: message.targetID,
+                data: message.data,
+                ttl: message.ttl
+            )
+            
             // 處理訊息
-            handleSpecialMessageTypes(message, from: peerID)
+            handleMeshMessage(extendedMessage, from: peerID)
             
             // 呼叫協議回調
             onMessageReceived?(message)
@@ -1059,7 +1298,7 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         }
     }
     
-    private func handleMeshMessage(_ message: MeshMessage, from peerID: String) {
+    private func handleMeshMessage(_ message: ExtendedMeshMessage, from peerID: String) {
         let myID = networkService.myPeerID.displayName
         
         // 更新節點指標（基於心跳訊息）
@@ -1090,17 +1329,24 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         handleSpecialMessageTypes(message, from: peerID)
     }
     
-    private func deliverMessage(_ message: MeshMessage) {
+    private func deliverMessage(_ message: ExtendedMeshMessage) {
         // 緊急訊息特殊處理
         if message.type.isEmergency {
-            onEmergencyMessage?(message.data, message.type, message.sourceID)
+            let meshMessageType = convertToMeshMessageType(message.type)
+            onEmergencyMessage?(message.data, meshMessageType, message.sourceID)
         }
         
         // 一般訊息處理
-        onMessageReceived?(message.data, message.type, message.sourceID)
+        let meshMessage = MeshMessage(type: convertToMeshMessageType(message.type), sourceID: message.sourceID, targetID: message.targetID, data: message.data, ttl: message.ttl)
+        onMessageReceived?(meshMessage)
+        
+        // 【NEW】遊戲訊息特殊處理
+        if message.type == .game {
+            onGameMessageReceived?(meshMessage)
+        }
     }
     
-    private func forwardMessage(_ message: MeshMessage, from senderID: String) {
+    private func forwardMessage(_ message: ExtendedMeshMessage, from senderID: String) {
         guard message.ttl > 0 && !message.isExpired else {
             print("⚰️ Message expired, not forwarding")
             return
@@ -1123,7 +1369,8 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         }
         
         if !validTargets.isEmpty {
-            messageQueue.enqueue(forwardedMessage)
+            let meshMessage = MeshMessage(type: convertToMeshMessageType(forwardedMessage.type), sourceID: forwardedMessage.sourceID, targetID: forwardedMessage.targetID, data: forwardedMessage.data, ttl: forwardedMessage.ttl)
+            messageQueue.enqueue(meshMessage)
             
             // 更新轉發統計
             DispatchQueue.main.async {
@@ -1198,8 +1445,9 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
                 
                 // 加密數據（如果有會話密鑰）
                 let finalData: Data
-                if securityService.hasSessionKey(for: peer.displayName) {
-                    finalData = try securityService.encrypt(messageData, for: peer.displayName)
+                let hasKey = await securityService.hasSessionKey(for: peer.displayName)
+                if hasKey {
+                    finalData = try await securityService.encrypt(messageData, for: peer.displayName)
                 } else {
                     finalData = messageData
                 }
@@ -1218,20 +1466,21 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         }
     }
     
-    private func handleSpecialMessageTypes(_ message: MeshMessage, from peerID: String) {
+    private func handleSpecialMessageTypes(_ message: ExtendedMeshMessage, from peerID: String) {
         switch message.type {
         case .heartbeat:
             handleHeartbeat(message, from: peerID)
         case .routingUpdate:
             handleRoutingUpdate(message, from: peerID)
         case .keyExchange:
-            handleKeyExchange(message, from: peerID)
+            let meshMessage = MeshMessage(type: convertToMeshMessageType(message.type), sourceID: message.sourceID, targetID: message.targetID, data: message.data, ttl: message.ttl)
+            handleKeyExchange(meshMessage, from: peerID)
         default:
             break
         }
     }
     
-    private func handleHeartbeat(_ message: MeshMessage, from peerID: String) {
+    private func handleHeartbeat(_ message: ExtendedMeshMessage, from peerID: String) {
         // 更新拓撲連接
         topology.addConnection(from: message.sourceID, to: peerID)
         updateConnectedPeers()
@@ -1240,9 +1489,27 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
         updateNodeMetrics(peerID: peerID, signalStrength: -50.0, packetLoss: 0.0)
     }
     
-    private func handleRoutingUpdate(_ message: MeshMessage, from peerID: String) {
+    // MARK: - 🚨 信號數據處理
+    private func handleInlineSignalTuple(_ signalTuple: (type: SignalType, deviceName: String, deviceID: String, gridCode: String?, timestamp: Date), from peerID: String) async {
+        print("🚨 處理內聯信號數據: 類型=\(signalTuple.type), 來源=\(signalTuple.deviceName)")
+        
+        // 轉發到 ServiceContainer 的信號處理系統
+        await MainActor.run {
+            _ = Task {
+                await ServiceContainer.shared.routeInlineSignalTuple(signalTuple, from: peerID)
+            }
+        }
+        
+        // 更新統計數據
+        networkStats.messagesReceived += 1
+        
+        // 記錄成功處理
+        print("✅ 內聯信號數據處理完成")
+    }
+    
+    private func handleRoutingUpdate(_ message: ExtendedMeshMessage, from peerID: String) {
         do {
-            let remoteTopology = try BinaryMessageDecoder.decodeTopology(message.data)
+            let remoteTopology = try BinaryMessageDecoder.decodeTopology(message.data, expectedType: .routingUpdate)
             
             // 合併拓撲信息
             for (node, connections) in remoteTopology {
@@ -1259,19 +1526,51 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     }
     
     private func handleKeyExchange(_ message: MeshMessage, from peerID: String) {
-        // 這裡可以實現密鑰交換邏輯
-        #if DEBUG
-        print("🔑 Received key exchange")
-        #endif
+        print("🔑 收到來自 \(peerID) 的密鑰交換請求")
+        
+        // 轉發給 ServiceContainer 使用原有的密鑰交換處理邏輯
+        Task { @MainActor in
+            await ServiceContainer.shared.handleKeyExchangeMessage(message)
+        }
     }
     
     private func handlePeerConnected(_ peerID: String) {
+        // 🧠 APT 防禦系統分析新連接
+        let anomalyLevel = ServiceContainer.shared.behaviorAnalysisSystem.analyzeConnection(from: peerID)
+        
+        if anomalyLevel == .dangerous {
+            print("🛡️ APT Defence: Blocked dangerous peer connection - \(peerID)")
+            
+            // 記錄統計
+            networkStats.blockedConnections += 1
+            ServiceContainer.shared.behaviorAnalysisSystem.blockedConnections += 1
+            
+            // 註記：危險連接將被監控，實際斷開需要更複雜的peer管理
+            // TODO: 實作真正的連接斷開機制
+            
+            return
+        } else if anomalyLevel == .suspicious {
+            print("⚠️ APT Defence: Suspicious peer connected - \(peerID) - monitoring")
+        }
+        
         topology.addConnection(from: networkService.myPeerID.displayName, to: peerID)
         updateConnectedPeers()
         sendRoutingUpdate()
         
         // 初始化節點指標
         updateNodeMetrics(peerID: peerID, signalStrength: -50.0, packetLoss: 0.0)
+        
+        // 🔑 主動啟動密鑰交換以提高穩定性
+        Task { @MainActor in
+            // 短暫延遲以確保連接穩定
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5秒延遲
+            
+            // 檢查連接是否仍然活躍
+            if getConnectedPeers().contains(peerID) {
+                print("🔑 主動啟動與 \(peerID) 的密鑰交換")
+                await ServiceContainer.shared.scheduleKeyExchangeRetry(with: peerID)
+            }
+        }
         
         // 呼叫協議回調
         onPeerConnected?(peerID)
@@ -1281,7 +1580,9 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     private func handlePeerDisconnected(_ peerID: String) {
         topology.removePeer(peerID)
-        securityService.removeSessionKey(for: peerID)
+        Task {
+            await securityService.removeSessionKey(for: peerID)
+        }
         intelligentRouter.markNodeAsFailed(peerID)
         
         updateConnectedPeers()
@@ -1327,7 +1628,10 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     
     private func sendRoutingUpdate() {
         do {
-            let topologyData = try BinaryMessageEncoder.encodeTopology(topology.getConnections())
+            let topologyDict = Dictionary(uniqueKeysWithValues: topology.getConnections().map { (key, value) in
+                (key, Set(value))
+            })
+            let topologyData = try BinaryMessageEncoder.encodeTopology(topologyDict, messageType: .routingUpdate)
             broadcastMessage(topologyData, messageType: .routingUpdate)
         } catch {
             print("❌ Failed to send routing update: \(error)")
@@ -1358,9 +1662,7 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     }
     
     private func addToProcessedMessages(_ messageID: String) {
-        processedMessagesQueue.async(flags: .barrier) { [weak self] in
-            guard let self = self else { return }
-            
+        Task { @MainActor in
             self._processedMessages.insert(messageID)
             
             // 限制記憶體使用 - LRU 清理策略
@@ -1378,14 +1680,17 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol {
     }
     
     private func clearProcessedMessages() {
-        processedMessagesQueue.async(flags: .barrier) { [weak self] in
-            self?._processedMessages.removeAll()
+        Task { @MainActor in
+            self._processedMessages.removeAll()
         }
     }
     
     private func performCleanup() {
         // 清理智能路由器
         intelligentRouter.cleanup()
+        
+        // 清理緊急訊息速率限制器
+        emergencyRateLimiter.performCleanup()
         
         // 更新網路可靠性統計
         updateNetworkReliability()
@@ -1422,32 +1727,32 @@ extension MeshManager {
     convenience init() {
         // 創建簡單的實現作為替代
         let dummyNetworkService = DummyNetworkService()
-        let dummySecurityService = DummySecurityService()
+        let _ = DummySecurityService() // 用於向後兼容性
+        
+        // 使用高級連線速率管理作為默認選項
+        let advancedProtection = ConnectionRateManager()
         
         self.init(
             networkService: dummyNetworkService,
-            securityService: dummySecurityService,
-            floodProtection: SimpleFloodProtection()
+            securityService: SecurityService(),
+            trustScoreManager: TrustScoreManager(),
+            connectionRateManager: nil,
+            advancedConnectionRateManager: advancedProtection
         )
-        print("🕸️ MeshManager initialized with dummy services (backward compatibility)")
+        print("🕸️ MeshManager initialized with dummy services and advanced connection rate manager (backward compatibility)")
     }
     
     /// 啟動Mesh網路（兼容舊API）
-    func startMeshNetwork() {
+    func startMeshNetworkLegacy() {
         // 新版本在初始化時自動啟動，這裡只是記錄
         print("🕸️ MeshManager: Legacy startMeshNetwork() called")
     }
     
-    /// 停止Mesh網路（兼容舊API）
-    func stopMeshNetwork() {
-        stopServices()
-        print("🕸️ MeshManager: Legacy stopMeshNetwork() called")
-    }
     
     /// 設置訊息處理器（兼容舊API）
     func setMessageHandler(_ handler: @escaping (Data) -> Void) {
-        onMessageReceived = { data, messageType, sourceID in
-            handler(data)
+        onMessageReceived = { message in
+            handler(message.data)
         }
         print("🕸️ MeshManager: Legacy message handler set")
     }
@@ -1458,7 +1763,7 @@ extension MeshManager {
         let messageType: MeshMessageType
         switch priority {
         case .emergency:
-            messageType = .emergencyMedical  // 緊急訊息
+            messageType = .emergency  // 緊急訊息
         case .high:
             messageType = .signal
         case .normal:
@@ -1473,12 +1778,22 @@ extension MeshManager {
 }
 
 // MARK: - Dummy Implementations for Backward Compatibility
+@MainActor
 class DummyNetworkService: NetworkServiceProtocol {
+    var isConnected: Bool = false
     var myPeerID: MCPeerID = MCPeerID(displayName: "DummyPeer")
     var connectedPeers: [MCPeerID] = []
     var onDataReceived: ((Data, String) -> Void)?
     var onPeerConnected: ((String) -> Void)?
     var onPeerDisconnected: ((String) -> Void)?
+    
+    func startNetworking() {
+        print("🔧 DummyNetworkService: startNetworking called (no-op)")
+    }
+    
+    func stopNetworking() {
+        print("🔧 DummyNetworkService: stopNetworking called (no-op)")
+    }
     
     func send(_ data: Data, to peers: [MCPeerID]) async throws {
         print("🔧 DummyNetworkService: send called (no-op)")
@@ -1486,7 +1801,10 @@ class DummyNetworkService: NetworkServiceProtocol {
 }
 
 class DummySecurityService: SecurityServiceProtocol {
-    func hasSessionKey(for peerID: String) -> Bool { return false }
+    func generateSessionKey() -> Data? { return Data() }
+    func encryptData(_ data: Data) -> Data? { return data }
+    func decryptData(_ data: Data) -> Data? { return data }
+    func hasSessionKey(for peerID: String) async -> Bool { return false }
     func encrypt(_ data: Data, for peerID: String) throws -> Data { return data }
     func decrypt(_ data: Data, from peerID: String) throws -> Data { return data }
     func getPublicKey() throws -> Data { return Data() }

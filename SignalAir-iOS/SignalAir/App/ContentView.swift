@@ -125,6 +125,11 @@ struct ContentView: View {
                 }
             }
         }
+        .onAppear {
+            // 啟動網路服務以使設備能互相連接
+            print("🌐 ContentView: 啟動網路服務")
+            serviceContainer.startNetworkingWhenNeeded()
+        }
     }
 }
 

@@ -78,8 +78,8 @@ actor ServiceInitializer {
         // 連接優化器
         container.connectionOptimizer.initialize()
         
-        // 洪水保護
-        container.floodProtection.initialize()
+        // 連線速率管理
+        container.connectionRateManager.initialize()
         
         // 等待網路服務穩定
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2秒
@@ -91,7 +91,7 @@ actor ServiceInitializer {
         container.meshManager = MeshManager(
             networkService: container.networkService,
             securityService: container.securityService,
-            floodProtection: container.floodProtection
+            connectionRateManager: container.connectionRateManager
         )
         
         // 設置回調

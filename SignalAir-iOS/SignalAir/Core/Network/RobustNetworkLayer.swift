@@ -14,6 +14,10 @@ enum NetworkError: Error {
     case operationFailed
     case timeout
     case cancelled
+    case sessionError(String)
+    case notConnected
+    case peerNotFound
+    case connectionStateInconsistent
     
     var localizedDescription: String {
         switch self {
@@ -29,6 +33,14 @@ enum NetworkError: Error {
             return "操作超時"
         case .cancelled:
             return "操作已取消"
+        case .sessionError(let message):
+            return "會話錯誤: \(message)"
+        case .notConnected:
+            return "未連接到任何設備"
+        case .peerNotFound:
+            return "找不到指定的設備"
+        case .connectionStateInconsistent:
+            return "連接狀態不一致"
         }
     }
 }
@@ -410,7 +422,7 @@ class RobustNetworkLayer: ObservableObject {
             try await performSendOperation(data: data, to: peer)
             
             // 步驟 3: 記錄成功並釋放通道
-            await recordSuccessAndReleaseChannel(channel: channel, startTime: startTime, dataSize: data.count)
+            recordSuccessAndReleaseChannel(channel: channel, startTime: startTime, dataSize: data.count)
             
             return .success(())
             
@@ -421,7 +433,7 @@ class RobustNetworkLayer: ObservableObject {
     }
     
     /// 獲取通道
-    private func acquireChannelForPeer(_ peer: MCPeerID) async throws -> AdvancedChannelPoolManager.Channel {
+    private func acquireChannelForPeer(_ peer: MCPeerID) async throws -> ChannelInstance {
         guard let channel = await channelPoolManager.acquireChannel(for: peer) else {
             throw NetworkError.channelUnavailable
         }
@@ -434,9 +446,9 @@ class RobustNetworkLayer: ObservableObject {
     }
     
     /// 記錄成功並釋放通道
-    private func recordSuccessAndReleaseChannel(channel: AdvancedChannelPoolManager.Channel, startTime: Date, dataSize: Int) async {
+    private func recordSuccessAndReleaseChannel(channel: ChannelInstance, startTime: Date, dataSize: Int) {
         let latency = Date().timeIntervalSince(startTime)
-        await channelPoolManager.releaseChannel(channel, success: true, latency: latency, dataSize: dataSize)
+        channelPoolManager.releaseChannel(channel, success: true, latency: latency, dataSize: dataSize)
     }
     
     /// 分析發送結果
@@ -817,7 +829,6 @@ struct NetworkMetrics {
 
 extension NetworkError {
     static let systemUnavailable = NetworkError.sessionError("System unavailable")
-    static let channelUnavailable = NetworkError.sessionError("Channel unavailable")
 }
 
 // MARK: - 邊界情況檢測器

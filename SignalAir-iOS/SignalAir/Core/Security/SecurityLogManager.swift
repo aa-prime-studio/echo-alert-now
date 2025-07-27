@@ -123,7 +123,7 @@ class SecurityLogManager: ObservableObject {
         "repeated_connection_attempts",
         "unknown_protocol_request",
         "data_validation_failed",
-        "flood_protection_triggered",
+        "connection_rate_exceeded",
         "malicious_content_detected",
         "unauthorized_access_attempt",
         "encryption_failure",
@@ -381,7 +381,7 @@ class SecurityLogManager: ObservableObject {
         
         let timeFormatter = DateFormatter()
         timeFormatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        guard let timestamp = timeFormatter.date(from: timeString) else { return nil }
+        guard timeFormatter.date(from: timeString) != nil else { return nil }
         
         let severity = SecurityLogSeverity.allCases.first { $0.displayName == severityString } ?? .info
         
@@ -574,7 +574,7 @@ extension SecurityLogManager {
             switch eventType {
             case "large_packet", "malicious_content", "suspicious_content_detected", "oversized_message_blocked":
                 severity = .warning
-            case "flood_protection_triggered", "message_type_rate_limit_exceeded", "temporary_ban_applied":
+            case "connection_rate_exceeded", "message_type_rate_limit_exceeded", "temporary_ban_applied":
                 severity = .error
             case "peer_banned", "tiered_ban_applied", "unauthorized_access":
                 severity = .critical
@@ -602,5 +602,44 @@ extension SecurityLogManager {
         ) { [weak self] notification in
             self?.handleSecurityNotification(notification)
         }
+        
+        // 監聽安全監控事件
+        NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("SystemHealthMonitorEvent"),
+            object: nil,
+            queue: nil
+        ) { [weak self] notification in
+            self?.handleSystemHealthMonitorNotification(notification)
+        }
+    }
+    
+    /// 處理安全監控通知
+    private func handleSystemHealthMonitorNotification(_ notification: Notification) {
+        guard let userInfo = notification.userInfo else { return }
+        
+        let securityLevel = userInfo["securityLevel"] as? String ?? "未知"
+        let grade = userInfo["grade"] as? String ?? "未知"
+        let nodeCount = userInfo["nodeCount"] as? Int ?? 0
+        let confidence = userInfo["confidence"] as? Float ?? 0.0
+        let networkVectors = userInfo["networkVectors"] as? [String] ?? []
+        
+        let severity: SecurityLogSeverity
+        switch securityLevel {
+        case "black":
+            severity = .critical
+        case "red":
+            severity = .error
+        case "orange":
+            severity = .warning
+        default:
+            severity = .info
+        }
+        
+        logEntry(
+            eventType: "security_anomaly_detected",
+            source: "SystemHealthMonitor",
+            severity: severity,
+            details: "安全等級: \(securityLevel), 分級: \(grade), 節點數: \(nodeCount), 信心度: \(String(format: "%.2f", confidence)), 網路向量: \(networkVectors.joined(separator: ", "))"
+        )
     }
 }

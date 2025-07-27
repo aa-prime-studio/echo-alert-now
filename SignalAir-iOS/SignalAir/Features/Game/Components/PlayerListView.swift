@@ -99,10 +99,10 @@ struct PlayerListView: View {
 #Preview {
     PlayerListView(
         players: [
-            RoomPlayer(name: "BingoKing", completedLines: 3, hasWon: false),
-            RoomPlayer(name: "iPhone", completedLines: 2, hasWon: false),
-            RoomPlayer(name: "LuckyStrike", completedLines: 6, hasWon: true),
-            RoomPlayer(name: "NumberHunter", completedLines: 1, hasWon: false)
+            RoomPlayer(name: "BingoKing", playerID: "test-device-1", completedLines: 3, hasWon: false),
+            RoomPlayer(name: "iPhone", playerID: "test-device-2", completedLines: 2, hasWon: false),
+            RoomPlayer(name: "LuckyStrike", playerID: "test-device-3", completedLines: 6, hasWon: true),
+            RoomPlayer(name: "NumberHunter", playerID: "test-device-4", completedLines: 1, hasWon: false)
         ],
         deviceName: "iPhone"
     )

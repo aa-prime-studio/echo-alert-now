@@ -22,7 +22,7 @@ class IntegratedSecurityAlertSystem {
     // Integration Components
     private let trustBehaviorModel = TrustBehaviorModel()
     private let nodeAnomalyTracker = NodeAnomalyTracker()
-    private let aptDefenseSystem = APTDefenseSystem()
+    private let behaviorAnalysisSystem = BehaviorAnalysisSystem()
     
     private init() {
         setupAlertNotifications()
@@ -319,7 +319,7 @@ class IntegratedSecurityAlertSystem {
         
         NotificationCenter.default.addObserver(
             self,
-            selector: #selector(handleAPTThreatNotification),
+            selector: #selector(handleBehavior AnalysisThreatNotification),
             name: .aptThreatDetected,
             object: nil
         )
@@ -366,15 +366,15 @@ class IntegratedSecurityAlertSystem {
         sendAlert(alert)
     }
     
-    @objc private func handleAPTThreatNotification(_ notification: Notification) {
-        guard let aptAlert = notification.object as? APTAlert else { return }
+    @objc private func handleBehavior AnalysisThreatNotification(_ notification: Notification) {
+        guard let aptAlert = notification.object as? Behavior AnalysisAlert else { return }
         
         let alert = SecurityAlert(
             id: UUID(),
-            level: mapAPTThreatToSecurityLevel(aptAlert),
+            level: mapBehavior AnalysisThreatToSecurityLevel(aptAlert),
             source: aptAlert.affectedNodes.joined(separator: ","),
             type: .aptThreat,
-            reason: "APT threat detected",
+            reason: "Behavior Analysis threat detected",
             timestamp: aptAlert.timestamp,
             isResolved: false,
             metadata: [
@@ -544,7 +544,7 @@ class IntegratedSecurityAlertSystem {
         }
     }
     
-    private func mapAPTThreatToSecurityLevel(_ aptAlert: APTAlert) -> SecurityAlertLevel {
+    private func mapBehavior AnalysisThreatToSecurityLevel(_ aptAlert: Behavior AnalysisAlert) -> SecurityAlertLevel {
         switch aptAlert.threatLevel {
         case .critical:
             return .critical

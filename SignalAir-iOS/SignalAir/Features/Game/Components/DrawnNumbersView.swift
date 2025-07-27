@@ -44,7 +44,7 @@ struct DrawnNumbersView: View {
                             }
                             .padding(.horizontal, 4)
                         }
-                        .onChange(of: drawnNumbers.count) { _ in
+                        .onChange(of: drawnNumbers.count) { _, _ in
                             if let lastNumber = drawnNumbers.last {
                                 withAnimation(.easeInOut(duration: 0.3)) {
                                     proxy.scrollTo(lastNumber, anchor: .trailing)

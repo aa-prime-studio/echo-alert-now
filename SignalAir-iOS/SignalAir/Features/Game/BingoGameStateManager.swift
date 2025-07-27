@@ -4,7 +4,7 @@ import Combine
 
 /// 賓果遊戲狀態管理器 - 負責所有遊戲邏輯和狀態管理
 @MainActor
-class BingoGameStateManager: ObservableObject {
+class BingoGameStateManager: BingoGameStateManagerProtocol, ObservableObject {
     
     // MARK: - Published Properties
     
@@ -31,7 +31,7 @@ class BingoGameStateManager: ObservableObject {
     
     // MARK: - Dependencies
     
-    private let timerManager: TimerManager
+    private let timerManager: UnifiedTimerManager
     private let networkManager: BingoNetworkManager
     
     // MARK: - Private Properties
@@ -42,26 +42,32 @@ class BingoGameStateManager: ObservableObject {
     
     // MARK: - Initialization
     
-    init(timerManager: TimerManager, networkManager: BingoNetworkManager) {
+    init(timerManager: UnifiedTimerManager, networkManager: BingoNetworkManager) {
         print("🎮 BingoGameStateManager: 開始初始化")
         
         self.timerManager = timerManager
         self.networkManager = networkManager
         
-        // 【FIX】添加初始化狀態跟蹤
+        // 【FIX】避免 MainActor 死鎖 - 移除 init 中的異步操作
+        
+        // 設置初始遊戲狀態（同步）
+        gameState = .waitingForPlayers
+    }
+    
+    /// 【NEW】在 UI 出現時執行初始化，避免 MainActor 死鎖
+    func onAppear() {
         Task { @MainActor in
-            await self.performInitialStateSetup()
+            await self.performAsyncInitialization()
         }
     }
     
-    /// 【NEW】執行初始狀態設置，避免阻塞主初始化
-    private func performInitialStateSetup() async {
-        print("🎮 BingoGameStateManager: 執行初始狀態設置")
+    /// 異步初始化方法
+    private func performAsyncInitialization() async {
+        print("🎮 BingoGameStateManager: 執行異步初始化")
         
-        // 設置初始遊戲狀態
-        gameState = .waitingForPlayers
+        // 可以在這裡執行需要異步的初始化操作
         
-        print("🎮 BingoGameStateManager: 初始狀態設置完成")
+        print("🎮 BingoGameStateManager: 異步初始化完成")
     }
     
     // MARK: - Game Lifecycle
@@ -70,7 +76,8 @@ class BingoGameStateManager: ObservableObject {
     func startGame() {
         print("🎮 BingoGameStateManager: 開始遊戲")
         
-        gameState = .playing
+        // 【對齊主線】先設置為倒數狀態
+        gameState = .countdown  
         countdown = 3
         gameWon = false
         drawnNumbers = []
@@ -80,7 +87,7 @@ class BingoGameStateManager: ObservableObject {
         // 生成賓果卡
         generateBingoCard()
         
-        // 開始倒數計時 (倒數結束後進入手動抽號模式)
+        // 開始倒數計時，倒數結束後自動抽號
         startCountdown()
         
         // 廣播遊戲開始
@@ -123,7 +130,8 @@ class BingoGameStateManager: ObservableObject {
         resetGameState()
         
         // 延遲開始新遊戲
-        timerManager.scheduleOnce(id: "game.restart.delay", delay: 2.0) { [weak self] in
+        let config = TimerConfiguration(interval: 2.0, repeats: false)
+        timerManager.schedule(id: "game.restart.delay", configuration: config) { [weak self] in
             self?.startGame()
         }
         
@@ -136,6 +144,12 @@ class BingoGameStateManager: ObservableObject {
     
     /// 生成賓果卡片 (1-99 系統)
     func generateBingoCard() {
+        // 【FIXED】檢查是否已有賓果卡，避免重複生成
+        if bingoCard != nil {
+            print("🎮 BingoGameStateManager: 賓果卡已存在，跳過生成")
+            return
+        }
+        
         print("🎮 BingoGameStateManager: 生成賓果卡片 (1-99 系統)")
         
         var cardNumbers: [[Int]] = []
@@ -206,10 +220,15 @@ class BingoGameStateManager: ObservableObject {
         
         // 廣播抽出的號碼
         let numberData = withUnsafeBytes(of: Int32(nextNumber).littleEndian) { Data($0) }
-        networkManager.broadcastGameMessage(.numberDraw, data: numberData)
+        print("📡 【重要】廣播抽號消息:")
+        print("📡   - 號碼: \(nextNumber)")
+        print("📡   - 數據長度: \(numberData.count) 字節")
+        print("📡   - 數據內容: \(numberData.map { String(format: "%02x", $0) }.joined(separator: " "))")
+        networkManager.broadcastGameMessage(.numberDrawn, data: numberData)
+        print("📡   ✅ 抽號消息廣播完成")
         
         // 檢查是否有玩家獲勝
-        checkWinCondition()
+        checkWinConditionInternal()
     }
     
     /// 【廢棄】自動抽號 (舊版本，現在不使用)
@@ -218,10 +237,42 @@ class BingoGameStateManager: ObservableObject {
         // 此功能已廢棄，改為手動抽號
     }
     
-    /// 【廢棄】抽取下一個號碼 (舊版本，現在不使用)
+    /// 自動抽取下一個號碼
     private func drawNextNumber() {
-        print("🎮 BingoGameStateManager: 【廢棄】自動抽號功能")
-        // 此功能已廢棄，改為手動抽號
+        print("🎲 BingoGameStateManager: 自動抽取下一個號碼")
+        
+        // 確保遊戲正在進行中
+        guard gameState == .playing else {
+            print("⚠️ BingoGameStateManager: 遊戲未在進行中，停止抽號")
+            return
+        }
+        
+        // 找出尚未抽出的號碼
+        let availableNumbers = Set(1...totalNumbers).subtracting(drawnNumbersSet)
+        
+        guard !availableNumbers.isEmpty else {
+            print("🎮 BingoGameStateManager: 所有號碼已抽完，結束遊戲")
+            endGame()
+            return
+        }
+        
+        // 隨機選擇一個號碼
+        let nextNumber = availableNumbers.randomElement()!
+        currentNumber = nextNumber
+        drawnNumbers.append(nextNumber)
+        drawnNumbersSet.insert(nextNumber)
+        
+        print("🎲 BingoGameStateManager: 自動抽出號碼 \(nextNumber)")
+        
+        // 【新增】在聊天室顯示抽號結果
+        broadcastSystemMessage("🎲 抽出號碼：\(nextNumber)")
+        
+        // 廣播抽出的號碼
+        let numberData = withUnsafeBytes(of: Int32(nextNumber).littleEndian) { Data($0) }
+        networkManager.broadcastGameMessage(.numberDrawn, data: numberData)
+        
+        // 檢查是否有玩家獲勝
+        checkWinConditionInternal()
     }
     
     // MARK: - Number Marking
@@ -255,7 +306,7 @@ class BingoGameStateManager: ObservableObject {
         bingoCard = newCard
         
         // 檢查獲勝條件
-        checkWinCondition()
+        checkWinConditionInternal()
         
         // 廣播玩家進度
         let progressData = createProgressData()
@@ -265,15 +316,22 @@ class BingoGameStateManager: ObservableObject {
     // MARK: - Win Condition
     
     /// 檢查獲勝條件
-    private func checkWinCondition() {
+    private func checkWinConditionInternal() {
         guard let card = bingoCard else { return }
         
         let lines = checkBingoLines(card: card)
         completedLines = lines
         
-        if lines > 0 && !gameWon {
+        // 【FIX】只有達到5條線才算獲勝
+        if lines >= 5 && !gameWon {
             gameWon = true
             print("🎉 BingoGameStateManager: 獲勝！完成 \(lines) 條線")
+            
+            // 【FIX】立即停止自動抽號
+            timerManager.invalidate(id: "gameDraw")
+            
+            // 廣播獲勝訊息到聊天室
+            broadcastSystemMessage("🎉 遊戲結束！有玩家完成 \(lines) 條線！")
             
             // 觸發獲勝回調
             for callback in gameWinCallbacks {
@@ -282,6 +340,36 @@ class BingoGameStateManager: ObservableObject {
             
             // 廣播獲勝
             broadcastWin(lines: lines)
+            
+            // 【NEW】延遲3秒後自動結束遊戲並踢出玩家
+            let config = TimerConfiguration(interval: 3.0, repeats: false)
+            timerManager.schedule(id: "gameEnd.delay", configuration: config) { [weak self] in
+                self?.autoEndGameAndKickPlayers()
+            }
+        }
+    }
+    
+    /// 【NEW】自動結束遊戲並踢出所有玩家
+    private func autoEndGameAndKickPlayers() {
+        print("🔚 BingoGameStateManager: 自動結束遊戲並踢出玩家")
+        
+        // 停止所有定時器（包括自動抽號）
+        stopAllTimers()
+        
+        // 廣播遊戲結束訊息
+        broadcastSystemMessage("🚪 遊戲結束，所有玩家將被踢出房間")
+        
+        // 設置遊戲狀態為結束
+        gameState = .finished
+        
+        // 廣播踢出玩家的訊息
+        let kickData = "auto_kick_all".data(using: .utf8) ?? Data()
+        networkManager.broadcastGameMessage(.gameEnd, data: kickData)
+        
+        // 延遲1秒後重置狀態，準備下一輪
+        let resetConfig = TimerConfiguration(interval: 1.0, repeats: false)
+        timerManager.schedule(id: "gameReset.delay", configuration: resetConfig) { [weak self] in
+            self?.resetGameState()
         }
     }
     
@@ -335,31 +423,52 @@ class BingoGameStateManager: ObservableObject {
     /// 廣播獲勝
     private func broadcastWin(lines: Int) {
         let winData = createWinData(lines: lines)
-        networkManager.broadcastGameMessage(.gameWin, data: winData)
+        networkManager.broadcastGameMessage(.winnerAnnouncement, data: winData)
     }
     
     // MARK: - Message Handling
     
     /// 處理號碼抽出消息
     func handleNumberDrawn(_ number: Int) {
-        print("🎮 BingoGameStateManager: 處理號碼抽出 \(number)")
+        print("📨 【重要】BingoGameStateManager: 接收到號碼抽出 \(number)")
+        print("📨   - 當前遊戲狀態: \(gameState)")
+        print("📨   - 已抽號碼列表: \(drawnNumbers)")
+        print("📨   - 是否為重複號碼: \(drawnNumbers.contains(number))")
         
         currentNumber = number
         if !drawnNumbers.contains(number) {
             drawnNumbers.append(number)
             drawnNumbersSet.insert(number)
+            print("📨   ✅ 號碼 \(number) 已加入已抽列表")
+        } else {
+            print("📨   ⚠️ 號碼 \(number) 重複，跳過")
         }
         
         // 更新賓果卡上該號碼的drawn狀態（顯示為藍色）
         if var card = bingoCard {
+            var foundAndMarked = false
             for i in 0..<card.numbers.count {
                 if card.numbers[i] == number {
                     card.drawn[i] = true
-                    print("✅ BingoGameStateManager: 號碼 \(number) 在位置 \(i) 標記為已抽中")
+                    foundAndMarked = true
+                    print("✅ BingoGameStateManager: 號碼 \(number) 在位置 \(i) 標記為已抽中（藍色顯示）")
                 }
             }
             bingoCard = card
+            
+            if foundAndMarked {
+                print("📨   ✅ 賓果卡已更新，號碼 \(number) 將顯示為藍色")
+            } else {
+                print("📨   ⚠️ 號碼 \(number) 不在我的賓果卡上")
+            }
+        } else {
+            print("📨   ❌ 沒有賓果卡，無法標記號碼")
         }
+        
+        print("📨   🎯 號碼抽出處理完成，當前已抽號碼: \(drawnNumbers)")
+        
+        // 檢查獲勝條件
+        checkWinConditionInternal()
     }
     
     /// 處理遊戲開始消息
@@ -368,7 +477,8 @@ class BingoGameStateManager: ObservableObject {
         
         gameState = .playing
         generateBingoCard()
-        startDrawing()
+        // 現在改為手動抽號，不自動開始抽號
+        print("🎮 BingoGameStateManager: 遊戲開始，等待手動抽號")
     }
     
     /// 處理遊戲結束消息
@@ -385,7 +495,8 @@ class BingoGameStateManager: ObservableObject {
         
         resetGameState()
         
-        timerManager.scheduleOnce(id: "game.restart.handle", delay: 1.0) { [weak self] in
+        let config = TimerConfiguration(interval: 1.0, repeats: false)
+        timerManager.schedule(id: "game.restart.handle", configuration: config) { [weak self] in
             self?.startGame()
         }
     }
@@ -394,26 +505,100 @@ class BingoGameStateManager: ObservableObject {
     
     /// 開始倒數計時
     private func startCountdown() {
-        timerManager.scheduleRepeating(id: TimerManager.TimerID.gameCountdown, interval: 1.0) { [weak self] in
+        print("⏰ BingoGameStateManager: 開始倒數計時")
+        
+        // 【對齊主線】使用正確的計時器配置
+        let config = TimerConfiguration(interval: 1.0, repeats: true)
+        timerManager.schedule(id: "gameCountdown", configuration: config) { [weak self] in
             guard let self = self else { return }
             
             if self.countdown > 0 {
+                // 【新增】在聊天室顯示倒數  
+                self.broadcastSystemMessage("⏰ \(self.countdown)...")
+                print("⏰ 倒數: \(self.countdown)")
+                
                 self.countdown -= 1
             } else {
-                self.timerManager.cancelTimer(id: TimerManager.TimerID.gameCountdown)
-                // 【重要修復】移除自動抽號，改為手動抽號模式
-                print("🎮 BingoGameStateManager: 倒數結束，現在進入手動抽號模式")
-                self.gameState = .playing
+                // 倒數結束
+                self.timerManager.invalidate(id: "gameCountdown")
+                
+                // 倒數結束後自動開始抽號
+                print("🎮 BingoGameStateManager: 倒數結束，開始自動抽號！")
+                self.actuallyStartGame()
             }
         }
+    }
+    
+    /// 真正開始遊戲（倒數結束後）
+    private func actuallyStartGame() {
+        print("🎮 BingoGameStateManager: 真正開始遊戲")
+        
+        gameState = .playing
+        
+        // 在聊天室顯示遊戲開始
+        broadcastSystemMessage("🎮 遊戲開始！系統將自動抽號")
+        
+        // 開始自動抽號
+        startAutoDrawing()
+    }
+    
+    /// 開始自動抽號
+    private func startAutoDrawing() {
+        print("🎲 BingoGameStateManager: 開始自動抽號")
+        
+        // 每3秒自動抽一個號碼
+        let config = TimerConfiguration(interval: 3.0, repeats: true)
+        timerManager.schedule(id: "gameDraw", configuration: config) { [weak self] in
+            guard let self = self else { return }
+            self.drawNextNumber()
+        }
+    }
+    
+    /// 廣播系統訊息到聊天室（對齊主線實現）
+    private func broadcastSystemMessage(_ message: String) {
+        print("💬 系統訊息: \(message)")
+        
+        // 【FIX】使用正確的二進制格式發送系統訊息
+        let systemData = createSystemMessageData(message: message)
+        networkManager.broadcastGameMessage(.chatMessage, data: systemData)
+    }
+    
+    /// 創建系統訊息的二進制數據
+    private func createSystemMessageData(message: String) -> Data {
+        var data = Data()
+        
+        // 房間ID（使用空字符串）
+        data.append(UInt8(0))
+        
+        // 發送者名稱（使用"系統"）
+        let senderName = "系統"
+        let senderData = senderName.data(using: .utf8) ?? Data()
+        let senderLength = min(senderData.count, 255)
+        data.append(UInt8(senderLength))
+        data.append(senderData.prefix(senderLength))
+        
+        // 消息內容長度和數據
+        let messageData = message.data(using: .utf8) ?? Data()
+        let messageLength = UInt16(messageData.count)
+        data.append(contentsOf: withUnsafeBytes(of: messageLength.littleEndian) { Array($0) })
+        data.append(messageData)
+        
+        // 時間戳
+        let timestamp = UInt64(Date().timeIntervalSince1970)
+        data.append(contentsOf: withUnsafeBytes(of: timestamp.littleEndian) { Array($0) })
+        
+        return data
     }
     
     // MARK: - Timer Management
     
     /// 停止所有計時器
     private func stopAllTimers() {
-        timerManager.cancelTimer(id: TimerManager.TimerID.gameCountdown)
-        timerManager.cancelTimer(id: TimerManager.TimerID.gameDraw)
+        timerManager.invalidate(id: "gameCountdown")
+        timerManager.invalidate(id: "gameDraw")
+        timerManager.invalidate(id: "gameEnd.delay")
+        timerManager.invalidate(id: "gameReset.delay")
+        print("⏹️ BingoGameStateManager: 已停止所有計時器")
     }
     
     // MARK: - Data Creation
@@ -432,11 +617,38 @@ class BingoGameStateManager: ObservableObject {
         return data
     }
     
+    // MARK: - Publishers for Protocol Compliance
+    
+    var gameStatePublisher: AnyPublisher<GameRoomState.GameState, Never> {
+        $gameState.eraseToAnyPublisher()
+    }
+    
+    var bingoCardPublisher: AnyPublisher<BingoCard?, Never> {
+        $bingoCard.eraseToAnyPublisher()
+    }
+    
+    var drawnNumbersPublisher: AnyPublisher<[Int], Never> {
+        $drawnNumbers.eraseToAnyPublisher()
+    }
+    
+    var currentNumberPublisher: AnyPublisher<Int?, Never> {
+        $currentNumber.eraseToAnyPublisher()
+    }
+    
+    var gameWonPublisher: AnyPublisher<Bool, Never> {
+        $gameWon.eraseToAnyPublisher()
+    }
+    
     // MARK: - Callbacks
     
     /// 註冊獲勝回調
     func onGameWon(_ callback: @escaping (String, Int) -> Void) {
         gameWinCallbacks.append(callback)
+    }
+    
+    /// 檢查獲勝條件 (公開方法)
+    func checkWinCondition() {
+        checkWinConditionInternal()
     }
     
     // MARK: - Lifecycle

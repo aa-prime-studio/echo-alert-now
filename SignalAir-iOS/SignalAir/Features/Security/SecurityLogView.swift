@@ -311,8 +311,8 @@ struct SecurityLogEntryView: View {
         switch source {
         case "SecurityLogManager":
             return "安全系統"
-        case "FloodProtection":
-            return "洪水防護"
+        case "ConnectionRateManager":
+            return "連線速率管理"
         case "NetworkService":
             return "網路服務"
         case "MeshManager":

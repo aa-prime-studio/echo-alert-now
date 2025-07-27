@@ -1,0 +1,80 @@
+{
+  "source": "/Users/mareen2018/Desktop/echo-alert-now-1/SignalAir-iOS/SignalAir/Features/Game/GameView.swift",
+  "tables": {
+    "Localizable": [
+      {
+        "comment": "",
+        "key": "Bingo\nGame Room",
+        "location": {
+          "startingColumn": 22,
+          "startingLine": 118
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ room %lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 124
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 577
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%lld%@)",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 592
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%lld/6%@)",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 584
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@ (%lld/6%@)",
+        "location": {
+          "startingColumn": 38,
+          "startingLine": 597
+        }
+      },
+      {
+        "comment": "",
+        "key": "%@: %lld/5",
+        "location": {
+          "startingColumn": 34,
+          "startingLine": 618
+        }
+      },
+      {
+        "comment": "",
+        "key": "%lld",
+        "location": {
+          "startingColumn": 26,
+          "startingLine": 765
+        }
+      },
+      {
+        "comment": "",
+        "key": "🏆",
+        "location": {
+          "startingColumn": 30,
+          "startingLine": 747
+        }
+      }
+    ]
+  },
+  "version": 1
+}

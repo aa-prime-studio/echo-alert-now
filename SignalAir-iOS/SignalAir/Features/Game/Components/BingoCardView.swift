@@ -87,7 +87,7 @@ struct BingoCardView: View {
             .background(Color.white)
             .cornerRadius(12)
             .frame(maxWidth: .infinity)
-            .onChange(of: drawnNumbers) { newDrawnNumbers in
+            .onChange(of: drawnNumbers) { _, newDrawnNumbers in
                 // 當有新號碼被抽中時，記錄時間
                 for number in newDrawnNumbers {
                     if numberDrawnTimes[number] == nil {

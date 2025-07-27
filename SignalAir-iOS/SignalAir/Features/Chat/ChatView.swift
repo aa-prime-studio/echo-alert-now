@@ -22,7 +22,7 @@ struct ChatView: View {
         .onAppear {
             viewModel.deviceName = nicknameService.userNickname
         }
-        .onChange(of: nicknameService.nickname) { newNickname in
+        .onChange(of: nicknameService.nickname) { _, newNickname in
             viewModel.deviceName = newNickname
         }
         .confirmationDialog("用戶操作", isPresented: $showBlacklistDialog) {
@@ -108,20 +108,37 @@ struct ChatView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.gray.opacity(0.05))
             } else {
-                ScrollView {
-                    LazyVStack(spacing: 12) {
-                        ForEach(filteredMessages) { message in
-                            ChatMessageView(
-                                message: message, 
-                                formatTime: viewModel.formatTime,
-                                selectedUserForBlacklist: $selectedUserForBlacklist,
-                                showBlacklistDialog: $showBlacklistDialog
-                            )
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        LazyVStack(spacing: 12) {
+                            ForEach(filteredMessages) { message in
+                                ChatMessageView(
+                                    message: message, 
+                                    formatTime: viewModel.formatTime,
+                                    selectedUserForBlacklist: $selectedUserForBlacklist,
+                                    showBlacklistDialog: $showBlacklistDialog
+                                )
+                                .id(message.id)
+                            }
+                        }
+                        .padding()
+                    }
+                    .background(Color.gray.opacity(0.05))
+                    .onChange(of: filteredMessages.count) { _, _ in
+                        // 當有新訊息時自動滾動到底部
+                        if let lastMessage = filteredMessages.last {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                            }
                         }
                     }
-                    .padding()
+                    .onAppear {
+                        // 初次載入時滾動到底部
+                        if let lastMessage = filteredMessages.last {
+                            proxy.scrollTo(lastMessage.id, anchor: .bottom)
+                        }
+                    }
                 }
-                .background(Color.gray.opacity(0.05))
             }
         }
     }
@@ -259,50 +276,7 @@ extension View {
 
 // MARK: - MentionTextField Implementation
 
-struct MentionAutocompleteView: View {
-    let users: [String]
-    let onSelectUser: (String) -> Void
-    let onDismiss: () -> Void
-    
-    var body: some View {
-        if !users.isEmpty {
-            VStack(alignment: .leading, spacing: 0) {
-                ForEach(users, id: \.self) { user in
-                    Button(action: {
-                        onSelectUser(user)
-                    }) {
-                        HStack {
-                            Image(systemName: "person.circle.fill")
-                                .foregroundColor(Color(red: 0.0, green: 0.843, blue: 0.416))
-                                .font(.system(size: 16))
-                            
-                            Text(user)
-                                .foregroundColor(.primary)
-                                .font(.system(size: 16))
-                            
-                            Spacer()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.white)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                    
-                    if user != users.last {
-                        Divider()
-                            .background(Color.gray.opacity(0.3))
-                    }
-                }
-            }
-            .background(Color.white)
-            .cornerRadius(8)
-            .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
-            .padding(.horizontal)
-            .transition(.opacity.combined(with: .scale(scale: 0.95)))
-        }
-    }
-}
+// MentionAutocompleteView moved to separate file - Components/MentionAutocompleteView.swift
 
 struct MentionTextField: View {
     @Binding var text: String
@@ -342,7 +316,7 @@ struct MentionTextField: View {
                     // 強制隱藏鍵盤
                     hideKeyboard()
                 }
-                .onChange(of: text) { newValue in
+                .onChange(of: text) { oldValue, newValue in
                     handleTextChange(newValue)
                 }
                 .onTapGesture {

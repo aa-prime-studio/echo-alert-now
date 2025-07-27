@@ -67,7 +67,7 @@ floodProtection.initialize()
 // - SecurityService: 自動調用 setupCryptoSystem()
 // - NetworkService: 自動設置 session、advertiser、browser
 // - ConnectionOptimizer: 自動調用 startQualityMonitoring()
-// - FloodProtection: 使用預設配置自動初始化
+// - ConnectionRateManager: 使用預設配置自動初始化
 
 // 只需要手動調用的操作：
 await purchaseService.reloadProducts() // 可選的產品重載
@@ -91,7 +91,7 @@ networkService.startNetworking()       // 啟動網路功能
 6. ✅ `value of type 'SecurityService' has no member 'initializeKeystore'`
 7. ✅ `value of type 'NetworkService' has no member 'initializeNetwork'`
 8. ✅ `value of type 'ConnectionOptimizer' has no member 'initialize'`
-9. ✅ `value of type 'FloodProtection' has no member 'initialize'`
+9. ✅ `value of type 'ConnectionRateManager' has no member 'initialize'`
 
 ### 架構改進
 - ✅ **保持了三階段初始化邏輯**

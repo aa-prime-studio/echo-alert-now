@@ -51,6 +51,7 @@ class GameViewModel: ObservableObject {
         return bingoViewModel.roomPlayers.map { playerState in
             RoomPlayer(
                 name: playerState.name,
+                playerID: playerState.playerID,
                 completedLines: playerState.completedLines,
                 hasWon: playerState.hasWon
             )
@@ -96,7 +97,7 @@ class GameViewModel: ObservableObject {
     // MARK: - Room Management
     func joinRoom(_ room: BingoRoom) {
         currentRoomID = room.id
-        bingoViewModel.updateRoom(room.id)
+        bingoViewModel.joinRoom("\(room.id)")
     }
     
     func leaveRoom() {

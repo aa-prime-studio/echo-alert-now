@@ -4,6 +4,7 @@ import Combine
 
 // MARK: - Admin Dashboard ViewModel
 
+@MainActor
 class AdminDashboardViewModel: ObservableObject {
     
     // MARK: - Published Properties

@@ -1044,19 +1044,19 @@ class TrustScoreManager: ObservableObject {
     
     /// 儲存資料
     private func saveData() {
-        // 儲存信任評分 (到 Keychain)
+        // 儲存信任評分 (僅 Keychain，不回退到明文儲存)
         if let data = try? JSONEncoder().encode(trustScores) {
             if !storeInKeychain(data: data, key: userDefaultsKey) {
-                print("⚠️ 儲存信任評分到 Keychain 失敗，回退到 UserDefaults")
-                UserDefaults.standard.set(data, forKey: userDefaultsKey)
+                print("🚨 SECURITY: 儲存信任評分到 Keychain 失敗，拒絕明文儲存")
+                // 嚴重安全警告：不回退到 UserDefaults 明文儲存
             }
         }
         
-        // 儲存黑名單 (到 Keychain)
+        // 儲存黑名單 (僅 Keychain，不回退到明文儲存)
         if let data = try? JSONEncoder().encode(Array(localBlacklist)) {
             if !storeInKeychain(data: data, key: blacklistKey) {
-                print("⚠️ 儲存黑名單到 Keychain 失敗，回退到 UserDefaults")
-                UserDefaults.standard.set(Array(localBlacklist), forKey: blacklistKey)
+                print("🚨 SECURITY: 儲存黑名單到 Keychain 失敗，拒絕明文儲存")
+                // 嚴重安全警告：不回退到 UserDefaults 明文儲存
             }
         }
         
@@ -1188,12 +1188,11 @@ class TrustScoreManager: ObservableObject {
                 }
             }
             
-            // 儲存合併後的數據到 Keychain
+            // 儲存合併後的數據到 Keychain (僅 Keychain，不回退到明文儲存)
             if let data = try? JSONEncoder().encode(allData) {
                 if !storeInKeychain(data: data, key: userDefaultsKey) {
-                    print("⚠️ 批次儲存到 Keychain 失敗，回退到 UserDefaults")
-                    UserDefaults.standard.set(data, forKey: userDefaultsKey)
-                    UserDefaults.standard.synchronize()
+                    print("🚨 SECURITY: 批次儲存到 Keychain 失敗，拒絕明文儲存")
+                    // 嚴重安全警告：不回退到 UserDefaults 明文儲存
                 }
                 lastSaveTime = Date()
                 
@@ -1203,10 +1202,11 @@ class TrustScoreManager: ObservableObject {
         }
         
         // 儲存其他數據（黑名單、觀察名單等）
-        // 儲存黑名單到 Keychain
+        // 儲存黑名單到 Keychain (僅 Keychain，不回退到明文儲存)
         if let data = try? JSONEncoder().encode(Array(localBlacklist)) {
             if !storeInKeychain(data: data, key: blacklistKey) {
-                UserDefaults.standard.set(Array(localBlacklist), forKey: blacklistKey)
+                print("🚨 SECURITY: 儲存黑名單到 Keychain 失敗，拒絕明文儲存")
+                // 嚴重安全警告：不回退到 UserDefaults 明文儲存
             }
         }
         

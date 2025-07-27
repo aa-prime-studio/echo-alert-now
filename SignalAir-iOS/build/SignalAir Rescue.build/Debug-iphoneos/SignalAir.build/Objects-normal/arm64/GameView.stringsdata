@@ -7,7 +7,7 @@
         "key": "Bingo\nGame Room",
         "location": {
           "startingColumn": 22,
-          "startingLine": 117
+          "startingLine": 118
         }
       },
       {
@@ -15,7 +15,7 @@
         "key": "%@ room %lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 123
+          "startingLine": 124
         }
       },
       {
@@ -23,7 +23,7 @@
         "key": "%@",
         "location": {
           "startingColumn": 30,
-          "startingLine": 497
+          "startingLine": 588
         }
       },
       {
@@ -31,7 +31,7 @@
         "key": "%@ (%lld%@)",
         "location": {
           "startingColumn": 34,
-          "startingLine": 512
+          "startingLine": 603
         }
       },
       {
@@ -39,7 +39,7 @@
         "key": "%@ (%lld/6%@)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 504
+          "startingLine": 595
         }
       },
       {
@@ -47,7 +47,7 @@
         "key": "%@ (%lld/6%@)",
         "location": {
           "startingColumn": 38,
-          "startingLine": 517
+          "startingLine": 608
         }
       },
       {
@@ -55,7 +55,7 @@
         "key": "%@: %lld/5",
         "location": {
           "startingColumn": 34,
-          "startingLine": 538
+          "startingLine": 629
         }
       },
       {
@@ -63,7 +63,7 @@
         "key": "%lld",
         "location": {
           "startingColumn": 26,
-          "startingLine": 685
+          "startingLine": 775
         }
       },
       {
@@ -71,7 +71,7 @@
         "key": "🏆",
         "location": {
           "startingColumn": 30,
-          "startingLine": 667
+          "startingLine": 757
         }
       }
     ]

@@ -70,13 +70,13 @@ class PurchaseService: NSObject, ObservableObject {
             switch language {
             case .chinese:
                 switch self {
-                case .basicVIP: return "解鎖聊天室每天上限30條訊息限制"
+                case .basicVIP: return "解鎖聊天室每天上限50條訊息限制"
                 case .vip: return "購買解鎖賓果遊戲室"
                 case .vvip: return "全解鎖版本，贊助未來擴充語言包"
                 }
             case .english:
                 switch self {
-                case .basicVIP: return "Unlock daily chat limit of 30 messages"
+                case .basicVIP: return "Unlock daily chat limit of 50 messages"
                 case .vip: return "Unlock Bingo Game Room"
                 case .vvip: return "Full unlock version, sponsor future language packs"
                 }
