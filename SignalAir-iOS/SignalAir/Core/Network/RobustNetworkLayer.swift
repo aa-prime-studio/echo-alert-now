@@ -18,6 +18,7 @@ enum NetworkError: Error {
     case notConnected
     case peerNotFound
     case connectionStateInconsistent
+    case keyExchangeFailed
     
     var localizedDescription: String {
         switch self {
@@ -41,6 +42,8 @@ enum NetworkError: Error {
             return "找不到指定的設備"
         case .connectionStateInconsistent:
             return "連接狀態不一致"
+        case .keyExchangeFailed:
+            return "密鑰交換失敗"
         }
     }
 }

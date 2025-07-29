@@ -65,7 +65,8 @@ class BingoGameStateManager: BingoGameStateManagerProtocol, ObservableObject {
     private func performAsyncInitialization() async {
         print("🎮 BingoGameStateManager: 執行異步初始化")
         
-        // 可以在這裡執行需要異步的初始化操作
+        // 確保一進入遊戲室就生成賓果卡
+        generateBingoCard()
         
         print("🎮 BingoGameStateManager: 異步初始化完成")
     }
@@ -142,10 +143,10 @@ class BingoGameStateManager: BingoGameStateManagerProtocol, ObservableObject {
     
     // MARK: - Bingo Card Generation
     
-    /// 生成賓果卡片 (1-99 系統)
+    /// 生成賓果卡片 (1-99 系統) - 只有在不存在時才生成
     func generateBingoCard() {
-        // 【FIXED】檢查是否已有賓果卡，避免重複生成
-        if bingoCard != nil {
+        // 【FIX】只有在賓果卡不存在時才生成新的，避免號碼變換
+        guard bingoCard == nil else {
             print("🎮 BingoGameStateManager: 賓果卡已存在，跳過生成")
             return
         }
@@ -523,7 +524,7 @@ class BingoGameStateManager: BingoGameStateManagerProtocol, ObservableObject {
                 self.timerManager.invalidate(id: "gameCountdown")
                 
                 // 倒數結束後自動開始抽號
-                print("🎮 BingoGameStateManager: 倒數結束，開始自動抽號！")
+                print("🎮 BingoGameStateManager: 倒數結束，開始輪流手動選號！")
                 self.actuallyStartGame()
             }
         }
@@ -536,22 +537,22 @@ class BingoGameStateManager: BingoGameStateManagerProtocol, ObservableObject {
         gameState = .playing
         
         // 在聊天室顯示遊戲開始
-        broadcastSystemMessage("🎮 遊戲開始！系統將自動抽號")
+        broadcastSystemMessage("🎮 遊戲開始！玩家輪流手動選號")
         
-        // 開始自動抽號
-        startAutoDrawing()
+        // 【修改】不再自動抽號，改為輪流手動選號
+        // startAutoDrawing() // 已停用
     }
     
-    /// 開始自動抽號
+    /// 【廢棄】開始自動抽號 (舊版本，現在不使用)
     private func startAutoDrawing() {
-        print("🎲 BingoGameStateManager: 開始自動抽號")
+        print("🎲 BingoGameStateManager: 【廢棄】自動抽號功能，現在使用輪流手動選號")
         
-        // 每3秒自動抽一個號碼
-        let config = TimerConfiguration(interval: 3.0, repeats: true)
-        timerManager.schedule(id: "gameDraw", configuration: config) { [weak self] in
-            guard let self = self else { return }
-            self.drawNextNumber()
-        }
+        // 已停用：每3秒自動抽一個號碼
+        // let config = TimerConfiguration(interval: 3.0, repeats: true)
+        // timerManager.schedule(id: "gameDraw", configuration: config) { [weak self] in
+        //     guard let self = self else { return }
+        //     self.drawNextNumber()
+        // }
     }
     
     /// 廣播系統訊息到聊天室（對齊主線實現）

@@ -648,6 +648,25 @@ struct BingoGameView: View {
                     RoomPlayer(name: player.name, playerID: player.playerID, completedLines: player.completedLines, hasWon: player.hasWon)
                 }, deviceName: viewModel.deviceName)
                 
+                // 【NEW】號碼選擇器（一進房間就顯示）
+                CurrentNumberSelectorView(
+                    selectedNumber: $viewModel.selectedNumber,
+                    isMyTurn: viewModel.isMyTurn && viewModel.gameState == .playing,
+                    currentPlayerName: viewModel.currentPlayerDisplayName,
+                    playerCount: viewModel.roomPlayers.count,
+                    gameState: viewModel.gameState,
+                    drawnNumbers: viewModel.drawnNumbers,
+                    confirmedNumbers: viewModel.confirmedNumbers,
+                    onNumberSelected: { number in
+                        viewModel.selectNumber(number)
+                        onInteraction() // 記錄互動次數
+                    },
+                    onNumberConfirmed: { number in
+                        viewModel.confirmNumber(number)
+                        onInteraction() // 記錄互動次數
+                    }
+                )
+                
                 // Drawn Numbers Display
                 DrawnNumbersView(drawnNumbers: viewModel.drawnNumbers)
                 

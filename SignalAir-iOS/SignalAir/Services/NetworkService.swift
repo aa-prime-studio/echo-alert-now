@@ -93,6 +93,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     // 連接狀態管理器 (使用Actor模式)
     private let connectionStateManager = ConnectionStateManager()
     
+    // 網絡狀態協調器
+    private let networkStateCoordinator: NetworkStateCoordinator = NetworkStateCoordinator.shared
+    
     // MARK: - Properties
     private var _myPeerID: MCPeerID?
     var myPeerID: MCPeerID { 
@@ -206,6 +209,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     func startNetworking() {
         print("🚀 Starting networking (non-blocking)...")
         
+        // 1. 報告物理層正在連接
+        networkStateCoordinator.reportPhysicalLayerState(.connecting)
+        
         DispatchQueue.main.async { @Sendable in
             self.connectionStatus = .connecting
         }
@@ -227,6 +233,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
                 self.advertiser.startAdvertisingPeer()
                 self.browser.startBrowsingForPeers()
                 
+                // 2. 報告物理層已連接（即使沒有對等體）
+                self.networkStateCoordinator.reportPhysicalLayerState(.connected)
+                
                 print("✅ NetworkService: 廣播和瀏覽已啟動（非阻塞）")
             }
         }
@@ -235,6 +244,9 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
     /// 停止網路服務
     func stopNetworking() {
         print("🛑 Stopping networking...")
+        
+        // 1. 報告物理層斷線
+        networkStateCoordinator.reportPhysicalLayerState(.disconnected)
         
         advertiser.stopAdvertisingPeer()
         browser.stopBrowsingForPeers()
@@ -353,6 +365,16 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
         DispatchQueue.main.async { @Sendable in
             print("✅ Peer connected: \(peer.displayName)")
             self.updateConnectionStatus()
+            
+            // 1. 報告對等體連接到物理層
+            self.networkStateCoordinator.reportPeerConnection(peer.displayName, connected: true, layer: .physical)
+            
+            // 2. 檢查並更新物理層狀態
+            let currentPeerCount = self.connectedPeers.count
+            if currentPeerCount > 0 {
+                self.networkStateCoordinator.reportPhysicalLayerState(.ready, peerCount: currentPeerCount)
+            }
+            
             self.onPeerConnected?(peer.displayName)
             
             // 通知自動重連管理器清除斷線記錄（暫時註解）
@@ -377,6 +399,18 @@ class NetworkService: NSObject, ObservableObject, NetworkServiceProtocol, @unche
             self.cleanupPendingOperations(for: peer)
             
             self.updateConnectionStatus()
+            
+            // 1. 報告對等體斷開連接
+            self.networkStateCoordinator.reportPeerConnection(peer.displayName, connected: false, layer: .physical)
+            
+            // 2. 檢查並更新物理層狀態
+            let remainingPeerCount = self.connectedPeers.count
+            if remainingPeerCount == 0 {
+                self.networkStateCoordinator.reportPhysicalLayerState(.connected, peerCount: 0) // 無對等體但仍在廣播
+            } else {
+                self.networkStateCoordinator.reportPhysicalLayerState(.ready, peerCount: remainingPeerCount)
+            }
+            
             self.onPeerDisconnected?(peer.displayName)
             
             // 記錄斷線以便自動重連（暫時註解）

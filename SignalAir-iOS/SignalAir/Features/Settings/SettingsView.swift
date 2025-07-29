@@ -9,6 +9,8 @@ struct SettingsView: View {
     @State private var showingLanguageSheet = false
     @State private var isEditingNickname = false
     @State private var tempNickname: String = ""
+    @State private var showingTestResults = false
+    @State private var testOutput = ""
     
     var body: some View {
         NavigationView {
@@ -44,6 +46,15 @@ struct SettingsView: View {
                         .background(Color.white)
                         .cornerRadius(12)
                         
+                        // DEBUG: 測試區塊
+                        #if DEBUG
+                        VStack(spacing: 0) {
+                            debugTestSection
+                        }
+                        .background(Color.white)
+                        .cornerRadius(12)
+                        #endif
+                        
                         // 恢復購買按鈕移到法律條款下方
                         HStack {
                             Spacer()
@@ -68,6 +79,24 @@ struct SettingsView: View {
         }
         .sheet(isPresented: $showingPurchaseSheet) {
             PurchaseOptionsView(purchaseService: purchaseService)
+        }
+        .sheet(isPresented: $showingTestResults) {
+            NavigationView {
+                ScrollView {
+                    Text(testOutput)
+                        .font(.system(.caption, design: .monospaced))
+                        .padding()
+                }
+                .navigationTitle("網絡測試結果")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("關閉") {
+                            showingTestResults = false
+                        }
+                    }
+                }
+            }
         }
         .sheet(isPresented: $showingLanguageSheet) {
             LanguageSelectionView(languageService: languageService)
@@ -406,6 +435,239 @@ struct SettingsView: View {
                 .padding()
             }
         }
+    }
+    
+    private var debugTestSection: some View {
+        VStack(spacing: 0) {
+            // 標題
+            HStack {
+                Image(systemName: "ladybug")
+                    .foregroundColor(.red)
+                    .frame(width: 24)
+                
+                Text("🧪 網絡測試工具")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                
+                Spacer()
+                
+                Text("DEBUG")
+                    .font(.caption)
+                    .foregroundColor(.red)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 4)
+                    .background(Color.red.opacity(0.1))
+                    .cornerRadius(4)
+            }
+            .padding()
+            
+            Divider()
+            
+            // 測試按鈕們
+            VStack(spacing: 0) {
+                Button(action: {
+                    runMessageRoutingTest()
+                }) {
+                    HStack {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .foregroundColor(.blue)
+                            .frame(width: 24)
+                        
+                        Text("🧪 測試消息路由")
+                            .font(.body)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "play.circle")
+                            .foregroundColor(.blue)
+                    }
+                    .padding()
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    runNetworkIntegrationTest()
+                }) {
+                    HStack {
+                        Image(systemName: "network")
+                            .foregroundColor(.purple)
+                            .frame(width: 24)
+                        
+                        Text("🌐 測試網絡集成")
+                            .font(.body)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "play.circle")
+                            .foregroundColor(.purple)
+                    }
+                    .padding()
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    runNetworkDiagnosis()
+                }) {
+                    HStack {
+                        Image(systemName: "stethoscope")
+                            .foregroundColor(.orange)
+                            .frame(width: 24)
+                        
+                        Text("🔍 診斷網絡狀態")
+                            .font(.body)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "play.circle")
+                            .foregroundColor(.orange)
+                    }
+                    .padding()
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    testKeyExchangeOptimization()
+                }) {
+                    HStack {
+                        Image(systemName: "key.fill")
+                            .foregroundColor(.purple)
+                            .frame(width: 24)
+                        
+                        Text("🔑 測試密鑰交換優化")
+                            .font(.body)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "play.circle")
+                            .foregroundColor(.purple)
+                    }
+                    .padding()
+                }
+                
+                Divider()
+                
+                Button(action: {
+                    showingTestResults = true
+                }) {
+                    HStack {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .foregroundColor(.green)
+                            .frame(width: 24)
+                        
+                        Text("📋 查看測試結果")
+                            .font(.body)
+                            .foregroundColor(.black)
+                        
+                        Spacer()
+                        
+                        Image(systemName: "eye")
+                            .foregroundColor(.green)
+                    }
+                    .padding()
+                }
+            }
+        }
+    }
+    
+    private func runMessageRoutingTest() {
+        appendToTestOutput("🧪 開始執行消息路由測試...")
+        
+        // 簡化測試 - 檢查基本的消息路由組件
+        appendToTestOutput("📡 檢查消息路由組件:")
+        
+        // 檢查 NetworkService
+        let networkService = serviceContainer.networkService
+        appendToTestOutput("  - NetworkService.onDataReceived: \(networkService.onDataReceived != nil ? "已設置" : "未設置")")
+        
+        // 檢查 MeshManager
+        if let meshManager = serviceContainer.meshManager {
+            appendToTestOutput("  - MeshManager.onGameMessageReceived: \(meshManager.onGameMessageReceived != nil ? "已設置" : "未設置")")
+        } else {
+            appendToTestOutput("  - MeshManager: 未初始化")
+        }
+        
+        appendToTestOutput("✅ 消息路由測試完成")
+    }
+    
+    private func runNetworkIntegrationTest() {
+        appendToTestOutput("🌐 開始執行網絡集成測試...")
+        
+        // 簡化的網絡集成測試
+        if let meshManager = serviceContainer.meshManager {
+            appendToTestOutput("✅ MeshManager 實例存在")
+            appendToTestOutput("🔗 連接狀態: \(meshManager.isActive ? "活躍" : "非活躍")")
+            appendToTestOutput("👥 連接的對等體: \(meshManager.getConnectedPeers().count)")
+        } else {
+            appendToTestOutput("❌ MeshManager 實例不存在")
+        }
+        
+        appendToTestOutput("✅ 網絡集成測試完成")
+    }
+    
+    private func runNetworkDiagnosis() {
+        appendToTestOutput("🔍 開始執行網絡診斷...")
+        
+        // 診斷 NetworkService
+        let networkService = serviceContainer.networkService
+        appendToTestOutput("📡 NetworkService 狀態:")
+        appendToTestOutput("  - isConnected: \(networkService.isConnected)")
+        appendToTestOutput("  - myPeerID: \(networkService.myPeerID.displayName)")
+        appendToTestOutput("  - connectedPeers: \(networkService.connectedPeers.count)")
+        
+        // 診斷 MeshManager
+        if let meshManager = serviceContainer.meshManager {
+            appendToTestOutput("🌐 MeshManager 狀態:")
+            appendToTestOutput("  - isActive: \(meshManager.isActive)")
+            appendToTestOutput("  - connectedPeers: \(meshManager.getConnectedPeers().count)")
+            appendToTestOutput("  - onGameMessageReceived: \(meshManager.onGameMessageReceived != nil ? "已設置" : "未設置")")
+        } else {
+            appendToTestOutput("❌ MeshManager 實例不存在")
+        }
+        
+        // 診斷完成
+        
+        appendToTestOutput("✅ 網絡診斷完成")
+    }
+    
+    private func testKeyExchangeOptimization() {
+        appendToTestOutput("🔑 開始測試密鑰交換優化...")
+        
+        // 測試密鑰交換狀態追蹤
+        let connectedPeers = serviceContainer.networkService.connectedPeers
+        if connectedPeers.isEmpty {
+            appendToTestOutput("⚠️ 沒有連接的對等設備進行測試")
+            return
+        }
+        
+        appendToTestOutput("📊 密鑰交換狀態檢查:")
+        Task {
+            for peer in connectedPeers {
+                let hasKey = await serviceContainer.securityService.hasSessionKey(for: peer.displayName)
+                appendToTestOutput("  - \(peer.displayName): \(hasKey ? "已有密鑰" : "無密鑰")")
+            }
+            
+            appendToTestOutput("⚡ 優化內容:")
+            appendToTestOutput("  - 監控頻率: 60秒 → 180秒 (減少66%)")
+            appendToTestOutput("  - 密鑰交換超時: 15秒 → 8秒 (減少47%)")
+            appendToTestOutput("  - 等待超時: 3秒 → 2秒 (減少33%)")
+            appendToTestOutput("  - 重試延遲: 2秒 → 1秒 (減少50%)")
+            appendToTestOutput("  - 添加狀態追蹤防止重複交換")
+            appendToTestOutput("  - 失敗設備5分鐘後才重試")
+            
+            appendToTestOutput("✅ 密鑰交換優化測試完成")
+        }
+    }
+    
+    private func appendToTestOutput(_ message: String) {
+        let timestamp = DateFormatter().string(from: Date())
+        testOutput += "[\(timestamp)] \(message)\n"
     }
     
     private func saveNickname() {

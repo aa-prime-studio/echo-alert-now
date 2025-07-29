@@ -819,7 +819,13 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
                 NotificationCenter.default.removeObserver(observer)
                 
                 if isStable {
-                    await self.initiateKeyExchange(with: peerDisplayName)
+                    // 【修復】檢查是否已有進行中的密鑰交換，避免重複觸發
+                    let currentState = await self.keyExchangeActor.getState(for: peerDisplayName)
+                    if case .inProgress = currentState {
+                        print("⚠️ \(peerDisplayName) 已有密鑰交換進行中，跳過新的交換")
+                    } else {
+                        try? await self.initiateKeyExchange(with: peerDisplayName)
+                    }
                 } else {
                     print("⚠️ 連接穩定性等待超時，跳過與 \(peerDisplayName) 的密鑰交換")
                 }
@@ -1261,10 +1267,26 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     }
     
     // MARK: - 專用密鑰交換方法
-    private func initiateKeyExchange(with peerDisplayName: String) async {
+    private func initiateKeyExchange(with peerDisplayName: String) async throws {
+        // 【修復】開始前檢查是否已有會話密鑰或進行中的交換
+        let hasKey = await securityService.hasSessionKey(for: peerDisplayName)
+        if hasKey {
+            print("✅ \(peerDisplayName) 已有會話密鑰，跳過密鑰交換")
+            return
+        }
+        
+        let currentState = await keyExchangeActor.getState(for: peerDisplayName)
+        if case .inProgress = currentState {
+            print("⚠️ \(peerDisplayName) 已有密鑰交換進行中，跳過重複交換")
+            return
+        }
+        
+        // 標記為進行中
+        await keyExchangeActor.setState(.inProgress(startTime: Date()), for: peerDisplayName)
+        
         let maxRetries = 3
         var retryCount = 0
-        let timeoutDuration: TimeInterval = 15.0 // 15秒超時
+        let timeoutDuration: TimeInterval = 8.0 // 縮短到8秒超時，減少資源等待
         
         while retryCount < maxRetries {
             let startTime = Date()
@@ -1288,7 +1310,8 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
                     group.cancelAll()
                 }
                 
-                // 如果成功，跳出重試循環
+                // 如果成功，標記為完成並跳出重試循環
+                await keyExchangeActor.setState(.completed(completedTime: Date()), for: peerDisplayName)
                 return
                 
             } catch NetworkError.timeout {
@@ -1300,14 +1323,16 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
             retryCount += 1
             
             if retryCount < maxRetries {
-                // 指數退避延遲
-                let delay = Double(retryCount) * 2.0
+                // 減少指數退避延遲，從2秒縮短到1秒
+                let delay = Double(retryCount) * 1.0
                 print("🔄 等待 \(delay) 秒後重試密鑰交換...")
                 try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
             }
         }
         
-        print("❌ 密鑰交換失敗，已達最大重試次數")
+        // 標記為失敗
+        await keyExchangeActor.setState(.failed(lastAttempt: Date(), retryCount: maxRetries), for: peerDisplayName)
+        throw NetworkError.keyExchangeFailed
     }
     
     private func performKeyExchange(with peerDisplayName: String, retryCount: Int, startTime: Date) async throws {
@@ -1335,7 +1360,12 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
             throw NetworkError.peerNotFound
         }
         
-        // 🔧 原子性檢查：validPeer 已經通過上面的原子檢查，直接使用
+        // 【重要】發送前再次檢查是否已有密鑰（避免並發處理）
+        let hasKeyBeforeSend = await securityService.hasSessionKey(for: peerDisplayName)
+        if hasKeyBeforeSend {
+            print("✅ 密鑰在發送前已建立: \(peerDisplayName)")
+            return
+        }
         
         // 發送密鑰交換請求
         try await networkService.send(messageData, to: [validPeer])
@@ -1346,8 +1376,8 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
         
         print("🔑 密鑰交換請求已發送給 \(peerDisplayName) (嘗試: \(retryCount + 1), 大小: \(messageData.count) bytes, 延遲: \(String(format: "%.0f", latency * 1000))ms)")
         
-        // 🚨 使用更高效的非阻塞等待機制
-        try await waitForSessionKeyWithContinuation(peerDisplayName: peerDisplayName, timeout: 3.0)
+        // 🚨 使用更高效的非阻塞等待機制，縮短等待時間
+        try await waitForSessionKeyWithContinuation(peerDisplayName: peerDisplayName, timeout: 2.0)
     }
     
     /// 非阻塞等待會話密鑰建立（優化版本）
@@ -1355,13 +1385,15 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
         let startTime = Date()
         
         // 使用更適合的輪詢間隔
-        let checkInterval: TimeInterval = 0.1 // 100ms 固定間隔
+        let checkInterval: TimeInterval = 0.05 // 50ms 更頻繁檢查
         
         while Date().timeIntervalSince(startTime) < timeout {
             // 立即檢查會話密鑰
             let hasKey = await securityService.hasSessionKey(for: peerDisplayName)
             if hasKey {
-                print("✅ 與 \(peerDisplayName) 的密鑰交換成功完成")
+                // 【重要】密鑰已存在，立即返回成功
+                let elapsed = Date().timeIntervalSince(startTime)
+                print("✅ 檢測到與 \(peerDisplayName) 的密鑰交換已完成 (耗時: \(String(format: "%.1f", elapsed))秒)")
                 return
             }
             
@@ -1374,20 +1406,27 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
             try await Task.sleep(nanoseconds: UInt64(checkInterval * 1_000_000_000))
         }
         
+        // 最後再檢查一次，避免邊界條件
+        let hasKey = await securityService.hasSessionKey(for: peerDisplayName)
+        if hasKey {
+            print("✅ 密鑰交換在最後時刻完成: \(peerDisplayName)")
+            return
+        }
+        
         // 超時後拋出錯誤
-        print("❌ 等待密鑰交換超時: \(peerDisplayName)")
+        print("❌ 等待密鑰交換真正超時: \(peerDisplayName) (已等待 \(timeout) 秒)")
         throw NetworkError.timeout
     }
     
     // MARK: - 會話密鑰監控
     private func setupSessionKeyMonitoring() {
-        // 每60秒檢查一次會話密鑰狀態，降低頻率並移至背景隊列
-        sessionKeyMonitorTimer = Timer.scheduledTimer(withTimeInterval: 60.0, repeats: true) { [weak self] _ in
+        // 降低頻率到180秒 (3分鐘) 減少不必要的重試
+        sessionKeyMonitorTimer = Timer.scheduledTimer(withTimeInterval: 180.0, repeats: true) { [weak self] _ in
             Task.detached(priority: .background) {
                 await self?.checkAndRepairSessionKeys()
             }
         }
-        print("🔄 ServiceContainer: 會話密鑰監控定時器已啟動")
+        print("🔄 ServiceContainer: 會話密鑰監控定時器已啟動 (每3分鐘檢查)")
     }
     
     private func checkAndRepairSessionKeys() async {
@@ -1396,18 +1435,36 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
         for peerDisplayName in connectedPeers {
             let hasKey = await securityService.hasSessionKey(for: peerDisplayName)
             if !hasKey {
-                print("🔧 檢測到 \(peerDisplayName) 缺少會話密鑰，嘗試修復...")
-                await initiateKeyExchange(with: peerDisplayName)
+                // 【修復】檢查密鑰交換狀態，避免重複觸發
+                let currentState = await keyExchangeActor.getState(for: peerDisplayName)
+                switch currentState {
+                case .inProgress:
+                    print("⏳ \(peerDisplayName) 密鑰交換進行中，跳過修復")
+                    continue
+                case .failed(let lastAttempt, let retryCount):
+                    // 只有在失敗超過5分鐘且重試次數少於上限時才重試
+                    let timeSinceFailure = Date().timeIntervalSince(lastAttempt)
+                    if timeSinceFailure > 300 && retryCount < 3 {
+                        print("🔧 \(peerDisplayName) 密鑰交換失敗超過5分鐘，嘗試修復...")
+                        try? await initiateKeyExchange(with: peerDisplayName)
+                    } else {
+                        print("⏸️ \(peerDisplayName) 密鑰交換失敗時間不足或重試次數已達上限，跳過")
+                    }
+                default:
+                    print("🔧 檢測到 \(peerDisplayName) 缺少會話密鑰，嘗試修復...")
+                    try? await initiateKeyExchange(with: peerDisplayName)
+                }
             }
         }
         
-        // 清理已斷開連接的會話密鑰
+        // 清理已斷開連接的會話密鑰和狀態
         let allSessionKeys = await securityService.getAllSessionKeyPeerIDs()
         for sessionKeyPeerID in allSessionKeys {
             if !connectedPeers.contains(sessionKeyPeerID) {
                 print("🧹 清理已斷開連接的會話密鑰: \(sessionKeyPeerID)")
                 Task {
                     await securityService.removeSessionKey(for: sessionKeyPeerID)
+                    await keyExchangeActor.clearState(for: sessionKeyPeerID)
                 }
             }
         }
@@ -1969,20 +2026,123 @@ class ServiceContainer: ObservableObject, @unchecked Sendable {
     
     // MARK: - 密鑰交換增強處理
     
-    /// 安排密鑰交換重試
+    /// 密鑰交換狀態追蹤
+    private let keyExchangeActor = KeyExchangeStateActor()
+    
+    /// 密鑰交換狀態
+    private enum KeyExchangeState {
+        case none
+        case inProgress(startTime: Date)
+        case completed(completedTime: Date)
+        case failed(lastAttempt: Date, retryCount: Int)
+    }
+    
+    /// 線程安全的密鑰交換狀態管理
+    private actor KeyExchangeStateActor {
+        private var states: [String: KeyExchangeState] = [:]
+        
+        func getState(for peer: String) -> KeyExchangeState {
+            return states[peer] ?? .none
+        }
+        
+        func setState(_ state: KeyExchangeState, for peer: String) {
+            states[peer] = state
+        }
+        
+        func removeState(for peer: String) {
+            states.removeValue(forKey: peer)
+        }
+        
+        func clearState(for peer: String) {
+            states.removeValue(forKey: peer)
+        }
+    }
+    
+    /// 安排密鑰交換重試（帶狀態追蹤）
     func scheduleKeyExchangeRetry(with peerDisplayName: String) async {
-        print("🔄 安排與 \(peerDisplayName) 的密鑰交換重試")
+        let currentState = await keyExchangeActor.getState(for: peerDisplayName)
+        
+        // 檢查是否需要執行密鑰交換
+        switch currentState {
+        case .none:
+            print("🔄 首次安排與 \(peerDisplayName) 的密鑰交換")
+        case .inProgress(let startTime):
+            // 檢查是否超時
+            if Date().timeIntervalSince(startTime) < 30.0 {
+                print("⚠️ 與 \(peerDisplayName) 的密鑰交換正在進行中，跳過重複請求")
+                return
+            } else {
+                print("🔄 與 \(peerDisplayName) 的密鑰交換超時，重新開始")
+            }
+        case .completed(let completedTime):
+            // 檢查是否在有效期內
+            if Date().timeIntervalSince(completedTime) < 300.0 { // 5分鐘有效期
+                print("✅ 與 \(peerDisplayName) 的密鑰交換已完成且仍有效，跳過")
+                return
+            } else {
+                print("🔄 與 \(peerDisplayName) 的密鑰交換過期，重新開始")
+            }
+        case .failed(let lastAttempt, let retryCount):
+            // 檢查重試間隔
+            let retryInterval = min(pow(2.0, Double(retryCount)), 60.0) // 指數退避，最大60秒
+            if Date().timeIntervalSince(lastAttempt) < retryInterval {
+                print("⚠️ 與 \(peerDisplayName) 的密鑰交換重試間隔未到，跳過")
+                return
+            } else {
+                print("🔄 與 \(peerDisplayName) 的密鑰交換重試間隔到期，重新嘗試")
+            }
+        }
         
         // 檢查設備是否仍然連接
         let connectedPeers = meshManager?.getConnectedPeers() ?? []
         guard connectedPeers.contains(peerDisplayName) else {
             print("⚠️ 設備 \(peerDisplayName) 已斷開連接，取消重試")
+            await keyExchangeActor.setState(.none, for: peerDisplayName)
             return
         }
         
-        // 短暫延遲後重新開始密鑰交換
-        try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒延遲
-        await initiateKeyExchange(with: peerDisplayName)
+        // 標記為進行中
+        await keyExchangeActor.setState(.inProgress(startTime: Date()), for: peerDisplayName)
+        
+        // 異步執行密鑰交換
+        Task {
+            // 短暫延遲確保連接穩定
+            try? await Task.sleep(nanoseconds: 1_000_000_000) // 1秒延遲
+            await performKeyExchangeWithStateTracking(with: peerDisplayName)
+        }
+    }
+    
+    /// 帶狀態追蹤的密鑰交換執行
+    private func performKeyExchangeWithStateTracking(with peerDisplayName: String) async {
+        do {
+            try await initiateKeyExchange(with: peerDisplayName)
+            
+            // 標記為完成
+            await keyExchangeActor.setState(.completed(completedTime: Date()), for: peerDisplayName)
+            
+            print("✅ 與 \(peerDisplayName) 的密鑰交換成功完成")
+            
+        } catch {
+            // 標記為失敗
+            let currentState = await keyExchangeActor.getState(for: peerDisplayName)
+            let currentRetryCount: Int
+            if case .failed(_, let retryCount) = currentState {
+                currentRetryCount = retryCount + 1
+            } else {
+                currentRetryCount = 1
+            }
+            await keyExchangeActor.setState(.failed(lastAttempt: Date(), retryCount: currentRetryCount), for: peerDisplayName)
+            
+            print("❌ 與 \(peerDisplayName) 的密鑰交換失敗 (第\(currentRetryCount)次)：\(error)")
+        }
+    }
+    
+    /// 清理斷開連接的設備狀態
+    func cleanupKeyExchangeState(for peerDisplayName: String) {
+        Task {
+            await keyExchangeActor.removeState(for: peerDisplayName)
+            print("🧹 清理 \(peerDisplayName) 的密鑰交換狀態")
+        }
     }
     
     // MARK: - 調試工具方法

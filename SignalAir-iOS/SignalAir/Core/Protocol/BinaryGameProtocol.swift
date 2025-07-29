@@ -31,6 +31,8 @@ class BinaryGameProtocol {
         // 冠軍廣播相關訊息
         case winnerAnnouncement = 0x30
         case gameRestart = 0x31
+        // 輪流管理相關訊息
+        case turnChange = 0x40
     }
     
     // MARK: - 編碼方法
@@ -382,6 +384,56 @@ class BinaryGameProtocol {
         return data
     }
     
+    // MARK: - 輪流管理編碼
+    
+    /// 【NEW】編碼輪流變更訊息
+    static func encodeTurnChange(nextPlayerID: String, turnIndex: Int) -> Data {
+        var data = Data()
+        
+        // 編碼下一位玩家ID (使用長度前綴)
+        let playerIDData = nextPlayerID.data(using: .utf8) ?? Data()
+        let safePlayerIDLength = min(playerIDData.count, 255)
+        data.append(UInt8(safePlayerIDLength))
+        data.append(playerIDData.prefix(safePlayerIDLength))
+        
+        // 編碼輪流索引 (4字節整數)
+        let safeTurnIndex = max(0, min(turnIndex, Int(Int32.max)))
+        data.append(contentsOf: withUnsafeBytes(of: Int32(safeTurnIndex).littleEndian) { Array($0) })
+        
+        return data
+    }
+    
+    /// 【NEW】解碼輪流變更訊息
+    static func decodeTurnChange(_ data: Data) throws -> (nextPlayerID: String, turnIndex: Int) {
+        var offset = 0
+        
+        // 解碼玩家ID長度
+        guard offset < data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        let playerIDLength = Int(data[offset])
+        offset += 1
+        
+        // 解碼玩家ID
+        guard offset + playerIDLength <= data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        let playerIDData = data.subdata(in: offset..<(offset + playerIDLength))
+        guard let playerID = String(data: playerIDData, encoding: .utf8) else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        offset += playerIDLength
+        
+        // 解碼輪流索引
+        guard offset + 4 <= data.count else {
+            throw BinaryProtocolError.invalidDataSize
+        }
+        let turnIndexData = data.subdata(in: offset..<(offset + 4))
+        let turnIndex = turnIndexData.withUnsafeBytes { $0.load(as: Int32.self).littleEndian }
+        
+        return (nextPlayerID: playerID, turnIndex: Int(turnIndex))
+    }
+    
     // MARK: - 本週排行榜編碼
     
     /// 排行榜類型
@@ -673,6 +725,7 @@ class BinaryGameProtocol {
         case .weeklyLeaderboardRequest: return .weeklyLeaderboardRequest
         case .winnerAnnouncement: return .winnerAnnouncement
         case .gameRestart: return .gameRestart
+        case .turnChange: return .turnChange
         case .unknown: return .heartbeat // 未知類型映射到心跳
         }
     }
@@ -696,6 +749,7 @@ class BinaryGameProtocol {
         case .weeklyLeaderboardRequest: return .weeklyLeaderboardRequest
         case .winnerAnnouncement: return .winnerAnnouncement
         case .gameRestart: return .gameRestart
+        case .turnChange: return .turnChange
         }
     }
     

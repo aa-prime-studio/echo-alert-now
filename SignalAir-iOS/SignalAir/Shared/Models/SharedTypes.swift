@@ -494,6 +494,9 @@ enum GameMessageType: UInt8, Codable, CaseIterable {
     case winnerAnnouncement = 0x30
     case gameRestart = 0x31
     
+    // 輪流管理訊息 (0x40-0x4F)
+    case turnChange = 0x40
+    
     // 🔧 FIX: 未知類型處理
     case unknown = 0xFF                 // 未知或不支持的類型
     
@@ -529,6 +532,7 @@ enum GameMessageType: UInt8, Codable, CaseIterable {
         case .weeklyLeaderboardRequest: return "weekly_leaderboard_request"
         case .winnerAnnouncement: return "winner_announcement"
         case .gameRestart: return "game_restart"
+        case .turnChange: return "turn_change"
         case .unknown: return "unknown_type"
         }
     }
@@ -971,10 +975,12 @@ enum EmoteType: String, Codable, Hashable, CaseIterable {
     
     var isPureEmoji: Bool {
         switch self {
-        case .boom, .pirate, .bug, .fly, .fire, .poop, .clown, .mindBlown, .pinch, .eyeRoll, .rockOn, .bottle, .skull, .juggler, .burger, .pray, .love, .happy:
-            return true
-        case .bingo, .nen, .wow, .rocket, .battery, .dizzy, .mouse, .ring:
+        // 文字表情 (5個 - 有動作描述)
+        case .bingo, .nen, .wow, .dizzy, .ring:
             return false
+        // 純Emoji表情 (20個 - 僅顯示emoji)
+        case .boom, .pirate, .bug, .fly, .fire, .poop, .clown, .mindBlown, .pinch, .eyeRoll, .rockOn, .bottle, .skull, .juggler, .burger, .battery, .rocket, .mouse, .pray, .love, .happy:
+            return true
         }
     }
 }

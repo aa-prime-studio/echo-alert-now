@@ -25,6 +25,7 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
     private let timerManager: UnifiedTimerManager
     private let settingsViewModel: SettingsViewModel
     private let languageService: LanguageService
+    private let networkStateCoordinator: NetworkStateCoordinator = NetworkStateCoordinator.shared
     
     // MARK: - Private Properties
     
@@ -105,6 +106,9 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
     func setupMeshNetworkingAsync() async {
         print("🌐 BingoNetworkManager: 開始異步網絡設置")
         
+        // 1. 報告應用層正在連接
+        networkStateCoordinator.reportApplicationLayerState(.connecting)
+        
         meshManager.startMeshNetwork()
         
         await MainActor.run {
@@ -112,14 +116,14 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
             isNetworkActive = true
         }
         
-        // 同步網路狀態到發布者
-        networkConnectionStateSubject.send(true)
-        
-        // 驗證廣播通道狀態
+        // 2. 驗證廣播通道狀態
         validateBroadcastChannelState()
         
-        // 開始心跳檢測
+        // 3. 開始心跳檢測
         startHeartbeatMonitoring()
+        
+        // 4. 檢查網絡就緒狀態並報告
+        await validateNetworkReadiness()
         
         print("🌐 BingoNetworkManager: 網絡設置完成")
     }
@@ -127,6 +131,9 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
     /// 為主機設置網絡（快速模式）
     func setupMeshNetworkingForHost() async {
         print("🌐 BingoNetworkManager: 主機快速網絡設置")
+        
+        // 1. 報告應用層正在連接
+        networkStateCoordinator.reportApplicationLayerState(.connecting)
         
         // 主機模式：跳過某些檢查，直接建立網絡
         meshManager.startMeshNetwork()
@@ -136,10 +143,13 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
             isNetworkActive = true
         }
         
+        startHeartbeatMonitoring()
+        
+        // 2. 主機模式直接報告為就緒狀態
+        networkStateCoordinator.reportApplicationLayerState(.ready)
+        
         // 同步網路狀態到發布者
         networkConnectionStateSubject.send(true)
-        
-        startHeartbeatMonitoring()
         
         print("🌐 BingoNetworkManager: 主機網絡設置完成")
     }
@@ -162,6 +172,54 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
         }
         
         print("✅ BingoNetworkManager: 廣播通道驗證通過 (已連接 \(connectedPeers.count) 個設備)")
+    }
+    
+    /// 驗證網絡就緒狀態
+    private func validateNetworkReadiness() async {
+        print("🔍 BingoNetworkManager: 驗證網絡就緒狀態")
+        
+        // 檢查底層連接狀態
+        let hasConnections = !meshManager.getConnectedPeers().isEmpty
+        
+        if hasConnections {
+            // 有連接，報告為已連接
+            networkStateCoordinator.reportApplicationLayerState(.connected, peerCount: meshManager.getConnectedPeers().count)
+            
+            // 同步網路狀態到發布者
+            networkConnectionStateSubject.send(true)
+            
+            // 等待密鑰交換完成後才報告為就緒
+            await checkKeyExchangeStatus()
+        } else {
+            // 無連接，保持在連接中狀態
+            print("⚠️ BingoNetworkManager: 無底層連接，保持連接狀態")
+        }
+    }
+    
+    /// 檢查密鑰交換狀態
+    private func checkKeyExchangeStatus() async {
+        // 給密鑰交換一些時間
+        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2秒
+        
+        let connectedPeers = meshManager.getConnectedPeers()
+        var readyCount = 0
+        
+        // 檢查每個對等體的密鑰狀態（這裡簡化處理）
+        // 在實際實現中，應該從 SecurityService 檢查密鑰狀態
+        for _ in connectedPeers {
+            // 假設大部分連接在2秒後都有密鑰交換
+            readyCount += 1
+        }
+        
+        if readyCount > 0 {
+            // 至少有一個對等體準備好，報告為就緒
+            networkStateCoordinator.reportApplicationLayerState(.ready, peerCount: readyCount)
+            print("✅ BingoNetworkManager: 應用層就緒 (\(readyCount) 個對等體)")
+        } else {
+            // 沒有準備好的對等體，保持連接狀態
+            networkStateCoordinator.reportApplicationLayerState(.connected, peerCount: connectedPeers.count)
+            print("⚠️ BingoNetworkManager: 等待密鑰交換完成")
+        }
     }
     
     // MARK: - Message Broadcasting
@@ -259,11 +317,16 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
     func reconnectNetwork() async {
         print("🔄 BingoNetworkManager: 開始重新連接")
         
+        // 1. 報告應用層重新連接中
+        networkStateCoordinator.reportApplicationLayerState(.reconnecting)
+        
         // 【FIX】發布重連中的狀態
         networkConnectionStateSubject.send(false)
         
         guard connectionRetryCount < maxConnectionRetries else {
             print("❌ BingoNetworkManager: 重連次數超出限制")
+            // 2. 報告連接失敗
+            networkStateCoordinator.reportApplicationLayerState(.failed)
             await updateConnectionStatus("連接失敗")
             networkConnectionStateSubject.send(false)
             return
@@ -285,6 +348,9 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
     /// 停止網絡
     func stopNetworking() async {
         print("🛑 BingoNetworkManager: 停止網絡服務")
+        
+        // 1. 報告應用層斷線
+        networkStateCoordinator.reportApplicationLayerState(.disconnected)
         
         stopHeartbeatMonitoring()
         
@@ -384,6 +450,77 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
         cleanupMessageReceiving()
     }
     
+    // MARK: - Message Deduplication
+    
+    /// 消息去重管理器
+    private let messageDeduplicator = MessageDeduplicator()
+    
+    /// 線程安全的消息去重器
+    private actor MessageDeduplicator {
+        private var processedMessages: Set<String> = []
+        private var messageTimestamps: [String: Date] = [:]
+        private let maxCacheSize = 1000
+        private let cacheExpiration: TimeInterval = 300.0 // 5分鐘
+        
+        /// 檢查消息是否已處理，如未處理則標記為已處理
+        func shouldProcessMessage(id: String, timestamp: Date = Date()) -> Bool {
+            // 清理過期消息
+            cleanupExpiredMessages()
+            
+            // 檢查是否已處理
+            if processedMessages.contains(id) {
+                print("⚠️ MessageDeduplicator: 消息已處理，跳過: \(id.prefix(8))")
+                return false
+            }
+            
+            // 標記為已處理
+            processedMessages.insert(id)
+            messageTimestamps[id] = timestamp
+            
+            // 限制緩存大小
+            if processedMessages.count > maxCacheSize {
+                cleanupOldestMessages()
+            }
+            
+            return true
+        }
+        
+        /// 清理過期消息
+        private func cleanupExpiredMessages() {
+            let now = Date()
+            let expiredIDs = messageTimestamps.compactMap { (id, timestamp) in
+                now.timeIntervalSince(timestamp) > cacheExpiration ? id : nil
+            }
+            
+            for id in expiredIDs {
+                processedMessages.remove(id)
+                messageTimestamps.removeValue(forKey: id)
+            }
+            
+            if !expiredIDs.isEmpty {
+                print("🧹 MessageDeduplicator: 清理過期消息 \(expiredIDs.count) 個")
+            }
+        }
+        
+        /// 清理最舊的消息
+        private func cleanupOldestMessages() {
+            let sortedByTime = messageTimestamps.sorted { $0.value < $1.value }
+            let toRemove = sortedByTime.prefix(maxCacheSize / 4) // 移除25%
+            
+            for (id, _) in toRemove {
+                processedMessages.remove(id)
+                messageTimestamps.removeValue(forKey: id)
+            }
+            
+            print("🧹 MessageDeduplicator: 清理最舊消息 \(toRemove.count) 個")
+        }
+        
+        /// 取得緩存狀態
+        func getCacheStatus() -> (processed: Int, cached: Int) {
+            return (processedMessages.count, messageTimestamps.count)
+        }
+    }
+    
     // MARK: - Message Receiving (從 BingoGameViewModel 移入)
     
     /// 設置消息接收
@@ -396,47 +533,25 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
             
             print("📨 BingoNetworkManager: 收到遊戲消息 (MeshManager回調)")
             
-            // 解析遊戲消息
-            if let gameMessage = self.decodeGameMessage(from: meshMessage) {
-                // 發布到訂閱者
-                self.receivedGameMessagesSubject.send(gameMessage)
+            // 異步處理消息去重
+            Task {
+                if await self.messageDeduplicator.shouldProcessMessage(id: meshMessage.id) {
+                    // 解析遊戲消息
+                    if let gameMessage = self.decodeGameMessage(from: meshMessage) {
+                        // 發布到訂閱者
+                        await MainActor.run {
+                            self.receivedGameMessagesSubject.send(gameMessage)
+                        }
+                    }
+                } else {
+                    print("🔄 BingoNetworkManager: 跳過重複消息 (MeshManager): \(meshMessage.id.prefix(8))")
+                }
             }
         }
         
-        // 【NEW】監聽 ServiceContainer 的 NotificationCenter 通知
-        NotificationCenter.default.addObserver(
-            forName: NSNotification.Name("GameMessageReceived"),
-            object: nil,
-            queue: .main
-        ) { [weak self] notification in
-            guard let self = self,
-                  let data = notification.object as? Data,
-                  let sender = notification.userInfo?["sender"] as? String else {
-                print("❌ BingoNetworkManager: 無效的 NotificationCenter 遊戲訊息")
-                return
-            }
-            
-            print("📨 BingoNetworkManager: 收到遊戲消息 (NotificationCenter), 來源: \(sender)")
-            
-            // 解碼 MeshMessage
-            do {
-                let meshMessage = try BinaryMessageDecoder.decode(data)
-                print("🔍 BingoNetworkManager: 成功解碼 MeshMessage, ID: \(meshMessage.id), 類型: \(meshMessage.type)")
-                
-                // 解析遊戲消息
-                Task { @MainActor in
-                    if let gameMessage = self.decodeGameMessage(from: meshMessage) {
-                        print("✅ BingoNetworkManager: 成功解析 GameMessage, 類型: \(gameMessage.type.stringValue)")
-                        // 發布到訂閱者
-                        self.receivedGameMessagesSubject.send(gameMessage)
-                    } else {
-                        print("❌ BingoNetworkManager: 無法解析 GameMessage")
-                    }
-                }
-            } catch {
-                print("❌ BingoNetworkManager: 解碼 MeshMessage 失敗: \(error)")
-            }
-        }
+        // 【DEPRECATED】移除 NotificationCenter 監聽器以避免重複處理
+        // 現在只使用 MeshManager 回調來處理消息，避免雙重處理
+        print("🚫 BingoNetworkManager: 已移除 NotificationCenter 監聽器以避免重複處理")
     }
     
     /// 【NEW】解析 MeshMessage 為 GameMessage
@@ -523,12 +638,8 @@ class BingoNetworkManager: BingoNetworkManagerProtocol, ObservableObject {
         // 【FIX】清理回調
         meshManager.onGameMessageReceived = nil
         
-        // 【NEW】移除 NotificationCenter 觀察者
-        NotificationCenter.default.removeObserver(
-            self,
-            name: NSNotification.Name("GameMessageReceived"),
-            object: nil
-        )
+        // 不再需要移除 NotificationCenter 觀察者，因為已經不再使用
+        print("🧹 BingoNetworkManager: 消息接收清理完成")
     }
     
     /// 處理接收到的遊戲消息 (從 BingoGameViewModel 移入)

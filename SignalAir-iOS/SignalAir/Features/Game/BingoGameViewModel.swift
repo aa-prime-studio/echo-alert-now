@@ -26,6 +26,29 @@ class BingoGameViewModel: ObservableObject {
     @Published var syncStatus: String = "未同步"
     @Published var isNetworkActive: Bool = false
     
+    // MARK: - Turn Management Properties
+    
+    @Published var currentPlayerTurn: String = ""
+    @Published var isMyTurn: Bool = false
+    @Published var selectedNumber: Int = 50
+    @Published var turnOrder: [String] = []
+    
+    // MARK: - Player Device ID Tracking
+    
+    @Published var playerDeviceIDs: [String] = []  // 設備ID列表
+    @Published var playerNames: [String] = []      // 對應的玩家名稱列表
+    
+    // MARK: - Computed Properties
+    
+    /// 已確認的號碼列表（從賓果卡的marked狀態提取）
+    var confirmedNumbers: [Int] {
+        guard let card = bingoCard else { return [] }
+        return card.numbers.enumerated().compactMap { index, number in
+            guard index < card.marked.count && card.marked[index] else { return nil }
+            return number
+        }
+    }
+    
     // MARK: - Room Management
     
     var roomID: String = ""
@@ -40,6 +63,7 @@ class BingoGameViewModel: ObservableObject {
     private let hostElectionService: HostElectionService
     private let timerService: GameTimerService
     private let chatService: GameChatService
+    private let turnManager: BingoTurnManager
     
     // MARK: - Legacy Dependencies (for compatibility)
     
@@ -62,9 +86,20 @@ class BingoGameViewModel: ObservableObject {
         static let playerExpirationTime: TimeInterval = 300 // 5分鐘
     }
     
-    // 消息去重機制
+    // 消息去重機制 - 增強版
     private var lastProcessedMessageIds = Set<String>()
-    private let maxProcessedMessageIds = 100
+    private let maxProcessedMessageIds = 500
+    private var messageTimestamps: [String: Date] = [:]
+    private let messageExpirationTime: TimeInterval = 300.0 // 5分鐘
+    private let deduplicationQueue = DispatchQueue(label: "com.signalair.deduplication", attributes: .concurrent)
+    
+    // 自適應房間狀態同步
+    private var lastRoomStateHash: Int = 0
+    private var consecutiveUnchangedStates: Int = 0
+    private var currentSyncInterval: TimeInterval = 2.0 // 初始同步間隔
+    private let minSyncInterval: TimeInterval = 1.0 // 最小同步間隔
+    private let maxSyncInterval: TimeInterval = 10.0 // 最大同步間隔
+    private var roomSyncTimer: String? = nil
     private let emoteSubject = PassthroughSubject<EmoteEvent, Never>()
     private var lastEmoteTime: Date = Date.distantPast
     private let emoteCooldown: TimeInterval = 2.0
@@ -126,8 +161,12 @@ class BingoGameViewModel: ObservableObject {
             networkManager: self.networkManager,
             deviceName: self.deviceName
         )
+        self.turnManager = BingoTurnManager(
+            networkManager: self.networkManager,
+            localPeerID: ServiceContainer.shared.temporaryIDManager.deviceID
+        )
         
-        print("🎮 BingoGameViewModel: 協調器模式初始化完成")
+        print("🎮 BingoGameViewModel: 協調器模式初始化完成（含輪流管理器）")
         
         // 設置服務間的協調
         setupServiceCoordination()
@@ -174,6 +213,19 @@ class BingoGameViewModel: ObservableObject {
             .receive(on: DispatchQueue.main)
             .assign(to: &$roomChatMessages)
         
+        // 訂閱輪流管理器
+        turnManager.$currentPlayerTurn
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$currentPlayerTurn)
+        
+        turnManager.$isMyTurn
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$isMyTurn)
+        
+        turnManager.$turnOrder
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$turnOrder)
+        
         // 訂閱網路管理器
         networkManager.networkConnectionState
             .receive(on: DispatchQueue.main)
@@ -198,7 +250,18 @@ class BingoGameViewModel: ObservableObject {
         
         // 註冊獲勝回調
         stateManager.onGameWon { [weak self] playerID, lines in
-            self?.handlePlayerWon(playerID: playerID, lines: lines)
+            guard let self = self else { return }
+            
+            print("🏆 遊戲獲勝回調: \(playerID) 完成 \(lines) 條線")
+            
+            // 停止輪流管理
+            self.turnManager.resetTurnState()
+            
+            // 處理玩家獲勝
+            self.handlePlayerWon(playerID: playerID, lines: lines)
+            
+            // 觸發外部獲勝回調
+            self.onGameWon?(playerID, lines)
         }
         
         print("✅ BingoGameViewModel: 服務協調設置完成")
@@ -261,6 +324,9 @@ class BingoGameViewModel: ObservableObject {
             return
         }
         
+        // 【NEW】初始化輪流順序
+        initializeTurnOrder()
+        
         // 委託給狀態管理器
         stateManager.startGame()
     }
@@ -268,12 +334,20 @@ class BingoGameViewModel: ObservableObject {
     /// 結束遊戲
     func endGame() {
         print("🎮 BingoGameViewModel: 協調結束遊戲")
+        
+        // 重置輪流管理
+        turnManager.resetTurnState()
+        
         stateManager.endGame()
     }
     
     /// 重新開始遊戲
     func restartGame() {
         print("🎮 BingoGameViewModel: 協調重新開始遊戲")
+        
+        // 重置輪流管理
+        turnManager.resetTurnState()
+        
         stateManager.restartGame()
     }
     
@@ -293,6 +367,72 @@ class BingoGameViewModel: ObservableObject {
     func markNumber(_ number: Int) {
         print("🎮 BingoGameViewModel: 協調標記號碼 \(number)")
         stateManager.markNumber(number)
+    }
+    
+    /// 確認號碼（將已抽取的藍色號碼標記為綠色）
+    func confirmNumber(_ number: Int) {
+        print("✅ BingoGameViewModel: 確認號碼 \(number)")
+        
+        // 確保號碼已被抽中但尚未確認
+        guard drawnNumbers.contains(number) && !confirmedNumbers.contains(number) else {
+            print("⚠️ 號碼 \(number) 無法確認：需要是已抽取但未確認的號碼")
+            return
+        }
+        
+        // 標記號碼為已確認
+        stateManager.markNumber(number)
+    }
+    
+    // MARK: - Turn-Based Number Selection (NEW)
+    
+    /// 【NEW】手動選擇號碼抽號（輪流制）
+    func selectNumber(_ number: Int) {
+        print("🎯 BingoGameViewModel: 玩家選擇號碼 \(number)")
+        
+        guard isMyTurn else {
+            print("⚠️ 不是你的回合，無法抽號")
+            return
+        }
+        
+        guard gameState == .playing else {
+            print("⚠️ 遊戲未在進行中，無法抽號")
+            return
+        }
+        
+        guard !drawnNumbers.contains(number) else {
+            print("⚠️ 號碼 \(number) 已經抽過了")
+            return
+        }
+        
+        // 處理選中的號碼
+        handleSelectedNumber(number)
+        
+        // 切換到下一位玩家
+        turnManager.nextTurn()
+        
+        print("✅ 號碼 \(number) 抽號完成，輪到下一位玩家")
+    }
+    
+    /// 【NEW】處理選中的號碼
+    private func handleSelectedNumber(_ number: Int) {
+        print("🎲 處理選中號碼: \(number)")
+        
+        // 更新本地狀態
+        stateManager.handleNumberDrawn(number)
+        
+        // 廣播給所有玩家
+        let numberData = withUnsafeBytes(of: Int32(number).littleEndian) { Data($0) }
+        networkManager.broadcastGameMessage(.numberDrawn, data: numberData)
+        
+        print("📡 已廣播號碼 \(number) 給所有玩家")
+    }
+    
+    /// 【NEW】初始化輪流順序
+    func initializeTurnOrder() {
+        print("🎯 初始化輪流順序")
+        let playerIDs = roomPlayers.map { $0.playerID }
+        turnManager.initializeTurnOrder(players: playerIDs)
+        print("🎯 輪流順序已設置: \(turnOrder)")
     }
     
     // MARK: - Host Election (Coordinator Methods)
@@ -366,8 +506,9 @@ class BingoGameViewModel: ObservableObject {
         
         print("😄 發送表情廣播: \(emote.rawValue) 玩家=\(normalizedName) ID=\(playerID.prefix(8))")
         
-        // 使用網路管理器發送表情訊息
-        networkManager.broadcastGameMessage(.emote, data: emote.rawValue.data(using: .utf8) ?? Data(), gameRoomID: gameRoomID, deviceName: normalizedName)
+        // 使用網路管理器發送表情訊息（格式：emoteType|deviceName）
+        let emoteData = "\(emote.rawValue)|\(normalizedName)".data(using: .utf8) ?? Data()
+        networkManager.broadcastGameMessage(.emote, data: emoteData, gameRoomID: gameRoomID, deviceName: normalizedName)
         
         // 本地也顯示表情
         triggerEmoteDisplay(nickname: normalizedName, emote: emote)
@@ -375,23 +516,25 @@ class BingoGameViewModel: ObservableObject {
     
     /// 【修復】處理收到的表情訊息 - 增強容錯性和廣播支持
     private func handleEmote(_ message: GameMessage) {
-        let components = String(data: message.data, encoding: .utf8)?.components(separatedBy: "|") ?? []
+        let dataString = String(data: message.data, encoding: .utf8) ?? ""
+        let components = dataString.components(separatedBy: "|")
+        
         guard components.count >= 1,
               let emoteType = EmoteType(rawValue: components[0]) else {
-            print("❌ 表情訊息格式錯誤: \(String(data: message.data, encoding: .utf8) ?? "無法解析")")
+            print("❌ 表情訊息格式錯誤: \(dataString)")
             return
         }
         
-        let senderPlayerID = message.senderID
-        let senderName = roomPlayers.first(where: { $0.id.uuidString == senderPlayerID })?.name ?? "未知玩家"
-        
-        // 確保發送者在房間內（防止惡意廣播）
-        guard roomPlayers.contains(where: { $0.id.uuidString == senderPlayerID }) else {
-            print("⚠️ 忽略來自未知玩家的表情: \(senderName) (\(senderPlayerID.prefix(8)))")
-            return
+        // 優先使用消息中的發送者名稱，如果沒有則使用房間玩家列表中的名稱
+        let senderName: String
+        if components.count >= 2 && !components[1].isEmpty {
+            senderName = components[1]
+        } else {
+            let senderPlayerID = message.senderID
+            senderName = roomPlayers.first(where: { $0.id.uuidString == senderPlayerID })?.name ?? "未知玩家"
         }
         
-        print("😄 收到表情廣播: \(emoteType.rawValue) 來自 \(senderName) (\(senderPlayerID.prefix(8)))")
+        print("😄 收到表情廣播: \(emoteType.rawValue) 來自 \(senderName)")
         triggerEmoteDisplay(nickname: senderName, emote: emoteType)
     }
     
@@ -441,6 +584,9 @@ class BingoGameViewModel: ObservableObject {
         self.gameRoomID = roomID
         self.roomID = roomID
         self.isInRoom = true
+        
+        // 確保加入房間時初始化賓果卡
+        stateManager.onAppear()
         
         // 設置網路並開始消息處理
         networkManager.setupMeshNetworking()
@@ -533,25 +679,69 @@ class BingoGameViewModel: ObservableObject {
     
     // MARK: - Message Handling (Coordinator Methods)
     
-    /// 處理接收到的遊戲消息
+    /// 處理接收到的遊戲消息 - 線程安全版本
     private func handleReceivedGameMessage(_ message: GameMessage) {
-        // 檢查消息是否已經處理過
         let messageId = createMessageId(message)
-        guard !lastProcessedMessageIds.contains(messageId) else {
-            print("⚠️ 重複消息，跳過處理: \(messageId.prefix(8))")
-            return
-        }
         
-        // 添加到已處理列表
-        lastProcessedMessageIds.insert(messageId)
-        
-        // 限制已處理消息列表大小
-        if lastProcessedMessageIds.count > maxProcessedMessageIds {
-            let oldestIds = Array(lastProcessedMessageIds.prefix(lastProcessedMessageIds.count - maxProcessedMessageIds))
-            for oldId in oldestIds {
-                lastProcessedMessageIds.remove(oldId)
+        // 線程安全的去重檢查
+        deduplicationQueue.sync(flags: .barrier) {
+            // 清理過期消息
+            cleanupExpiredMessages()
+            
+            // 檢查消息是否已經處理過
+            guard !lastProcessedMessageIds.contains(messageId) else {
+                print("⚠️ 重複消息，跳過處理: \(messageId.prefix(8))")
+                return
+            }
+            
+            // 添加到已處理列表
+            lastProcessedMessageIds.insert(messageId)
+            messageTimestamps[messageId] = Date()
+            
+            // 限制已處理消息列表大小
+            if lastProcessedMessageIds.count > maxProcessedMessageIds {
+                cleanupOldestMessages()
+            }
+            
+            // 實際處理消息
+            DispatchQueue.main.async { [weak self] in
+                self?.processGameMessage(message, messageId: messageId)
             }
         }
+    }
+    
+    /// 清理過期消息
+    private func cleanupExpiredMessages() {
+        let now = Date()
+        let expiredIds = messageTimestamps.compactMap { (id, timestamp) in
+            now.timeIntervalSince(timestamp) > messageExpirationTime ? id : nil
+        }
+        
+        for id in expiredIds {
+            lastProcessedMessageIds.remove(id)
+            messageTimestamps.removeValue(forKey: id)
+        }
+        
+        if !expiredIds.isEmpty {
+            print("🧹 BingoGameViewModel: 清理過期消息 \(expiredIds.count) 個")
+        }
+    }
+    
+    /// 清理最舊的消息
+    private func cleanupOldestMessages() {
+        let sortedByTime = messageTimestamps.sorted { $0.value < $1.value }
+        let toRemove = sortedByTime.prefix(maxProcessedMessageIds / 4) // 移除25%
+        
+        for (id, _) in toRemove {
+            lastProcessedMessageIds.remove(id)
+            messageTimestamps.removeValue(forKey: id)
+        }
+        
+        print("🧹 BingoGameViewModel: 清理最舊消息 \(toRemove.count) 個")
+    }
+    
+    /// 實際處理遊戲消息
+    private func processGameMessage(_ message: GameMessage, messageId: String) {
         
         print("📥 BingoGameViewModel: 協調處理消息 - \(message.type.stringValue)")
         print("   消息ID: \(messageId.prefix(8))")
@@ -582,6 +772,8 @@ class BingoGameViewModel: ObservableObject {
             handleRoomStateUpdate(message)
         case .keyExchangeResponse:
             handleKeyExchangeResponse(message)
+        case .turnChange:
+            handleTurnChangeMessage(message)
         default:
             print("⚠️ 未處理的消息類型: \(message.type.stringValue)")
         }
@@ -616,6 +808,28 @@ class BingoGameViewModel: ObservableObject {
         hostElectionService.handleHostHeartbeat(from: message.senderID)
     }
     
+    /// 處理輪流變更消息
+    private func handleTurnChangeMessage(_ message: GameMessage) {
+        print("🎯 ===== 處理輪流變更消息 =====")
+        print("🎯 發送者: \(message.senderName) (\(message.senderID.prefix(8)))")
+        print("🎯 數據大小: \(message.data.count) bytes")
+        
+        do {
+            let turnData = try BinaryGameProtocol.decodeTurnChange(message.data)
+            print("🎯 解析輪流數據: 下一位玩家=\(turnData.nextPlayerID), 索引=\(turnData.turnIndex)")
+            
+            turnManager.handleTurnChange(
+                nextPlayerID: turnData.nextPlayerID,
+                turnIndex: turnData.turnIndex
+            )
+            
+            print("🎯 輪流變更處理完成")
+        } catch {
+            print("❌ 輪流變更消息解析失敗: \(error)")
+        }
+        print("🎯 ===== 處理完成 =====")
+    }
+    
     /// 【SIMPLIFIED】處理玩家加入消息 - 簡化邏輯移除複雜身份驗證
     private func handlePlayerJoinedMessage(_ message: GameMessage) {
         print("👤 ===== 收到玩家加入消息 =====")
@@ -625,7 +839,7 @@ class BingoGameViewModel: ObservableObject {
         print("👤 當前房間玩家數: \(roomPlayers.count)")
         print("👤 當前房間玩家列表: \(roomPlayers.map { $0.name })")
         
-        // 【SIMPLIFIED】只解析玩家名稱，不驗證 ID
+        // 【ENHANCED】解析玩家名稱並更新設備ID映射
         guard let playerName = parseSimplePlayerName(message.data) else {
             print("❌ 無法解析玩家名稱")
             return
@@ -636,6 +850,9 @@ class BingoGameViewModel: ObservableObject {
         // 【FIX】統一格式化暱稱
         let cleanName = NicknameFormatter.cleanNickname(playerName)
         print("📝 清理後的玩家名稱: \(cleanName)")
+        
+        // 【NEW】更新設備ID到玩家名稱的映射
+        updatePlayerMapping(deviceID: message.senderID, playerName: cleanName)
         
         // 【SIMPLIFIED】檢查是否為自己 - 只比較名稱
         let myName = NicknameFormatter.cleanNickname(deviceName)
@@ -704,6 +921,12 @@ class BingoGameViewModel: ObservableObject {
             
         } else {
             print("⚠️ 玩家已存在，跳過重複添加: \(cleanName)")
+        }
+        
+        // 觸發自適應同步（玩家數量變化）
+        if roomPlayers.count >= 2 && roomSyncTimer == nil {
+            print("🔄 玩家數量達到2+，啟動自適應房間同步")
+            startAdaptiveRoomSync()
         }
         
         print("👤 ===== 玩家加入處理完成 =====\n")
@@ -951,12 +1174,28 @@ class BingoGameViewModel: ObservableObject {
         Task {
             do {
                 let roomStateData = createRoomStateData()
+                
+                // 檢查狀態是否有變化
+                let newStateHash = calculateRoomStateHash()
+                if newStateHash == lastRoomStateHash {
+                    consecutiveUnchangedStates += 1
+                    print("🔄 房間狀態無變化 (連續 \(consecutiveUnchangedStates) 次)")
+                } else {
+                    consecutiveUnchangedStates = 0
+                    lastRoomStateHash = newStateHash
+                    print("🔄 房間狀態已變化，重置計數器")
+                }
+                
                 try await networkManager.broadcastGameAction(
                     type: .roomStateUpdate,
                     data: roomStateData,
                     priority: .high
                 )
                 print("✅ 已廣播完整房間狀態，包含 \(roomPlayers.count) 位玩家")
+                
+                // 調整同步間隔
+                adjustSyncInterval()
+                
             } catch {
                 print("❌ 廣播房間狀態失敗: \(error)")
             }
@@ -965,11 +1204,110 @@ class BingoGameViewModel: ObservableObject {
         print("📡 ===== 房間狀態廣播完成 =====\n")
     }
     
+    /// 計算房間狀態哈希值
+    private func calculateRoomStateHash() -> Int {
+        var hasher = Hasher()
+        hasher.combine(roomPlayers.count)
+        for player in roomPlayers.sorted(by: { $0.id < $1.id }) {
+            hasher.combine(player.id)
+            hasher.combine(player.name)
+            // RoomPlayer 沒有 isConnected 屬性，只使用 id 和 name
+        }
+        hasher.combine(gameRoomID)
+        return hasher.finalize()
+    }
+    
+    /// 調整同步間隔 - 自適應算法
+    private func adjustSyncInterval() {
+        let previousInterval = currentSyncInterval
+        
+        if consecutiveUnchangedStates >= 3 {
+            // 狀態穩定，增加同步間隔
+            currentSyncInterval = min(currentSyncInterval * 1.5, maxSyncInterval)
+        } else if consecutiveUnchangedStates == 0 {
+            // 狀態有變化，減少同步間隔
+            currentSyncInterval = max(currentSyncInterval * 0.8, minSyncInterval)
+        }
+        
+        if abs(currentSyncInterval - previousInterval) > 0.1 {
+            print("🔄 調整同步間隔: \(String(format: "%.1f", previousInterval))s -> \(String(format: "%.1f", currentSyncInterval))s")
+            
+            // 重新安排計時器
+            if let timerID = roomSyncTimer {
+                UnifiedTimerManager.shared.invalidate(id: timerID)
+                scheduleAdaptiveRoomSync()
+            }
+        }
+    }
+    
+    /// 開始自適應房間同步
+    func startAdaptiveRoomSync() {
+        print("🔄 開始自適應房間狀態同步")
+        scheduleAdaptiveRoomSync()
+    }
+    
+    /// 停止自適應房間同步
+    func stopAdaptiveRoomSync() {
+        if let timerID = roomSyncTimer {
+            UnifiedTimerManager.shared.invalidate(id: timerID)
+            roomSyncTimer = nil
+            print("🔄 停止自適應房間狀態同步")
+        }
+    }
+    
+    /// 安排自適應房間同步計時器
+    private func scheduleAdaptiveRoomSync() {
+        let timerID = "adaptiveRoomSync_\(UUID().uuidString.prefix(8))"
+        roomSyncTimer = timerID
+        
+        let config = TimerConfiguration(interval: currentSyncInterval, repeats: true)
+        UnifiedTimerManager.shared.schedule(id: timerID, configuration: config) { [weak self] in
+            Task { @MainActor in
+                self?.performAdaptiveRoomSync()
+            }
+        }
+        
+        print("⏰ 已安排自適應同步計時器，間隔: \(String(format: "%.1f", currentSyncInterval))s")
+    }
+    
+    /// 執行自適應房間同步
+    private func performAdaptiveRoomSync() {
+        // 只在有玩家且處於活躍狀態時同步
+        guard roomPlayers.count > 1 else {
+            print("🔄 玩家數量不足，跳過同步")
+            return
+        }
+        
+        // 如果連續多次狀態未變化，降低同步頻率
+        if consecutiveUnchangedStates >= 5 {
+            print("🔄 狀態長期穩定 (連續 \(consecutiveUnchangedStates) 次)，降低同步頻率")
+            currentSyncInterval = min(currentSyncInterval * 1.2, maxSyncInterval)
+            
+            // 重新安排計時器
+            if let timerID = roomSyncTimer {
+                UnifiedTimerManager.shared.invalidate(id: timerID)
+                scheduleAdaptiveRoomSync()
+            }
+        }
+        
+        broadcastRoomState()
+    }
+    
     /// 處理玩家離開消息
     private func handlePlayerLeftMessage(_ message: GameMessage) {
         // 從 roomPlayers 移除玩家 - 使用清理後的名稱比較
         let cleanLeavingName = NicknameFormatter.cleanNickname(message.senderName)
         roomPlayers.removeAll { NicknameFormatter.cleanNickname($0.name) == cleanLeavingName }
+        
+        // 【NEW】移除設備ID到玩家名稱的映射
+        removePlayerMapping(deviceID: message.senderID)
+        
+        // 檢查是否需要停止自適應同步
+        if roomPlayers.count < 2 {
+            print("🔄 玩家數量不足2，停止自適應房間同步")
+            stopAdaptiveRoomSync()
+        }
+        
         print("👋 玩家離開: \(cleanLeavingName)")
         print("📊 房間玩家數量: \(roomPlayers.count)")
     }
@@ -1184,6 +1522,10 @@ class BingoGameViewModel: ObservableObject {
         // 避免重複添加 - 使用清理後的名稱比較
         if !roomPlayers.contains(where: { NicknameFormatter.cleanNickname($0.name) == cleanDeviceName }) {
             roomPlayers.append(selfPlayer)
+            
+            // 【NEW】添加自己的設備ID到玩家名稱映射
+            updatePlayerMapping(deviceID: ServiceContainer.shared.temporaryIDManager.deviceID, playerName: cleanDeviceName)
+            
             print("✅ 自己已添加到房間: \(cleanDeviceName)")
             print("📊 房間玩家數量: \(roomPlayers.count)")
         } else {
@@ -1506,12 +1848,89 @@ class BingoGameViewModel: ObservableObject {
         return (playerID: playerID, playerName: playerName)
     }
     
+    // MARK: - Device ID to Player Name Mapping
+    
+    /// 添加或更新玩家設備ID和名稱的映射
+    func updatePlayerMapping(deviceID: String, playerName: String) {
+        let cleanPlayerName = NicknameFormatter.cleanNickname(playerName)
+        
+        if let index = playerDeviceIDs.firstIndex(of: deviceID) {
+            // 更新現有映射
+            playerNames[index] = cleanPlayerName
+            print("🔄 更新玩家映射: \(deviceID.prefix(8)) -> \(cleanPlayerName)")
+        } else {
+            // 添加新映射
+            playerDeviceIDs.append(deviceID)
+            playerNames.append(cleanPlayerName)
+            print("➕ 添加玩家映射: \(deviceID.prefix(8)) -> \(cleanPlayerName)")
+        }
+        
+        // 確保兩個數組長度一致
+        assert(playerDeviceIDs.count == playerNames.count, "設備ID和玩家名稱數組長度不一致")
+    }
+    
+    /// 根據設備ID獲取玩家名稱
+    func getPlayerName(for deviceID: String) -> String? {
+        guard let index = playerDeviceIDs.firstIndex(of: deviceID),
+              index < playerNames.count else {
+            return nil
+        }
+        return playerNames[index]
+    }
+    
+    /// 根據玩家名稱獲取設備ID
+    func getDeviceID(for playerName: String) -> String? {
+        let cleanPlayerName = NicknameFormatter.cleanNickname(playerName)
+        guard let index = playerNames.firstIndex(of: cleanPlayerName),
+              index < playerDeviceIDs.count else {
+            return nil
+        }
+        return playerDeviceIDs[index]
+    }
+    
+    /// 移除玩家映射
+    func removePlayerMapping(deviceID: String) {
+        guard let index = playerDeviceIDs.firstIndex(of: deviceID) else { return }
+        
+        let removedPlayerName = index < playerNames.count ? playerNames[index] : "未知"
+        
+        playerDeviceIDs.remove(at: index)
+        if index < playerNames.count {
+            playerNames.remove(at: index)
+        }
+        
+        print("➖ 移除玩家映射: \(deviceID.prefix(8)) -> \(removedPlayerName)")
+    }
+    
+    /// 清空所有玩家映射
+    func clearPlayerMappings() {
+        playerDeviceIDs.removeAll()
+        playerNames.removeAll()
+        print("🧹 清空所有玩家映射")
+    }
+    
+    /// 獲取當前輪到的玩家名稱（基於設備ID映射）
+    var currentPlayerDisplayName: String {
+        // 如果currentPlayerTurn是設備ID，嘗試映射到玩家名稱
+        if let playerName = getPlayerName(for: currentPlayerTurn) {
+            return playerName
+        }
+        // 否則直接返回currentPlayerTurn（可能已經是玩家名稱）
+        return currentPlayerTurn
+    }
+    
     
     // MARK: - Lifecycle
     
     /// 清理資源
     func cleanup() {
         print("🧹 BingoGameViewModel: 協調器清理資源")
+        
+        // 停止自適應同步
+        stopAdaptiveRoomSync()
+        
+        // 【NEW】清空玩家映射
+        clearPlayerMappings()
         
         cancellables.removeAll()
         timerService.cleanup()
@@ -1540,15 +1959,14 @@ struct EmoteEvent {
     
     /// 表情文本表示（用於GameView兼容性）
     var text: String {
-        return type.rawValue
+        // 使用 template 來格式化顯示文字，用暱稱替換 %@
+        return String(format: type.template, senderName)
     }
     
     /// 是否為純表情符號（用於GameView兼容性）
     var isPureEmoji: Bool {
-        // 簡單檢查是否只包含emoji字符
-        return type.rawValue.unicodeScalars.allSatisfy { scalar in
-            scalar.properties.isEmoji
-        }
+        // 使用 EmoteType 的 isPureEmoji 屬性
+        return type.isPureEmoji
     }
 }
 

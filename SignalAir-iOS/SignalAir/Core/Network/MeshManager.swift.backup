@@ -106,9 +106,7 @@ class NetworkStateCoordinator: ObservableObject {
         }
         set {
             stateQueue.async(flags: .barrier) { [weak self] in
-                Task { @MainActor [weak self] in
-                    self?._internalStates = newValue
-                }
+                self?._internalStates = newValue
             }
         }
     }
@@ -1368,40 +1366,6 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol, ObservableObject {
     
     // MARK: - Private Methods
     
-    /// 【NEW】處理來自 NetworkService 的原始數據
-    private func handleNetworkData(_ data: Data, from peerID: String) {
-        print("🔄 MeshManager.handleNetworkData: 開始處理來自 \(peerID) 的 \(data.count) bytes")
-        
-        // 解析為 MeshMessage
-        guard let meshMessage = try? BinaryMessageDecoder.decode(data) else {
-            print("❌ MeshManager: 無法解析 MeshMessage，嘗試直接處理為遊戲數據")
-            
-            // 如果無法解析為標準 MeshMessage，可能是直接的遊戲數據
-            // 直接創建 ExtendedMeshMessage 並處理
-            let extendedMessage = ExtendedMeshMessage(
-                type: .game,
-                sourceID: peerID,
-                targetID: nil,
-                data: data,
-                ttl: 5
-            )
-            handleMeshMessage(extendedMessage, from: peerID)
-            return
-        }
-        
-        print("✅ MeshManager: 成功解析 MeshMessage - 類型: \(meshMessage.type.stringValue)")
-        
-        // 轉換為 ExtendedMeshMessage 並處理
-        let extendedMessage = ExtendedMeshMessage(
-            type: ExtendedMeshMessageType(rawValue: meshMessage.type.stringValue) ?? .system,
-            sourceID: meshMessage.sourceID ?? peerID,
-            targetID: meshMessage.targetID,
-            data: meshMessage.data,
-            ttl: meshMessage.ttl
-        )
-        handleMeshMessage(extendedMessage, from: peerID)
-    }
-    
     /// 判斷消息是否需要加密（選擇性加密策略）
     private func shouldEncryptMessage(_ message: MeshMessage) -> Bool {
         // 遊戲消息需要根據具體類型判斷
@@ -1504,12 +1468,9 @@ class MeshManager: MeshNetworkProtocol, MeshManagerProtocol, ObservableObject {
     }
     
     private func setupNetworkCallbacks() {
-        // 【CRITICAL FIX】恢復 onDataReceived 回調 - 修復消息路由斷裂
-        // 這是解決玩家看不到其他設備的根本原因
-        networkService.onDataReceived = { [weak self] data, peerID in
-            print("📥 MeshManager: 收到來自 \(peerID) 的數據 \(data.count) bytes")
-            self?.handleNetworkData(data, from: peerID)
-        }
+        // 🔧 FIX: 移除onDataReceived回調設置，避免與ServiceContainer衝突
+        // ServiceContainer現在是唯一的數據處理入口，會分發消息給MeshManager
+        // networkService.onDataReceived - 不再設置，由ServiceContainer統一處理
         
         networkService.onPeerConnected = { [weak self] peerID in
             self?.handlePeerConnected(peerID)

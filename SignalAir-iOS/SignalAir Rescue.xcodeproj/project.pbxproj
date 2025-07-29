@@ -54,6 +54,8 @@
 		E7DA9FA055D6C94A1DA7E0A6 /* PurchaseOptionsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBA6F9EFBA5AB996FBC23F81 /* PurchaseOptionsView.swift */; };
 		EA6D65118E2F033BB5CBC69E /* ChatView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B61DCAC113E68FF9FF70983D /* ChatView.swift */; };
 		EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */; };
+		TURN001234567890ABCDEF123 /* BingoTurnManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = TURN001234567890ABCDEF124 /* BingoTurnManager.swift */; };
+		CURR001234567890ABCDEF123 /* CurrentNumberSelectorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CURR001234567890ABCDEF124 /* CurrentNumberSelectorView.swift */; };
 		NET001234567890ABCDEF123 /* BingoNetworkManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = NET001234567890ABCDEF124 /* BingoNetworkManager.swift */; };
 		STT001234567890ABCDEF123 /* BingoGameStateManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = STT001234567890ABCDEF124 /* BingoGameStateManager.swift */; };
 		HST001234567890ABCDEF123 /* HostElectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = HST001234567890ABCDEF124 /* HostElectionService.swift */; };
@@ -140,6 +142,8 @@
 		9390CD9EAB98396D2F49D3E2 /* RoomChatView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoomChatView.swift; sourceTree = "<group>"; };
 		A0C593762D72DB0ECC701D91 /* HelpView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HelpView.swift; sourceTree = "<group>"; };
 		A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoGameViewModel.swift; sourceTree = "<group>"; };
+		TURN001234567890ABCDEF124 /* BingoTurnManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoTurnManager.swift; sourceTree = "<group>"; };
+		CURR001234567890ABCDEF124 /* CurrentNumberSelectorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CurrentNumberSelectorView.swift; sourceTree = "<group>"; };
 		NET001234567890ABCDEF124 /* BingoNetworkManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoNetworkManager.swift; sourceTree = "<group>"; };
 		STT001234567890ABCDEF124 /* BingoGameStateManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BingoGameStateManager.swift; sourceTree = "<group>"; };
 		HST001234567890ABCDEF124 /* HostElectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HostElectionService.swift; sourceTree = "<group>"; };
@@ -232,6 +236,7 @@
 			isa = PBXGroup;
 			children = (
 				3A918DE39A56052433134489 /* BingoCardView.swift */,
+				CURR001234567890ABCDEF124 /* CurrentNumberSelectorView.swift */,
 				14BB704277FFF5C14B06F384 /* DrawnNumbersView.swift */,
 				5192F2009B446E7217B88B40 /* GameRulesView.swift */,
 				F79A8B99132792ECBB45F81E /* LeaderboardView.swift */,
@@ -438,6 +443,7 @@
 			isa = PBXGroup;
 			children = (
 				A37027D72D8FF042CBA2A78A /* BingoGameViewModel.swift */,
+				TURN001234567890ABCDEF124 /* BingoTurnManager.swift */,
 				NET001234567890ABCDEF124 /* BingoNetworkManager.swift */,
 				STT001234567890ABCDEF124 /* BingoGameStateManager.swift */,
 				HST001234567890ABCDEF124 /* HostElectionService.swift */,
@@ -569,6 +575,8 @@
 			files = (
 				0D9F8ADFC96E776680BED966 /* BingoCardView.swift in Sources */,
 				EAB3319340E8C5817D0F6010 /* BingoGameViewModel.swift in Sources */,
+				TURN001234567890ABCDEF123 /* BingoTurnManager.swift in Sources */,
+				CURR001234567890ABCDEF123 /* CurrentNumberSelectorView.swift in Sources */,
 				NET001234567890ABCDEF123 /* BingoNetworkManager.swift in Sources */,
 				STT001234567890ABCDEF123 /* BingoGameStateManager.swift in Sources */,
 				HST001234567890ABCDEF123 /* HostElectionService.swift in Sources */,
